@@ -63,7 +63,6 @@ class Department (models.Model):
     class Meta:
         verbose_name = "Department"
         verbose_name_plural = "Departments"
-        ordering = ['id']  
 
     def __str__(self):
         return self.department_name
@@ -104,7 +103,7 @@ class StrategicPlan (models.Model):
     class Meta:
         verbose_name = "StrategicPlan"
         verbose_name_plural = "StrategicPlans"
-        ordering = ['id']  
+        ordering = ['start_date']  
 
     def __str__(self):
         return self.plan_name
@@ -205,8 +204,7 @@ class Note (models.Model):
     
     class Meta:
         verbose_name = "Note"
-        verbose_name_plural = "Notes"
-        ordering = ['id']  
+        verbose_name_plural = "Notes" 
 
     def __str__(self):
         return  f"Note #{self.id}"
@@ -230,7 +228,6 @@ class Log (models.Model):
     class Meta:
         verbose_name = "Log"
         verbose_name_plural = "Logs"
-        ordering = ['id']  
 
     def __str__(self):
         return f"{self.table_name} - {self.action}"
