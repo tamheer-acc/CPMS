@@ -12,7 +12,7 @@ ROLES = (
 
 
 
-GOAL_STATUS = (
+STATUS = (
     ('NS', 'لم يبدأ بعد'),
     ('IP', 'قيد التنفيذ'),
     ('D', 'متأخر'),
@@ -20,7 +20,7 @@ GOAL_STATUS = (
 )
 
 
-GOAL_PRIORITY = (
+PRIORITY = (
     ('C', 'حرجة'),
     ('H', 'عالية'),
     ('M', 'متوسطة'),
@@ -109,8 +109,8 @@ class StrategicGoal (models.Model):
     description = models.TextField(null=False, blank=False, help_text="وصف الهدف الاستراتيجي")
     start_date = models.DateField(null=True, blank=True, default=date.today, help_text="تاريخ بداية الهدف")
     end_date = models.DateField(null=True, blank=True, help_text="تاريخ نهاية الهدف")
-    goal_status = models.CharField(max_length=2, choices=GOAL_STATUS, default=GOAL_STATUS[0][0], help_text="حالة الهدف")
-    goal_priority = models.CharField(max_length=1, choices=GOAL_PRIORITY, default=GOAL_PRIORITY[0][0], help_text="أهمية الهدف")
+    goal_status = models.CharField(max_length=2, choices=STATUS, default=STATUS[0][0], help_text="حالة الهدف")
+    goal_priority = models.CharField(max_length=1, choices=PRIORITY, default=PRIORITY[0][0], help_text="أهمية الهدف")
     
     class Meta:
         verbose_name = "StrategicGoal"
@@ -130,7 +130,7 @@ class Initiative(models.Model):  # 1 : M Relationship with StrategicGoal (Many S
     description = models.TextField()
     start_date = models.DateField()
     end_date = models.DateField()
-    priority = models.CharField(max_length=20)
+    priority = models.CharField(max_length=1)
     category = models.CharField(max_length=50)
     strategic_goal = models.ForeignKey(StrategicGoal, on_delete=models.CASCADE)
     
@@ -147,7 +147,7 @@ class Initiative(models.Model):  # 1 : M Relationship with StrategicGoal (Many S
 #  UserInitiative Model
 # ---------------------------
 class UserInitiative(models.Model): # M : M relationshp  
-    status = models.CharField(max_length=20)
+    status = models.CharField(max_length=2)
     progress = models.DecimalField(max_digits=10, decimal_places=0)
     initiative = models.ForeignKey(Initiative, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
