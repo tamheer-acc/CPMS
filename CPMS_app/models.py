@@ -6,6 +6,7 @@ from datetime import date
 
 ROLES = (
     ('GM', 'المدير العام'), #General Manager
+    ('CM','مدير لجنة الخطط'),
     ('M', 'مدير'), #Manager
     ('E', 'موظف') #Employee
 )
