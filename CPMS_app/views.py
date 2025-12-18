@@ -28,6 +28,12 @@ from .models import STATUS
 
 
 
+#########################################################################################################################
+#                                                    RENAD's Views                                                      #
+#########################################################################################################################
+
+
+
 ########################################################################
 #                           Initiative Views                           #
 ########################################################################
@@ -111,11 +117,19 @@ class DeleteInitiativeView(DeleteView):
     success_url = reverse_lazy('PATH@')
 
 
+
 #@Assign Employee Function ###inactive until you add kpi's###
+
+
 
 ######################################################################### 
 #                               KPI Views                               # 
 #########################################################################
+
+
+
+#
+
 
 
 #########################################################################################################################
@@ -166,7 +180,7 @@ class PlanDetailsview(DetailView):
                 return StrategicPlan.objects.all()
             else:
                 raise PermissionDenied
-          
+
 #LoginRequiredMixin, UserPassesTestMixin, CreateView            
 class CreatePlanView(CreateView):
     model = StrategicPlan
@@ -209,7 +223,7 @@ class DeletePlanView(DeleteView):
 #LoginRequiredMixin, DetailView 
 #class GoalDetailsview(DetailView):
     
-          
+
 #LoginRequiredMixin, UserPassesTestMixin, CreateView            
 class CreateGoalView(CreateView):
     model = StrategicGoal
@@ -221,11 +235,11 @@ class CreateGoalView(CreateView):
         return self.request.user.role.role_name in ['CM','M'] 
 
     def form_valid(self, form):
-       form.instance.plan_id = self.kwargs['plan_id']   # ربط بالخطة
-       form.instance.department = self.request.user.department  # ربط بالإدارة
-       return super().form_valid(form) 
+        form.instance.plan_id = self.kwargs['plan_id']   # ربط بالخطة
+        form.instance.department = self.request.user.department  # ربط بالإدارة
+        return super().form_valid(form) 
 
-   
+
 #LoginRequiredMixin, UserPassesTestMixin, CreateView   
 class UpdateGoalView(UpdateView):
     model = StrategicGoal
