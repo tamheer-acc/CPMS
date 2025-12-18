@@ -62,7 +62,6 @@ class InitiativeDetailsView(DetailView):
     #retreave the users related in the template 
 
 
-
 class CreateInitiativeView(CreateView): #Managers 
     '''
     - Allows Managers to create a new initiative
@@ -113,4 +112,148 @@ class DeleteInitiativeView(DeleteView):
 
 
 
+#########################################################################################################################
+#                                                    WALAA's Views                                                      #
+#########################################################################################################################
 
+
+# ---------------------------
+#  Department View
+# ---------------------------
+#LoginRequiredMixin,
+class AllDepartmentsView(ListView): 
+    model = Department 
+    template_name = 'departments_list.html'
+    context_object_name = 'departments'
+
+    def get_queryset(self):
+        return Department.objects.all()
+    
+
+# ---------------------------
+#  StrategicPlan View
+# ---------------------------
+#LoginRequiredMixin, ListView
+class AllPlansView(ListView): 
+    model = StrategicPlan 
+    template_name = 'plans_list.html'
+    context_object_name = 'plans'
+
+    def get_queryset(self):
+        if self.request.user.role:
+            if self.request.user.role.role_name in ['GM', 'CM', 'M']:
+                return StrategicPlan.objects.all()
+            else:
+                raise PermissionDenied 
+
+#LoginRequiredMixin, DetailView 
+class PlanDetailsview(DetailView):
+    model = StrategicPlan 
+    template_name = 'plan_detail.html'
+    context_object_name = 'plan'
+
+    def get_queryset(self):
+        if self.request.user.role:
+            if self.request.user.role.role_name in ['GM', 'CM', 'M']:
+                return StrategicPlan.objects.all()
+            else:
+                raise PermissionDenied
+          
+#LoginRequiredMixin, UserPassesTestMixin, CreateView            
+class CreatePlanView(CreateView):
+    model = StrategicPlan
+    fields = ['plan_name', 'vision', 'mission', 'start_date', 'end_date']
+    template_name = 'plan_form.html'
+    success_url = reverse_lazy('')
+    
+    def test_func(self):
+        return self.request.user.role.role_name == 'CM'  #مدير لجنة الخطط
+
+    def form_valid(self, form):
+        form.instance.user = self.request.user 
+        return super().form_valid(form) 
+
+#LoginRequiredMixin, UserPassesTestMixin, CreateView   
+class UpdatePlanView(UpdateView):
+    model = StrategicPlan
+    fields = ['plan_name', 'vision', 'mission', 'start_date', 'end_date']
+    template_name = 'plan_form.html'
+    success_url = reverse_lazy('')
+    
+    def test_func(self):
+        return self.request.user.role.role_name == 'CM' 
+
+class DeletePlanView(DeleteView):
+    model = StrategicPlan
+    template_name = 'plan_confirm_delete.html'
+    success_url = reverse_lazy('')
+
+    def test_func(self):
+        return self.request.user.role.role_name == 'CM' 
+
+# ---------------------------
+#  StrategicGoal View
+# ---------------------------
+
+#LoginRequiredMixin, ListView
+#class AllGoalsView(ListView): 
+    
+#LoginRequiredMixin, DetailView 
+#class GoalDetailsview(DetailView):
+    
+          
+#LoginRequiredMixin, UserPassesTestMixin, CreateView            
+class CreateGoalView(CreateView):
+    model = StrategicGoal
+    fields = ['goal_title', 'description', 'start_date', 'end_date', 'goal_status', 'goal_priority']
+    template_name = 'goal_form.html'
+    success_url = reverse_lazy('')
+    
+    def test_func(self):
+        return self.request.user.role.role_name in ['CM','M'] 
+
+    def form_valid(self, form):
+       form.instance.plan_id = self.kwargs['plan_id']   # ربط بالخطة
+       form.instance.department = self.request.user.department  # ربط بالإدارة
+       return super().form_valid(form) 
+
+   
+#LoginRequiredMixin, UserPassesTestMixin, CreateView   
+class UpdateGoalView(UpdateView):
+    model = StrategicGoal
+    fields = ['goal_title', 'description', 'start_date', 'end_date', 'goal_status', 'goal_priority']
+    template_name = 'goal_form.html'
+    success_url = reverse_lazy('')
+    
+    def test_func(self):
+        return self.request.user.role.role_name in ['CM','M'] 
+    
+
+class DeleteGoalView(DeleteView):
+    model = StrategicGoal
+    template_name = 'goal_form.html'
+    success_url = reverse_lazy('')
+    
+    def test_func(self):
+        return self.request.user.role.role_name in ['CM','M'] 
+    
+# ---------------------------
+#  Note View
+# ---------------------------
+
+# ---------------------------
+#  Log View
+# ---------------------------
+#LoginRequiredMixin,
+class AllLogsView(ListView): 
+    model = Log 
+    template_name = 'logs_list.html'
+    context_object_name = 'logs'
+#نحط شرط لللادمن ممكن
+    def get_queryset(self):
+        return Log.objects.all()
+    
+
+    #الداش بورد والتفاصيل هذي اتوقع لازم لها فيو
+    #برضو التوجية
+    #وانه البيانات تبان فصفحات ثانية للباقين
