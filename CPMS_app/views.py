@@ -2,16 +2,20 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy
 from django.views.generic import ListView, DetailView, CreateView
 from django.views.generic.edit import UpdateView, DeleteView
-from .models import ( Role, Department, User, StrategicPlan, StrategicGoal, 
-                    Initiative, UserInitiative, KPI, Note, Log)
+from django.http import JsonResponse
+from django.forms import ModelForm
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm#!!
 from django.contrib.auth import login
 from django.contrib.auth.mixins import LoginRequiredMixin #class based view 
 from django.contrib.auth.decorators import login_required #function based view
-from django.core.exceptions import PermissionDenied
 from django.contrib.auth import get_user_model
-from django.forms import ModelForm
-from .models import STATUS
+from django.core.exceptions import PermissionDenied
+from .models import ( Role, Department, User, StrategicPlan, StrategicGoal, 
+                        Initiative, UserInitiative, KPI, Note, Log, STATUS)
+from .services import generate_KPIs
+from .forms import KPIForm
+
+
 
 
 # Custom User Handling:  
@@ -44,7 +48,6 @@ class AllInitiativeView(ListView):
     - General Manager sees all initiatives
     - Other users see only initiatives they are assigned to
     '''
-    #ListView: query all of the objects in our view? from our database
     model = Initiative 
     template_name = 'initiatives_list.html'
     context_object_name = 'initiatives'
@@ -64,8 +67,8 @@ class InitiativeDetailsView(DetailView):
     '''
     model = Initiative
     template_name = "initiative_detail.html"
-    context_object_name = "initiative"
-    #retreave the users related in the template 
+    context_object_name = "initiative" 
+
 
 
 class CreateInitiativeView(CreateView): #Managers 
@@ -77,7 +80,7 @@ class CreateInitiativeView(CreateView): #Managers
     model = Initiative
     fields = ['title', 'description', 'start_date', 'end_date', 'priority', 'category']
     template_name = 'initiative_form.html'
-    success_url = reverse_lazy('PATH@')
+    success_url = reverse_lazy('PATH@')#initiatives list or goals list@
 
     def form_valid(self, form): #overriding form valid to set strategic goal and employee
         form.instance.strategic_goal_id = self.kwargs['goal_id']#kwargs = from the URL@
@@ -128,14 +131,82 @@ class DeleteInitiativeView(DeleteView):
 
 
 
-#
+def create_kpi_view(request, initiative_id):
+    '''
+    - Allows users to create a new KPI for a given initiative
+    - Fills AI-generated KPI suggestions for editing or adding
+    - Redirects on submission or renders form (full or partial) on GET, handling errors as needed
+    '''
+    initiative = get_object_or_404(Initiative, id=initiative_id)
+    if request.method == "POST":
+        form = KPIForm(request.POST)
+        if form.is_valid():
+            kpi = form.save(commit=False)
+            kpi.initiative = initiative
+            kpi.save()
+            return redirect('@PATH')
+        else:
+            return render(request, '@PATH', {'initiative': initiative, 'form': form})
 
+    else:
+        form = KPIForm()
+        ai_suggestion = generate_KPIs(initiative)
+
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':    # only return partial HTML if request is via JS
+            return render(request, '@partials/kpi_form.html', {'form': form, 'suggestions': ai_suggestion})
+        
+        #if someone opens the url normally
+        return render(request, '@kpi_page.html', {'initiative': initiative, 'form': form})
+
+
+
+class DeleteKPIView(DeleteView):
+    '''
+    - Allows users to delete a KPI
+    - Confirms deletion using a template
+    - Redirects to the Initiative??@@ after successful deletion
+    '''
+
+    model = KPI
+    template_name = 'confirm_delete.html'
+    success_url = reverse_lazy('@tags_list')
+
+
+
+class UpdateKPIView(UpdateView):
+    '''
+    - Allows users to update an existing KPI
+    - Lets users edit fields like kpi name, unit, target, and actual values
+    - Redirects to the @@@@@KPI list after successful update
+    '''
+    model = KPI
+    fields = ['kpi', 'unit', 'target_value','actual_value']
+    template_name = '@tag_form.html'
+    success_url = reverse_lazy('@tags_list')
+
+
+
+class AllKPIsView(ListView): #not needed but here we go
+    '''
+    - Displays a list of KPIs related to initiatives assigned to the current user
+    - Filters KPIs based on the user's assigned initiatives
+    - Renders the KPIs in the specified template
+    '''
+    model = KPI 
+    template_name = '@tags_list.html'
+    context_object_name = 'KPIs'
+    
+    def get_queryset(self):
+        return KPI.objects.filter(initiative__userinitiative__user=self.request.user)
+
+
+
+# Paths and URLs, conditioning (depending on Role), Model Handling 
 
 
 #########################################################################################################################
 #                                                    WALAA's Views                                                      #
 #########################################################################################################################
-
 
 
 
