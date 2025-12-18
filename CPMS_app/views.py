@@ -131,6 +131,16 @@ class DeleteInitiativeView(DeleteView):
 
 
 
+class KPIDetailsView(DetailView):
+    '''
+    - Shows details of a single KPI
+    '''
+    model = KPI
+    template_name = "KPI_detail.html"
+    context_object_name = "KPI" 
+
+
+
 def create_kpi_view(request, initiative_id):
     '''
     - Allows users to create a new KPI for a given initiative
