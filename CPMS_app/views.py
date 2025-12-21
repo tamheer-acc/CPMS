@@ -2,16 +2,18 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy, reverse
 from django.views.generic import ListView, DetailView, CreateView
 from django.views.generic.edit import UpdateView, DeleteView
-from .models import ( Role, Department, User, StrategicPlan, StrategicGoal, 
-                    Initiative, UserInitiative, KPI, Note, Log)
+from django.http import JsonResponse
+from django.forms import ModelForm
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm#!!
 from django.contrib.auth import login
 from django.contrib.auth.mixins import LoginRequiredMixin #class based view 
 from django.contrib.auth.decorators import login_required #function based view
-from django.core.exceptions import PermissionDenied
 from django.contrib.auth import get_user_model
-from django.forms import ModelForm
-from .models import STATUS
+from django.core.exceptions import PermissionDenied
+from .models import ( Role, Department, User, StrategicPlan, StrategicGoal, 
+                        Initiative, UserInitiative, KPI, Note, Log, STATUS)
+from .services import generate_KPIs
+from .forms import KPIForm
 
 
 # Custom User Handling:  
