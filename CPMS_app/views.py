@@ -2,20 +2,16 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy, reverse
 from django.views.generic import ListView, DetailView, CreateView
 from django.views.generic.edit import UpdateView, DeleteView
-from django.http import JsonResponse
-from django.forms import ModelForm
+from .models import ( Role, Department, User, StrategicPlan, StrategicGoal, 
+                    Initiative, UserInitiative, KPI, Note, Log)
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm#!!
 from django.contrib.auth import login
 from django.contrib.auth.mixins import LoginRequiredMixin #class based view 
 from django.contrib.auth.decorators import login_required #function based view
-from django.contrib.auth import get_user_model
 from django.core.exceptions import PermissionDenied
-from .models import ( Role, Department, User, StrategicPlan, StrategicGoal, 
-                        Initiative, UserInitiative, KPI, Note, Log, STATUS)
-from .services import generate_KPIs
-from .forms import KPIForm
-
-
+from django.contrib.auth import get_user_model
+from django.forms import ModelForm
+from .models import STATUS
 
 
 # Custom User Handling:  
@@ -32,12 +28,6 @@ from .forms import KPIForm
 
 
 
-#########################################################################################################################
-#                                                    RENAD's Views                                                      #
-#########################################################################################################################
-
-
-
 ########################################################################
 #                           Initiative Views                           #
 ########################################################################
@@ -49,6 +39,7 @@ class AllInitiativeView(ListView):
     - Managers see their departments initiatives 
     - Employee see the initiatives they are assigned to
     '''
+    #ListView: query all of the objects in our view? from our database
     model = Initiative 
     template_name = 'initiatives_list.html'
     context_object_name = 'initiatives'
@@ -73,8 +64,8 @@ class InitiativeDetailsView(DetailView):
     '''
     model = Initiative
     template_name = "initiative_detail.html"
-    context_object_name = "initiative" 
-
+    context_object_name = "initiative"
+    #retreave the users related in the template 
 
 
 class CreateInitiativeView(CreateView): #Managers 
@@ -272,7 +263,6 @@ class AllKPIsView(ListView): #not needed but here we go
 #########################################################################################################################
 
 
-
 # ---------------------------
 #  Department View
 # ---------------------------
@@ -314,7 +304,7 @@ class PlanDetailsview(DetailView):
                 return StrategicPlan.objects.all()
             else:
                 raise PermissionDenied
-
+          
 #LoginRequiredMixin, UserPassesTestMixin, CreateView            
 class CreatePlanView(CreateView):
     model = StrategicPlan
@@ -350,14 +340,32 @@ class DeletePlanView(DeleteView):
 # ---------------------------
 #  StrategicGoal View
 # ---------------------------
-
 #LoginRequiredMixin, ListView
-#class AllGoalsView(ListView): 
-    
-#LoginRequiredMixin, DetailView 
-#class GoalDetailsview(DetailView):
-    
+class AllGoalsView(ListView): 
+    model = StrategicGoal 
+    template_name = 'goals_list.html'
+    context_object_name = 'goals'
+        
+    def get_queryset(self):
+     user = self.request.user
+     role = user.role.role_name
 
+     if role == 'GM':
+        return StrategicGoal.objects.all()
+     elif role in ['M','CM']:
+        return StrategicGoal.objects.filter(department = user.department)
+     elif role == 'E':
+        return StrategicGoal.objects.filter(initiative__userinitiative__user = user).distinct()
+     
+     return StrategicGoal.objects.none()
+
+        
+#LoginRequiredMixin, DetailView 
+class GoalDetailsview(DetailView):
+    model = StrategicGoal 
+    template_name = 'goal_detail.html'
+    context_object_name = 'goal'     
+        
 #LoginRequiredMixin, UserPassesTestMixin, CreateView            
 class CreateGoalView(CreateView):
     model = StrategicGoal
@@ -369,33 +377,156 @@ class CreateGoalView(CreateView):
         return self.request.user.role.role_name in ['CM','M'] 
 
     def form_valid(self, form):
-        form.instance.plan_id = self.kwargs['plan_id']   # ربط بالخطة
-        form.instance.department = self.request.user.department  # ربط بالإدارة
-        return super().form_valid(form) 
+       form.instance.plan_id = self.kwargs['plan_id']   # ربط بالخطة
+       form.instance.department = self.request.user.department  # ربط بالإدارة
+       return super().form_valid(form) 
 
-
+   
 #LoginRequiredMixin, UserPassesTestMixin, CreateView   
 class UpdateGoalView(UpdateView):
     model = StrategicGoal
     fields = ['goal_title', 'description', 'start_date', 'end_date', 'goal_status', 'goal_priority']
     template_name = 'goal_form.html'
     success_url = reverse_lazy('')
-    
-    def test_func(self):
-        return self.request.user.role.role_name in ['CM','M'] 
+
+    def get_queryset(self):
+        user = self.request.user
+        role = user.role.role_name
+
+        if role in ['M', 'CM']:
+            return StrategicGoal.objects.filter(department=user.department)
+        return StrategicGoal.objects.none()
+
+    def dispatch(self, request, *args, **kwargs):
+        if not self.get_queryset().filter(pk=self.kwargs['pk']).exists():
+            raise PermissionDenied("ليس لديك صلاحية تعديل هذا الهدف.")
+        return super().dispatch(request, *args, **kwargs)
+     
     
 
 class DeleteGoalView(DeleteView):
     model = StrategicGoal
-    template_name = 'goal_form.html'
+    template_name = 'goal_confirm_delete.html'
     success_url = reverse_lazy('')
-    
-    def test_func(self):
-        return self.request.user.role.role_name in ['CM','M'] 
+
+    def get_queryset(self):
+        user = self.request.user
+        role = user.role.role_name
+
+        if role in ['M', 'CM']:
+            return StrategicGoal.objects.filter(department=user.department)
+        return StrategicGoal.objects.none()
+
+    def dispatch(self, request, *args, **kwargs):
+        if not self.get_queryset().filter(pk=self.kwargs['pk']).exists():
+            raise PermissionDenied("ليس لديك صلاحية حذف هذا الهدف.")
+        return super().dispatch(request, *args, **kwargs)
     
 # ---------------------------
 #  Note View
 # ---------------------------
+#LoginRequiredMixin, ListView
+class AllNotesView(ListView): 
+    model = Note 
+    template_name = 'notes_list.html'
+    context_object_name = 'notes'
+        
+    def get_queryset(self):
+        user = self.request.user
+        role = user.role.role_name
+
+        if role == 'GM':
+            #كل الملاحظات اللي ارسلها
+            return Note.objects.filter(user=user)
+        elif role in ['M','CM']:
+            #كل الملاحظات اللي ارسلها واللي اسلتمها من المدير العام
+            return Note.objects.filter(user=user,department=user.department)
+        elif role == 'E':
+            #كل الملاحظات اللي ارسلها واللي استلمهاعلى نفس المبادرة أو ارسلها له المدير 
+            return Note.objects.filter(user=user,initiative__userinitiative__user=user,department=user.department).distinct()
+
+        return Note.objects.none()
+        
+#LoginRequiredMixin, DetailView 
+class NoteDetailsview(DetailView):
+    model = Note 
+    template_name = 'note_detail.html'
+    context_object_name = 'note'
+
+    """اعتقد مالها داعي يمكن احذفها
+    def get_queryset(self):
+      
+        user = self.request.user
+        return Note.objects.filter(sender=user, receiver=user, initiative__userinitiative__user=user).distinct()
+
+            def dispatch(self, request, *args, **kwargs):
+        if not self.get_queryset().filter(pk=self.kwargs['pk']).exists():
+            raise PermissionDenied("ليس لديك صلاحية عرض هذه الملاحظة.")
+        return super().dispatch(request, *args, **kwargs)
+     """
+
+        
+#LoginRequiredMixin, UserPassesTestMixin, CreateView            
+class CreateNoteView(CreateView):
+    model = Note
+    fields = ['content', 'initiative', 'department', 'receiver']
+    template_name = 'note_form.html'
+    success_url = reverse_lazy('')
+    
+    #هذا عشان يسجل اسم المستلم من dropdown مخصصة
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        user = self.request.user
+        role = user.role.role_name
+       
+        if role == 'GM':
+            form.fields['receiver'].queryset = User.objects.filter(role__role_name='M')
+        elif role in ['M','CM']:
+            form.fields['receiver'].queryset = User.objects.filter(department=user.department, role__role_name='E')
+        elif role == 'E':
+            form.fields['receiver'].queryset = User.objects.filter(
+                userinitiative__initiative__in=Initiative.objects.filter(
+                    userinitiative__user=user)
+                      ).distinct()
+        return form
+
+    def form_valid(self, form):
+        form.instance.sender = self.request.user
+        return super().form_valid(form) 
+
+   
+#LoginRequiredMixin, UserPassesTestMixin, CreateView   
+class UpdateNoteView(UpdateView):
+    model = Note
+    fields = ['content', 'initiative', 'department', 'receiver']
+    template_name = 'note_form.html'
+    success_url = reverse_lazy('')
+
+    def get_queryset(self):
+        return Note.objects.filter(sender=self.request.user)
+    
+    def dispatch(self, request, *args, **kwargs):
+        if not self.get_queryset().filter(pk=self.kwargs['pk']).exists():
+            raise PermissionDenied("ليس لديك صلاحية تعديل هذه الملاحظة.")
+        return super().dispatch(request, *args, **kwargs)
+    
+    def form_valid(self, form):
+        form.instance.sender = self.request.user
+        return super().form_valid(form)
+    
+
+class DeleteNoteView(DeleteView):
+    model = Note
+    template_name = 'note_confirm_delete.html'
+    success_url = reverse_lazy('')
+
+    def get_queryset(self):
+        return Note.objects.filter(sender=self.request.user)
+
+    def dispatch(self, request, *args, **kwargs):
+        if not self.get_queryset().filter(pk=self.kwargs['pk']).exists():
+            raise PermissionDenied("ليس لديك صلاحية حذف هذه الملاحظة.")
+        return super().dispatch(request, *args, **kwargs)
 
 # ---------------------------
 #  Log View

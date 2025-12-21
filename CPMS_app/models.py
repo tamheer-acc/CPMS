@@ -175,7 +175,8 @@ class KPI(models.Model): # 1 : M relationshp with Initiative (Many Side)
 #  Note Model
 # ---------------------------
 class Note (models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE,  related_name="notes")
+    sender = models.ForeignKey(User, on_delete=models.CASCADE,  related_name="sent_notes")
+    receiver = models.ForeignKey(User, on_delete=models.CASCADE,  related_name="received_notes")
     initiative = models.ForeignKey(Initiative, on_delete=models.CASCADE, related_name="notes")
     department = models.ForeignKey(Department,null=True, blank=True, on_delete=models.SET_NULL, related_name="notes")
     content = models.TextField(null=False, blank=False, help_text="محتوى الملاحظة")
@@ -192,9 +193,7 @@ class Note (models.Model):
 
 
 # ---------------------------
-
 #  Log Model
-
 # ---------------------------
 class Log (models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="logs")
