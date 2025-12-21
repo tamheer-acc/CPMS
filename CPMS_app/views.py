@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.urls import reverse_lazy
+from django.urls import reverse_lazy, reverse
 from django.views.generic import ListView, DetailView, CreateView
 from django.views.generic.edit import UpdateView, DeleteView
 from .models import ( Role, Department, User, StrategicPlan, StrategicGoal, 
@@ -36,7 +36,8 @@ class AllInitiativeView(ListView):
     '''
     List all initiatives
     - General Manager sees all initiatives
-    - Other users see only initiatives they are assigned to
+    - Managers see their departments initiatives 
+    - Employee see the initiatives they are assigned to
     '''
     #ListView: query all of the objects in our view? from our database
     model = Initiative 
@@ -44,12 +45,17 @@ class AllInitiativeView(ListView):
     context_object_name = 'initiatives'
     
     def get_queryset(self):
-        if self.request.user.role:
+        goal_id = self.kwargs.get('goal_id')
+        if goal_id:
             if self.request.user.role.role_name == 'GM':
                 return Initiative.objects.all()
-            else:
-                return Initiative.objects.filter( userinitiative__user = self.request.user )
-
+            else:  
+                return Initiative.objects.filter( strategic_goal_id = goal_id , userinitiative__user = self.request.user )
+        else:
+            if self.request.user.role.role_name == 'GM':
+                return Initiative.objects.all()
+            else:  # Managers and Employees
+                return Initiative.objects.filter( userinitiative__user=self.request.user )
 
 
 class InitiativeDetailsView(DetailView):
@@ -71,10 +77,9 @@ class CreateInitiativeView(CreateView): #Managers
     model = Initiative
     fields = ['title', 'description', 'start_date', 'end_date', 'priority', 'category']
     template_name = 'initiative_form.html'
-    success_url = reverse_lazy('PATH@')
-
+    
     def form_valid(self, form): #overriding form valid to set strategic goal and employee
-        form.instance.strategic_goal_id = self.kwargs['goal_id']#kwargs = from the URL@
+        form.instance.strategic_goal_id = self.kwargs['goal_id']
         response = super().form_valid(form)
         UserInitiative.objects.create(
             user=self.request.user,
@@ -84,6 +89,9 @@ class CreateInitiativeView(CreateView): #Managers
         )
         
         return response
+    def get_success_url(self):
+        return reverse('goal_detail', kwargs={'goal_id': self.kwargs['goal_id']})
+
 
 
 
@@ -96,7 +104,12 @@ class UpdateInitiativeView(UpdateView):
     model = Initiative
     fields = ['title', 'description', 'start_date', 'end_date', 'priority', 'category']
     template_name = 'initiative_form.html'
-    success_url = reverse_lazy('PATH@')
+    def get_success_url(self):
+        goal_id = self.kwargs.get('goal_id')
+        if goal_id:
+            return reverse('goal_initiatives_list', kwargs={'goal_id': goal_id})
+        else:
+            return reverse('initiatives_list')
 
 
 
@@ -104,11 +117,144 @@ class DeleteInitiativeView(DeleteView):
     '''
     - Allows deletion of an initiative
     - All related UserInitiative entries are automatically deleted (on_delete=CASCADE)
-    - After deletion redirects to PATH@
+    - After deletion redirects to Initiatives list
     '''
     model = Initiative
     template_name = 'initiative_confirm_delete.html'
-    success_url = reverse_lazy('PATH@')
+    def get_success_url(self):
+        goal_id = self.kwargs.get('goal_id')
+        if goal_id:
+            return reverse('goal_initiatives_list', kwargs={'goal_id': goal_id})
+        else:
+            return reverse('initiatives_list')
+
+
+
+def assign_employee_to_initiative(request, initiative_id):
+    '''
+    - Allows assigning one or more employees to a given initiative
+    - GET request: returns a list of employees in the current user's department to select from
+    - POST request: receives a list of employee IDs from the form and creates UserInitiative entries
+    - After successful assignment, redirects to the initiative detail page
+    '''
+    initiative = get_object_or_404(Initiative, id=initiative_id)
+    employees = User.objects.filter(role__role_name='E', department = request.user.department)  
+    
+    if request.method == "POST": #Post request: receives a list of employees
+        employees_ids_list = request.POST.getlist('user_ids') #@use in template 
+        if employees_ids_list:
+            for employee_id in employees_ids_list:
+                employee = get_object_or_404(User, id=employee_id)
+                UserInitiative.objects.get_or_create(
+                user=employee,
+                initiative=initiative,
+                status = STATUS[0][0],
+                progress = 0
+                )
+        return redirect('initiative_detail', pk=initiative.id)
+    
+    else: #Get request: returns a list of the department employees 
+        return render(request, 'assign_employee.html', {
+        'initiative': initiative,
+        'employees': employees
+    })
+
+
+
+######################################################################### 
+#                               KPI Views                               # 
+#########################################################################
+
+
+
+class KPIDetailsView(DetailView):
+    '''
+    - Shows details of a single KPI
+    '''
+    model = KPI
+    template_name = "KPI_detail.html"
+    context_object_name = "KPI" 
+
+
+
+def create_kpi_view(request, initiative_id):
+    '''
+    - Allows users to create a new KPI for a given initiative
+    - Fills AI-generated KPI suggestions for editing or adding
+    - Redirects on submission or renders form (full or partial) on GET, handling errors as needed
+    '''
+    initiative = get_object_or_404(Initiative, id=initiative_id)
+    if request.method == "POST":
+        form = KPIForm(request.POST)
+        if form.is_valid():
+            kpi = form.save(commit=False)
+            kpi.initiative = initiative
+            kpi.save()
+            return redirect('initiative_detail', pk=initiative.id)
+        else:
+            return render(request, 'kpi_create', {'initiative': initiative, 'form': form})
+
+    else:
+        form = KPIForm()
+        ai_suggestion = generate_KPIs(initiative)
+
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':    # only return partial HTML if request is via JS
+            return render(request, 'partials/kpi_form.html', {'form': form, 'suggestions': ai_suggestion})
+        
+        #if someone opens the url normally
+        return render(request, 'kpi_page.html', {'initiative': initiative, 'form': form})
+
+
+
+class DeleteKPIView(DeleteView):
+    '''
+    - Allows users to delete a KPI
+    - Confirms deletion using a template
+    - Redirects to the Initiative detail page after successful deletion
+    '''
+
+    model = KPI
+    template_name = 'confirm_delete.html'
+    success_url = reverse_lazy('initiative_detail')
+    def get_success_url(self):
+        initiative_id = self.kwargs.get('initiative_id')
+        return reverse('initiative_detail', kwargs={'pk': initiative_id})
+
+
+
+class UpdateKPIView(UpdateView):
+    '''
+    - Allows users to update an existing KPI
+    - Lets users edit fields like kpi name, unit, target, and actual values
+    - Redirects to the KPI detail after successful update
+    '''
+    model = KPI
+    fields = ['kpi', 'unit', 'target_value','actual_value']
+    template_name = 'kpi_form.html'
+    def get_success_url(self):
+        initiative_id = self.kwargs.get('initiative_id')
+        return reverse('kpi_detail', kwargs={'initiative_id': initiative_id, 'pk': self.object.pk})
+
+
+
+class AllKPIsView(ListView): #not needed but here we go
+    '''
+    - Displays a list of KPIs related to initiatives assigned to the current user
+    - Filters KPIs based on the user's assigned initiatives
+    - Renders the KPIs in the specified template
+    '''
+    model = KPI 
+    template_name = 'kpis_list.html'
+    context_object_name = 'kpis'
+    
+    def get_queryset(self):
+        return KPI.objects.filter(initiative__userinitiative__user=self.request.user)
+
+
+
+# Paths and URLs [done]
+# conditioning (depending on Role)
+# Model Handling 
 
 
 
