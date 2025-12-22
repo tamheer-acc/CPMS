@@ -224,6 +224,9 @@ class AllKPIsView(ListView): #not needed but here we go
 # ---------------------------
 #LoginRequiredMixin,
 class AllDepartmentsView(ListView): 
+    '''
+    - List all departments
+    '''
     model = Department 
     template_name = 'departments_list.html'
     context_object_name = 'departments'
@@ -237,6 +240,10 @@ class AllDepartmentsView(ListView):
 # ---------------------------
 #LoginRequiredMixin, ListView
 class AllPlansView(ListView): 
+    '''
+    - Displays a list of all strategic plans
+    - Only accessible to users with roles GM, CM, or M
+    '''
     model = StrategicPlan 
     template_name = 'plans_list.html'
     context_object_name = 'plans'
@@ -250,6 +257,9 @@ class AllPlansView(ListView):
 
 #LoginRequiredMixin, DetailView 
 class PlanDetailsview(DetailView):
+    '''
+    - Shows details of a single plan
+    '''
     model = StrategicPlan 
     template_name = 'plan_detail.html'
     context_object_name = 'plan'
@@ -263,6 +273,10 @@ class PlanDetailsview(DetailView):
 
 #LoginRequiredMixin, UserPassesTestMixin, CreateView            
 class CreatePlanView(CreateView):
+    '''
+    شرط حالة الخطة نسيته؟!
+    - Allows Committee Manager to create a new plan
+    '''
     model = StrategicPlan
     fields = ['plan_name', 'vision', 'mission', 'start_date', 'end_date']
     template_name = 'plan_form.html'
@@ -318,6 +332,9 @@ class AllGoalsView(ListView):
         
 #LoginRequiredMixin, DetailView 
 class GoalDetailsview(DetailView):
+    '''
+    - Shows details of a single goal
+    '''
     model = StrategicGoal 
     template_name = 'goal_detail.html'
     context_object_name = 'goal'
@@ -383,6 +400,12 @@ class DeleteGoalView(DeleteView):
 # ---------------------------
 #LoginRequiredMixin, ListView
 class AllNotesView(ListView): 
+    '''
+    - Displays a list of notes for the current user
+    - GM sees only notes they sent
+    - M and CM see notes they sent plus notes sent by GM in their department
+    - E sees notes they sent and notes related to initiatives they are part of, or notes sent to them by their manager
+    '''
     model = Note 
     template_name = 'notes_list.html'
     context_object_name = 'notes'
@@ -405,6 +428,9 @@ class AllNotesView(ListView):
         
 #LoginRequiredMixin, DetailView 
 class NoteDetailsview(DetailView):
+    '''
+    - Shows details of a single initiative
+    '''
     model = Note 
     template_name = 'note_detail.html'
     context_object_name = 'note'
@@ -424,6 +450,11 @@ class NoteDetailsview(DetailView):
         
 #LoginRequiredMixin, UserPassesTestMixin, CreateView            
 class CreateNoteView(CreateView):
+    '''
+    - Allows creating a new note
+    - Sets sender as current user
+    - Receiver options filtered based on sender's role
+    '''
     model = Note
     fields = ['content', 'initiative', 'department', 'receiver']
     template_name = 'note_form.html'
@@ -453,8 +484,13 @@ class CreateNoteView(CreateView):
    
 #LoginRequiredMixin, UserPassesTestMixin, CreateView   
 class UpdateNoteView(UpdateView):
+    '''
+    - Allows updating an existing note
+    - Only the sender of the note can edit it
+    - All note fields except receiver are editable
+    '''
     model = Note
-    fields = ['content', 'initiative', 'department', 'receiver']
+    fields = ['content', 'initiative', 'department']
     template_name = 'note_form.html'
     success_url = reverse_lazy('')
 
@@ -472,6 +508,11 @@ class UpdateNoteView(UpdateView):
     
 
 class DeleteNoteView(DeleteView):
+    '''
+    - Allows deleting an existing note
+    - Only the sender of the note can delete it
+    - Users cannot delete notes sent by others
+    '''
     model = Note
     template_name = 'note_confirm_delete.html'
     success_url = reverse_lazy('')
@@ -497,10 +538,7 @@ class AllLogsView(ListView):
         return Log.objects.all()
     
 
-    #الداش بورد والتفاصيل هذي اتوقع لازم لها فيو
-    #برضو التوجية
-    #وانه البيانات تبان فصفحات ثانية للباقين
-
+  
 
 
 
