@@ -4,11 +4,10 @@ from django.views.generic import ListView, DetailView, CreateView
 from django.views.generic.edit import UpdateView, DeleteView
 from django.http import JsonResponse
 from django.forms import ModelForm
-from django.contrib.auth.forms import UserCreationForm, UserChangeForm#!!
-from django.contrib.auth import login
-from django.contrib.auth.mixins import LoginRequiredMixin #class based view 
-from django.contrib.auth.decorators import login_required #function based view
-from django.contrib.auth import get_user_model
+from django.contrib.auth import login, get_user_model
+from django.contrib.auth.forms import UserCreationForm, UserChangeForm
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin #class based view 
+from django.contrib.auth.decorators import login_required, user_passes_test #function based view
 from django.core.exceptions import PermissionDenied
 from .models import ( Role, Department, User, StrategicPlan, StrategicGoal, 
                         Initiative, UserInitiative, KPI, Note, Log, STATUS)
@@ -16,23 +15,22 @@ from .services import generate_KPIs
 from .forms import KPIForm
 
 
-# Custom User Handling:  
-#User = get_user_model()
-# class CustomUserCreationForm(UserCreationForm):
-#     class Meta(UserCreationForm.Meta):
-#         model = User
-#         fields = ('username', 'email', 'employee_number', 'role', 'department')
-
-# class CustomUserChangeForm(UserChangeForm):
-#     class Meta(UserChangeForm.Meta):
-#         model = User
-#         fields = ('username', 'email', 'employee_number', 'role', 'department')
-
-
 
 ########################################################################
 #                           Initiative Views                           #
 ########################################################################
+
+
+
+#Helper class that acts like UserPassesTestMixin:
+class IsManagerUserMixin(UserPassesTestMixin):
+    def test_func(self): #only managers access this view
+        return self.request.user.role.role_name in ['M', 'CM']
+    
+    def handle_no_permission(self):
+        return redirect('access_denied') 
+
+
 
 class AllInitiativeView(ListView): 
     '''
@@ -41,7 +39,6 @@ class AllInitiativeView(ListView):
     - Managers see their departments initiatives 
     - Employee see the initiatives they are assigned to
     '''
-    #ListView: query all of the objects in our view? from our database
     model = Initiative 
     template_name = 'initiatives_list.html'
     context_object_name = 'initiatives'
@@ -60,6 +57,7 @@ class AllInitiativeView(ListView):
                 return Initiative.objects.filter( userinitiative__user=self.request.user )
 
 
+
 class InitiativeDetailsView(DetailView):
     '''
     - Shows details of a single initiative
@@ -67,10 +65,10 @@ class InitiativeDetailsView(DetailView):
     model = Initiative
     template_name = "initiative_detail.html"
     context_object_name = "initiative"
-    #retreave the users related in the template 
 
 
-class CreateInitiativeView(CreateView): #Managers 
+
+class CreateInitiativeView(IsManagerUserMixin,CreateView): #only Managers 
     '''
     - Allows Managers to create a new initiative
     - Sets the strategic goal based on the goal_id in the URL
@@ -79,7 +77,7 @@ class CreateInitiativeView(CreateView): #Managers
     model = Initiative
     fields = ['title', 'description', 'start_date', 'end_date', 'priority', 'category']
     template_name = 'initiative_form.html'
-    
+
     def form_valid(self, form): #overriding form valid to set strategic goal and employee
         form.instance.strategic_goal_id = self.kwargs['goal_id']
         response = super().form_valid(form)
@@ -96,16 +94,16 @@ class CreateInitiativeView(CreateView): #Managers
 
 
 
-
-class UpdateInitiativeView(UpdateView):
+class UpdateInitiativeView(IsManagerUserMixin,UpdateView):  #managers only
     '''
     - Allows updating an existing initiative
     - Only the initiative fields are editable (title, description, dates, priority, category)
     - The strategic goal and assigned users remain unchanged
     '''
     model = Initiative
-    fields = ['title', 'description', 'start_date', 'end_date', 'priority', 'category']
     template_name = 'initiative_form.html'
+    fields = ['title', 'description', 'start_date', 'end_date', 'priority', 'category']
+    
     def get_success_url(self):
         goal_id = self.kwargs.get('goal_id')
         if goal_id:
@@ -115,7 +113,7 @@ class UpdateInitiativeView(UpdateView):
 
 
 
-class DeleteInitiativeView(DeleteView):
+class DeleteInitiativeView(IsManagerUserMixin, DeleteView):#managers only
     '''
     - Allows deletion of an initiative
     - All related UserInitiative entries are automatically deleted (on_delete=CASCADE)
@@ -123,6 +121,7 @@ class DeleteInitiativeView(DeleteView):
     '''
     model = Initiative
     template_name = 'initiative_confirm_delete.html'
+    
     def get_success_url(self):
         goal_id = self.kwargs.get('goal_id')
         if goal_id:
@@ -132,6 +131,14 @@ class DeleteInitiativeView(DeleteView):
 
 
 
+def is_manager(user):
+    if user.role.role_name in ['M', 'CM']:
+        return True
+    return redirect('access_denied') 
+
+
+
+@user_passes_test(is_manager)
 def assign_employee_to_initiative(request, initiative_id):
     '''
     - Allows assigning one or more employees to a given initiative
@@ -143,7 +150,7 @@ def assign_employee_to_initiative(request, initiative_id):
     employees = User.objects.filter(role__role_name='E', department = request.user.department)  
     
     if request.method == "POST": #Post request: receives a list of employees
-        employees_ids_list = request.POST.getlist('user_ids') #@use in template 
+        employees_ids_list = request.POST.getlist('user_ids') #$$use in template 
         if employees_ids_list:
             for employee_id in employees_ids_list:
                 employee = get_object_or_404(User, id=employee_id)
@@ -179,6 +186,7 @@ class KPIDetailsView(DetailView):
 
 
 
+@user_passes_test(is_manager)
 def create_kpi_view(request, initiative_id):
     '''
     - Allows users to create a new KPI for a given initiative
@@ -208,7 +216,7 @@ def create_kpi_view(request, initiative_id):
 
 
 
-class DeleteKPIView(DeleteView):
+class DeleteKPIView(IsManagerUserMixin,DeleteView):
     '''
     - Allows users to delete a KPI
     - Confirms deletion using a template
@@ -217,6 +225,8 @@ class DeleteKPIView(DeleteView):
 
     model = KPI
     template_name = 'confirm_delete.html'
+    
+
     success_url = reverse_lazy('initiative_detail')
     def get_success_url(self):
         initiative_id = self.kwargs.get('initiative_id')
@@ -224,7 +234,7 @@ class DeleteKPIView(DeleteView):
 
 
 
-class UpdateKPIView(UpdateView):
+class UpdateKPIView(IsManagerUserMixin,UpdateView):
     '''
     - Allows users to update an existing KPI
     - Lets users edit fields like kpi name, unit, target, and actual values
@@ -255,8 +265,8 @@ class AllKPIsView(ListView): #not needed but here we go
 
 
 # Paths and URLs [done]
-# conditioning (depending on Role)
-# Model Handling 
+# conditioning (depending on Role) [done]
+# AI Model Handling 
 
 
 
