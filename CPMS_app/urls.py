@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.urls import path, include
 from django.contrib.auth import views as auth_views
+from django.views.generic import TemplateView
 from .views import (AllInitiativeView, AllLogsView, InitiativeDetailsView, CreateInitiativeView,
                     UpdateInitiativeView, DeleteInitiativeView, AllKPIsView, KPIDetailsView,
                     create_kpi_view , UpdateKPIView,  DeleteKPIView, AllDepartmentsView,
@@ -12,26 +13,9 @@ from .views import (AllInitiativeView, AllLogsView, InitiativeDetailsView, Creat
                     AllLogsView)
 
 
-#Only this is what supposed to be here, the rest in CPMS_app/url.py
-# urlpatterns = [
-#     path('admin/', admin.site.urls),
-#     path('', include('CPMS_app.urls')),    
-#     path('accounts/', include('django.contrib.auth.urls')) #importing all of these down below!
-# ]
-
-
-#all of these are imported!
-# accounts/login/ [name='login']
-# accounts/logout/ [name='logout']
-# accounts/password_change/ [name='password_change']
-# accounts/password_change/done/ [name='password_change_done']
-# accounts/password_reset/ [name='password_reset']
-# accounts/password_reset/done/ [name='password_reset_done']
-# accounts/reset/<uidb64>/<token>/ [name='password_reset_confirm']
-# accounts/reset/done/ [name='password_reset_complete']
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path('access-denied/', TemplateView.as_view(template_name='access_denied.html'), name='access_denied'),
     path('departmets',AllDepartmentsView.as_view(), name='departments_list'), #departments (typo)
     path('plans', AllPlansView.as_view(), name='plans_list'),
     path('plans/<int:pk>/detail', PlanDetailsview.as_view(), name='plan_detail'),
