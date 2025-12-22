@@ -2,14 +2,12 @@ from django.contrib import admin
 from django.urls import path, include
 from django.contrib.auth import views as auth_views
 from django.views.generic import TemplateView
-from .views import (AllInitiativeView, AllLogsView, InitiativeDetailsView, CreateInitiativeView,
-                    UpdateInitiativeView, DeleteInitiativeView, AllKPIsView, KPIDetailsView,
-                    create_kpi_view , UpdateKPIView,  DeleteKPIView, AllDepartmentsView,
-                    AllDepartmentsView, AllPlansView,PlanDetailsview,CreatePlanView,
-                    UpdatePlanView, DeletePlanView, AllGoalsView, GoalDetailsview, 
-                    CreateGoalView, UpdateGoalView,DeleteGoalView,AllNotesView,
-                    NoteDetailsview, CreateNoteView, UpdateNoteView, DeleteNoteView,
-                    PlanDetailsview, CreatePlanView,UpdatePlanView, DeletePlanView,
+from .views import (AllInitiativeView, InitiativeDetailsView, CreateInitiativeView, UpdateInitiativeView, DeleteInitiativeView, 
+                    AllKPIsView, KPIDetailsView, create_kpi_view , UpdateKPIView,  DeleteKPIView, 
+                    AllDepartmentsView,
+                    AllPlansView,PlanDetailsview,CreatePlanView, UpdatePlanView, DeletePlanView, 
+                    AllGoalsView, GoalDetailsview, CreateGoalView, UpdateGoalView,DeleteGoalView,
+                    AllNotesView, NoteDetailsview, CreateNoteView, UpdateNoteView, DeleteNoteView,
                     AllLogsView)
 
 
