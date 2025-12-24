@@ -4,6 +4,7 @@ from django.views.generic import ListView, DetailView, CreateView
 from django.views.generic.edit import UpdateView, DeleteView
 from django.http import JsonResponse
 from django.forms import ModelForm
+from django.forms.models import model_to_dict  
 from django.contrib.auth import login, get_user_model
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin #class based view 
@@ -11,9 +12,69 @@ from django.contrib.auth.decorators import login_required, user_passes_test #fun
 from django.core.exceptions import PermissionDenied
 from .models import ( Role, Department, User, StrategicPlan, StrategicGoal, 
                         Initiative, UserInitiative, KPI, Note, Log, STATUS)
-from .services import generate_KPIs
+from .services import generate_KPIs,  create_log
 from .forms import KPIForm
 
+
+class LogMixin:
+    '''
+    - Mixin to automatically log all actions (CREATE, UPDATE, DELETE) for Class-Based Views (CBVs).
+    '''
+
+    # -----------------------------
+    # Handle form submissions (CREATE or UPDATE)
+    # -----------------------------
+    def form_valid(self, form):
+        '''
+        This method is called when a valid form is submitted.
+        - For UPDATE: captures old values before saving.
+        - Saves the object first, then logs the action (CREATE or UPDATE).
+        '''
+        # Check if this is an UPDATE
+        if hasattr(self, 'object') and self.object.pk:
+            old_data = model_to_dict(self.object)  
+        else:
+            old_data = None 
+
+        response = super().form_valid(form)
+
+        # Log the action after saving
+        create_log(
+            user=self.request.user,  
+            action="CREATE" if self.request.method.lower() == "post" and not old_data else "UPDATE",
+            instance=self.object,
+            old_data=old_data  
+        )
+
+        return response
+
+    # -----------------------------
+    # Handle object deletion
+    # -----------------------------
+    def delete(self, request, *args, **kwargs):
+        '''
+        This method is called when an object is deleted.
+        - Captures all old values before deletion.
+        - Deletes the object.
+        - Logs the DELETE action with old values.
+        '''
+        # Get the object to delete
+        self.object = self.get_object()
+
+        # Save old values before deletion
+        old_data = model_to_dict(self.object)
+
+        # Delete the object by calling parent class's delete
+        response = super().delete(request, *args, **kwargs)
+
+        # Log the deletion
+        create_log(
+            user=self.request.user,
+            action="DELETE",
+            old_data=old_data
+        )
+
+        return response
 
 
 #########################################################################################################################
@@ -71,7 +132,7 @@ class InitiativeDetailsView(DetailView):
 
 
 
-class CreateInitiativeView(IsManagerUserMixin,CreateView): #only Managers 
+class CreateInitiativeView(IsManagerUserMixin,CreateView,LogMixin): #only Managers 
     '''
     - Allows Managers to create a new initiative
     - Sets the strategic goal based on the goal_id in the URL
@@ -97,7 +158,7 @@ class CreateInitiativeView(IsManagerUserMixin,CreateView): #only Managers
 
 
 
-class UpdateInitiativeView(IsManagerUserMixin,UpdateView):  #managers only
+class UpdateInitiativeView(IsManagerUserMixin,UpdateView,LogMixin):  #managers only
     '''
     - Allows updating an existing initiative
     - Only the initiative fields are editable (title, description, dates, priority, category)
@@ -116,7 +177,7 @@ class UpdateInitiativeView(IsManagerUserMixin,UpdateView):  #managers only
 
 
 
-class DeleteInitiativeView(IsManagerUserMixin, DeleteView):#managers only
+class DeleteInitiativeView(IsManagerUserMixin, DeleteView,LogMixin):#managers only
     '''
     - Allows deletion of an initiative
     - All related UserInitiative entries are automatically deleted (on_delete=CASCADE)
@@ -216,7 +277,7 @@ def create_kpi_view(request, initiative_id):
 
 
 
-class DeleteKPIView(IsManagerUserMixin,DeleteView):
+class DeleteKPIView(IsManagerUserMixin,DeleteView,LogMixin):
     '''
     - Allows users to delete a KPI
     - Confirms deletion using a template
@@ -234,7 +295,7 @@ class DeleteKPIView(IsManagerUserMixin,DeleteView):
 
 
 
-class UpdateKPIView(IsManagerUserMixin,UpdateView):
+class UpdateKPIView(IsManagerUserMixin,UpdateView,LogMixin):
     '''
     - Allows users to update an existing KPI
     - Lets users edit fields like kpi name, unit, target, and actual values
@@ -278,8 +339,7 @@ class AllKPIsView(ListView): #not needed but here we go
 # ---------------------------
 #  Department View
 # ---------------------------
-#LoginRequiredMixin,
-class AllDepartmentsView(ListView): 
+class AllDepartmentsView(LoginRequiredMixin, ListView): 
     '''
     - List all departments
     '''
@@ -294,8 +354,7 @@ class AllDepartmentsView(ListView):
 # ---------------------------
 #  StrategicPlan View
 # ---------------------------
-#LoginRequiredMixin, ListView
-class AllPlansView(ListView): 
+class AllPlansView(LoginRequiredMixin, ListView): 
     '''
     - Displays a list of all strategic plans
     - Only accessible to users with roles GM, CM, or M
@@ -312,7 +371,7 @@ class AllPlansView(ListView):
                 raise PermissionDenied 
 
 #LoginRequiredMixin, DetailView 
-class PlanDetailsview(DetailView):
+class PlanDetailsview(LoginRequiredMixin, DetailView):
     '''
     - Displays details of a single strategic plan
     '''
@@ -327,8 +386,7 @@ class PlanDetailsview(DetailView):
             else:
                 raise PermissionDenied
           
-#LoginRequiredMixin, UserPassesTestMixin, CreateView            
-class CreatePlanView(CreateView):
+class CreatePlanView(LoginRequiredMixin, UserPassesTestMixin, LogMixin, CreateView):
     '''
     - Only Committee Manager can create a new strategic plan
     - Allows creating a new strategic plan if no active plan exists
@@ -354,10 +412,15 @@ class CreatePlanView(CreateView):
 
     def form_valid(self, form):
         form.instance.user = self.request.user 
-        return super().form_valid(form) 
+        response = super().form_valid(form) 
 
-#LoginRequiredMixin, UserPassesTestMixin, UpdateView   
-class UpdatePlanView(UpdateView):
+       # Recording the log after saving form
+        create_log(user=self.request.user, action="CREATE", instance=self.object)
+
+        return response
+
+
+class UpdatePlanView(LoginRequiredMixin, UserPassesTestMixin, LogMixin, UpdateView):
     '''
     - Only Committee Manager can update an existing plan
     - Redirects to plans list after update
@@ -382,8 +445,8 @@ class UpdatePlanView(UpdateView):
             raise PermissionDenied("يمكنك تعديل الخطط النشطة حاليًا فقط!")
 
     
-#LoginRequiredMixin, UserPassesTestMixin, DeleteView  
-class DeletePlanView(DeleteView):
+
+class DeletePlanView(LoginRequiredMixin, UserPassesTestMixin, LogMixin, DeleteView):
     '''
     - Only Committee Manager can delete a plan 
     - Redirects to plans list after deletion
@@ -424,8 +487,7 @@ class AllGoalsView(ListView):
      return StrategicGoal.objects.none()
 
         
-#LoginRequiredMixin, DetailView 
-class GoalDetailsview(DetailView):
+class GoalDetailsview(LoginRequiredMixin, DetailView):
     '''
     - Shows details of a single goal
     '''
@@ -433,8 +495,8 @@ class GoalDetailsview(DetailView):
     template_name = 'goal_detail.html'
     context_object_name = 'goal'     
         
-#LoginRequiredMixin, UserPassesTestMixin, CreateView            
-class CreateGoalView(CreateView):
+          
+class CreateGoalView(LoginRequiredMixin, UserPassesTestMixin, LogMixin, CreateView):
     '''
     - Allows Managers and Committee Managers to create a new goal
     - Links the goal to the plan and the user's department
@@ -454,8 +516,8 @@ class CreateGoalView(CreateView):
        return super().form_valid(form) 
 
    
-#LoginRequiredMixin, UserPassesTestMixin, CreateView   
-class UpdateGoalView(UpdateView):
+  
+class UpdateGoalView(LoginRequiredMixin, UserPassesTestMixin, LogMixin, UpdateView):
     '''
     - Managers and Committee Managers can update goals in their department
     - Updates goal details
@@ -479,7 +541,7 @@ class UpdateGoalView(UpdateView):
         raise PermissionDenied("ليس لديك صلاحية تعديل هذا الهدف.")
     
 
-class DeleteGoalView(DeleteView):
+class DeleteGoalView(LoginRequiredMixin, UserPassesTestMixin, LogMixin, DeleteView):
     '''
     - Managers and Committee Managers can delete goals in their department
     - Shows confirmation before deletion
@@ -504,8 +566,8 @@ class DeleteGoalView(DeleteView):
 # ---------------------------
 #  Note View
 # ---------------------------
-#LoginRequiredMixin, ListView
-class AllNotesView(ListView): 
+
+class AllNotesView(LoginRequiredMixin, ListView): 
     '''
     - Displays a list of notes for the current user
     - GM sees only notes they sent
@@ -532,8 +594,8 @@ class AllNotesView(ListView):
 
         return Note.objects.none()
         
-#LoginRequiredMixin, DetailView 
-class NoteDetailsview(DetailView):
+
+class NoteDetailsview(LoginRequiredMixin, DetailView):
     '''
     - Shows details of a single note
     '''
@@ -541,8 +603,8 @@ class NoteDetailsview(DetailView):
     template_name = 'note_detail.html'
     context_object_name = 'note'
         
-#LoginRequiredMixin, CreateView            
-class CreateNoteView(CreateView):
+          
+class CreateNoteView(LoginRequiredMixin, UserPassesTestMixin, LogMixin, CreateView):
     '''
     - Allows creating a new note
     - Sets sender as current user
@@ -574,9 +636,8 @@ class CreateNoteView(CreateView):
         form.instance.sender = self.request.user
         return super().form_valid(form) 
 
-   
-#LoginRequiredMixin, UserPassesTestMixin, CreateView   
-class UpdateNoteView(UpdateView):
+     
+class UpdateNoteView(LoginRequiredMixin, UserPassesTestMixin, LogMixin, UpdateView):
     '''
     - Allows updating a note
     - Only the sender can update their own notes
@@ -601,7 +662,7 @@ class UpdateNoteView(UpdateView):
         return super().form_valid(form)
     
 
-class DeleteNoteView(DeleteView):
+class DeleteNoteView(LoginRequiredMixin, UserPassesTestMixin, LogMixin, DeleteView):
     '''
     - Allows deleting a note
     - Only the sender can delete their own notes
@@ -624,7 +685,6 @@ class DeleteNoteView(DeleteView):
 # ---------------------------
 #  Log View
 # ---------------------------
-#LoginRequiredMixin,ListView
 class AllLogsView(ListView): 
     model = Log 
     template_name = 'logs_list.html'
