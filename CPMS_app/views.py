@@ -10,10 +10,12 @@ from django.contrib.auth.forms import UserCreationForm, UserChangeForm
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin #class based view 
 from django.contrib.auth.decorators import login_required, user_passes_test #function based view
 from django.core.exceptions import PermissionDenied
+from functools import wraps
 from .models import ( Role, Department, User, StrategicPlan, StrategicGoal, 
                         Initiative, UserInitiative, KPI, Note, Log, STATUS)
 from .services import generate_KPIs,  create_log
 from .forms import KPIForm
+
 
 
 class LogMixin:
@@ -75,6 +77,57 @@ class LogMixin:
         )
 
         return response
+
+
+
+def log_action(action_type="AUTO"):
+    """
+    Decorator to log CREATE, UPDATE, DELETE actions for FBVs.
+    - GET requests are ignored (no logging)
+    """
+    def decorator(view_func):
+        @wraps(view_func)
+        def _wrapped_view(request, *args, **kwargs):
+            # Only log POST/PUT/DELETE
+            if request.method.lower() in ["post", "put", "delete"]:
+                # Try to get the object if FBV uses 'pk' in kwargs
+                obj = None
+                if hasattr(view_func, 'model') and kwargs.get('pk'):
+                    obj = view_func.model.objects.filter(pk=kwargs['pk']).first()
+                old_data = model_to_dict(obj) if obj else None
+
+                response = view_func(request, *args, **kwargs)  # call the actual view
+
+                # Determine action type
+                action = action_type
+                if action_type == "AUTO":
+                    method = request.method.lower()
+                    if method == "post":
+                        action = "CREATE" if not old_data else "UPDATE"
+                    elif method == "put":
+                        action = "UPDATE"
+                    elif method == "delete":
+                        action = "DELETE"
+
+                # Safely get instance for logging
+                instance = obj if obj else getattr(response, 'instance', None)
+
+                # Call logging function
+                create_log(
+                    user=request.user,
+                    action=action,
+                    instance=instance,
+                    old_data=old_data
+                )
+
+                return response
+
+            # For GET requests, just call the view normally
+            return view_func(request, *args, **kwargs)
+
+        return _wrapped_view
+    return decorator
+
 
 
 #########################################################################################################################
@@ -201,7 +254,7 @@ def is_manager(user):
     return redirect('access_denied') 
 
 
-
+@log_action()
 @user_passes_test(is_manager)
 def assign_employee_to_initiative(request, initiative_id):
     '''
@@ -246,7 +299,7 @@ class KPIDetailsView(DetailView):
     context_object_name = "KPI" 
 
 
-
+@log_action()
 @user_passes_test(is_manager)
 def create_kpi_view(request, initiative_id):
     '''
@@ -263,7 +316,7 @@ def create_kpi_view(request, initiative_id):
             kpi.save()
             return redirect('initiative_detail', pk=initiative.id)
         else:
-            return render(request, 'kpi_create', {'initiative': initiative, 'form': form})
+            return render(request, 'kpi_form.html', {'initiative': initiative, 'form': form})
 
     else:
         form = KPIForm()
