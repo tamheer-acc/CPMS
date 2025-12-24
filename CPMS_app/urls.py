@@ -66,7 +66,7 @@ urlpatterns = [
     path('initiatives/<int:initiative_id>/kpis/add/',create_kpi_view, name='kpi_create'),
     path('initiatives/<int:initiative_id>/kpis/<int:pk>/update/',UpdateKPIView.as_view(), name='kpi_update'),
     path('initiatives/<int:initiative_id>/kpis/<int:pk>/delete/',DeleteKPIView.as_view(), name='kpi_delete'),
-      
+    
     #Logs
     path('logs/',AllLogsView.as_view(), name='logs_list'),  
 
