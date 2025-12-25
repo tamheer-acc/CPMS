@@ -176,7 +176,8 @@ def dashboard_view(request):
 
     # Departments (optional)
     departments = Department.objects.all() if user.role.role_name in ['GM', 'CM', 'M'] else None
-
+    department = user.department
+    
     # Strategic Plans
     plans = StrategicPlan.objects.all() if user.role.role_name in ['GM', 'CM', 'M'] else None
 
@@ -185,6 +186,7 @@ def dashboard_view(request):
         'kpis': kpis,
         'notes': notes,
         'departments': departments,
+        'department': department,
         'plans': plans,
     }
 
