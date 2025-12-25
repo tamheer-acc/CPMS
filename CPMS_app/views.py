@@ -81,10 +81,10 @@ class LogMixin:
 
 
 def log_action(action_type="AUTO"):
-    """
+    '''
     Decorator to log CREATE, UPDATE, DELETE actions for FBVs.
     - GET requests are ignored (no logging)
-    """
+    '''
     def decorator(view_func):
         @wraps(view_func)
         def _wrapped_view(request, *args, **kwargs):
@@ -130,12 +130,6 @@ def log_action(action_type="AUTO"):
 
 
 
-#########################################################################################################################
-#                                                    RENAD's Views                                                      #
-#########################################################################################################################
-
-
-
 #Helper class that acts like UserPassesTestMixin:
 class IsManagerUserMixin(UserPassesTestMixin):
     def test_func(self): #only managers access this view
@@ -143,6 +137,60 @@ class IsManagerUserMixin(UserPassesTestMixin):
     
     def handle_no_permission(self):
         return redirect('access_denied') 
+
+
+
+#########################################################################################################################
+#                                                    RENAD's Views                                                      #
+#########################################################################################################################
+
+
+
+#@login_required
+def dashboard_view(request):
+    '''
+    - Displays the main dashboard with an overview of the system
+    - Shows initiatives relevant to the logged-in user based on their role
+        - General Manager sees all initiatives
+        - Managers and Employees see initiatives they are assigned to
+    - Lists KPIs related to the user’s initiatives
+    - Displays notes created by the user
+    - Optionally includes departments and strategic plans for managerial roles
+    '''
+
+    user = request.user
+
+    # Initiatives
+    if user.role.role_name == 'GM':
+        initiatives = Initiative.objects.all()
+    elif user.role.role_name in ['M', 'CM']:
+        initiatives = Initiative.objects.filter(userinitiative__user=user)
+    else:
+        initiatives = Initiative.objects.filter(userinitiative__user=user)
+
+    # KPIs assigned to user's initiatives
+    kpis = KPI.objects.filter(initiative__userinitiative__user=user)
+
+    # Notes
+    notes = Note.objects.filter(sender=user)
+
+    # Departments (optional)
+    departments = Department.objects.all() if user.role.role_name in ['GM', 'CM', 'M'] else None
+    department = user.department
+    
+    # Strategic Plans
+    plans = StrategicPlan.objects.all() if user.role.role_name in ['GM', 'CM', 'M'] else None
+
+    context = {
+        'initiatives': initiatives,
+        'kpis': kpis,
+        'notes': notes,
+        'departments': departments,
+        'department': department,
+        'plans': plans,
+    }
+
+    return render(request, 'dashboard.html', context)
 
 
 
