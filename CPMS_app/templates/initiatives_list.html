@@ -1,4 +1,44 @@
 {% extends 'base.html' %}
 {% block content %}
 
+{% if user.role.role_name == 'GM' %} <!-- the user is the general manager -->
+
+
+
+{% elif user.role.role_name == 'M' or user.role.role_name == 'CM' %} <!-- the user is a manager -->
+
+
+
+{% elif user.role.role_name == 'E' %} <!-- the user in an employee -->
+
+    <ul>
+        {% for initiative in initiatives %}
+            <!-- <li> 
+                <h2>{{initiative.title}}</h2>
+            </li> -->
+            <li class="border rounded mb-2 overflow-hidden">
+                <button class="w-full text-left p-4 bg-gray-100 hover:bg-gray-200 flex justify-between items-center"
+                        onclick="this.nextElementSibling.classList.toggle('max-h-0'); this.nextElementSibling.classList.toggle('max-h-96');">
+                    <span class="font-bold">{{ initiative.title }}</span>
+                    <span>▼</span>
+                </button>
+                <div class="max-h-0 overflow-hidden transition-all duration-300 p-4 bg-white">
+                    <p>{{ initiative.description }}</p>
+                    <p>Start: {{ initiative.start_date }} | End: {{ initiative.end_date }}</p>
+                    <p>Priority: {{ initiative.priority }}</p>
+                </div>
+            </li>
+            
+            {% empty %}
+                <li class="p-4 border rounded bg-gray-50">
+                    <h2>لم تُسجل في أي مبادرة بعد </h2>
+                    <p>تواصل مع مديرك ليتم تسجيلك في المبادرات </p>
+                </li>
+        {% endfor %}
+    </ul>
+
+{% else %} <!-- invalid user -->
+
+
+{% endif %}
 {% endblock %}
