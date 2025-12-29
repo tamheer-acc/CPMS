@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block content %}    
+<!-- ##add notes to general manager -->
+<h1>{{ initiative.title }} مبادرة</h1>
+<ul>
+    <li><strong> الوصف:</strong> <em>{{ initiative.description }}</em></li>
+    <li><strong>تاريخ البداية: </strong> {{ initiative.start_date }}</li>
+    <li><strong>تاريخ النهاية: </strong> {{ initiative.end_date }}</li>
+    <li><strong>الأهمية: </strong> {{ initiative.priority }}</li>
+    <li><strong>التصنيف: </strong> {{ initiative.category }} </li>
+    <li><strong>الهدف الاستراتيجي المرتبط بالمبادرة: </strong> {{ initiative.strategic_goal }}</li>
+</ul>
+
+{% if user.role.role_name == 'M' or user.role.role_name == 'CM' %}
+    <button onclick="window.open(
+    'initiatives/{{initiative.id}}/update/','_blank');">
+        تعديل
+    </button>
+
+    <button onclick="window.open(
+    'initiatives/{{initiative.id}}/delete/','_blank');">
+        حذف
+    </button>
+
+    <button onclick="openPopup('initiatives/{{initiative.id}}/assign')"> <!-- ##error handling -->
+        تعيين موظفين
+    </button>
+
+{% endif %}

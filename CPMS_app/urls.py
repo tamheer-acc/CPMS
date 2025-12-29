@@ -8,7 +8,8 @@ from .views import (
     AllInitiativeView, InitiativeDetailsView, CreateInitiativeView, UpdateInitiativeView,
     DeleteInitiativeView, AllKPIsView, KPIDetailsView, create_kpi_view, UpdateKPIView,
     DeleteKPIView, AllDepartmentsView, AllNotesView, NoteDetailsview, CreateNoteView,
-    UpdateNoteView, DeleteNoteView,  AllLogsView
+    UpdateNoteView, DeleteNoteView,  AllLogsView,
+    assign_employee_to_initiative
 )
 
 
@@ -19,7 +20,7 @@ urlpatterns = [
 
     #Departments
     path('departments/',AllDepartmentsView.as_view(), name='departments_list'), 
-   
+
     # Plans
     path('plans/', AllPlansView.as_view(), name='plans_list'),
     path('plans/<int:pk>/detail/', PlanDetailsview.as_view(), name='plan_detail'),
@@ -53,12 +54,14 @@ urlpatterns = [
     path('goals/<int:goal_id>/initiatives/add/',CreateInitiativeView.as_view(), name='initiative_create'),
     path('initiatives/<int:pk>/update/',UpdateInitiativeView.as_view(), name='initiative_update'),
     path('initiatives/<int:pk>/delete/',DeleteInitiativeView.as_view(), name='initiative_delete'),
-
+    path('initiatives/<int:pk>/assign/',assign_employee_to_initiative, name = 'initiative_assign'),
+    
     # Initiatives under a specific goal
     path('goals/<int:goal_id>/initiatives/',AllInitiativeView.as_view(), name='goal_initiatives_list'),
     path('goals/<int:goal_id>/initiatives/<int:pk>/',InitiativeDetailsView.as_view(), name='goal_initiative_detail'),
     path('goals/<int:goal_id>/initiatives/<int:pk>/update/',UpdateInitiativeView.as_view(), name='goal_initiative_update'),
     path('goals/<int:goal_id>/initiatives/<int:pk>/delete/',DeleteInitiativeView.as_view(), name='goal_initiative_delete'),
+    path('goals/<int:goal_id>/initiatives/<int:pk>/assign/',assign_employee_to_initiative, name = 'goal_initiative_assign'),
 
     #KPIs under a specific initiative
     path('initiatives/<int:initiative_id>/kpis/',AllKPIsView.as_view(), name='kpis_list'),
