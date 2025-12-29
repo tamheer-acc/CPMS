@@ -1,44 +1,67 @@
 {% extends 'base.html' %}
 {% block content %}
 
-{% if user.role.role_name == 'GM' %} <!-- the user is the general manager -->
-
-
-
 {% elif user.role.role_name == 'M' or user.role.role_name == 'CM' %} <!-- the user is a manager -->
-
-
-
-{% elif user.role.role_name == 'E' %} <!-- the user in an employee -->
 
     <ul>
         {% for initiative in initiatives %}
-            <!-- <li> 
-                <h2>{{initiative.title}}</h2>
-            </li> -->
-            <li class="border rounded mb-2 overflow-hidden">
-                <button class="w-full text-left p-4 bg-gray-100 hover:bg-gray-200 flex justify-between items-center"
-                        onclick="this.nextElementSibling.classList.toggle('max-h-0'); this.nextElementSibling.classList.toggle('max-h-96');">
-                    <span class="font-bold">{{ initiative.title }}</span>
-                    <span>▼</span>
-                </button>
-                <div class="max-h-0 overflow-hidden transition-all duration-300 p-4 bg-white">
-                    <p>{{ initiative.description }}</p>
-                    <p>Start: {{ initiative.start_date }} | End: {{ initiative.end_date }}</p>
-                    <p>Priority: {{ initiative.priority }}</p>
+            <li> 
+                <h2>{{initiative.title}}</h2> 
+                <button 
+                onclick="openPopup('initiatives/{{initiative.id}}/assign')"> <!-- ##error handling -->
+                    تعيين موظفين
+                </button> <!-- ##change message, add js -->
+
+                <div class="overflow-hidden">
+                    <p>{{initiative.description}}</p>
+                    <p>تاريخ البداية: {{ initiative.start_date }}</p>
+                    <p>تاريخ النهاية: {{ initiative.end_date }}</p>
+                    <p>الأهمية: {{ initiative.priority}}</p>
                 </div>
             </li>
-            
+
             {% empty %}
-                <li class="p-4 border rounded bg-gray-50">
-                    <h2>لم تُسجل في أي مبادرة بعد </h2>
-                    <p>تواصل مع مديرك ليتم تسجيلك في المبادرات </p>
+                <li>
+                    <h2>لم تُسجل أي مبادرة بعد </h2>
+                    <p> اضف بعض المبادرات </p> <!-- ##change the message -->
                 </li>
         {% endfor %}
     </ul>
 
-{% else %} <!-- invalid user -->
+{% elif user.role.role_name == 'E' or user.role.role_name == 'GM'  %} <!-- the user in an employee or the general manager -->
 
+    <ul>
+        {% for initiative in initiatives %}
+            <li> 
+                <h2>{{initiative.title}}</h2>
+                <div class="overflow-hidden">
+                    <p>{{initiative.description}}</p>
+                    <p>تاريخ البداية: {{ initiative.start_date }}</p>
+                    <p>تاريخ النهاية: {{ initiative.end_date }}</p>
+                    <p>الأهمية: {{ initiative.priority}}</p>
+                </div>
+            </li>
+
+            {% empty %} <!-- no initiatives yet -->
+
+                {% if user.role.role_name == 'E'  %} <!-- the user is an employee -->
+                    <li> 
+                        <h2>لم تُسجَّل في أي مبادرة بعد </h2>
+                        <p>تواصل مع مديرك ليتم تسجيلك في المبادرات </p>
+                    </li>
+                {% else %} <!-- the user is the general manager -->
+                    <li>
+                        <h2>لا توجد مبادرات بعد </h2>
+                        <p> لم يضف المدراء أي المبادرات بعد </p>
+                    </li>
+                {% endif %}
+
+        {% endfor %}
+    </ul>
+
+{% else %} <!-- invalid user ## change the message or redirect or whatever-->
+
+    <p>INVALID USER! User: {{ user }}</p>
 
 {% endif %}
 {% endblock %}
