@@ -20,7 +20,7 @@ urlpatterns = [
 
     #Departments
     path('departments/',AllDepartmentsView.as_view(), name='departments_list'), 
-   
+
     # Plans
     path('plans/', AllPlansView.as_view(), name='plans_list'),
     path('plans/<int:pk>/detail/', PlanDetailsview.as_view(), name='plan_detail'),
