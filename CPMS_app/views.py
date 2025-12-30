@@ -16,7 +16,7 @@ from .models import ( Role, Department, User, StrategicPlan, StrategicGoal,
                         Initiative, UserInitiative, KPI, Note, Log, STATUS)
 from .services import generate_KPIs,  create_log
 from .forms import KPIForm
-
+from django.template.loader import render_to_string
 
 
 class LogMixin:
@@ -456,25 +456,58 @@ class AllDepartmentsView(LoginRequiredMixin, ListView):
 # ---------------------------
 #  StrategicPlan View
 # ---------------------------
-class AllPlansView(ListView): 
-    '''
+class AllPlansView(ListView):
+    """
     - Displays a list of all strategic plans
     - Only accessible to users with roles GM, CM, or M
-    '''
-    model = StrategicPlan 
+    """
+    model = StrategicPlan
     template_name = 'plans_list.html'
     context_object_name = 'plans'
+    paginate_by = 6  # عدد الخطط في كل صفحة
 
     def get_queryset(self):
+        # تحقق من صلاحية المستخدم (يمكنك تفعيلها لاحقًا)
+        #if not self.request.user.role or self.request.user.role.role_name not in ['GM', 'CM', 'M']:
+           # raise PermissionDenied
+
+        queryset = StrategicPlan.objects.all()
+
+        # تحديث الخطط المنتهية تلقائيًا (اختياري)
+        today = timezone.now().date()
+        StrategicPlan.objects.filter(is_active=True, end_date__lt=today).update(is_active=False)
+
+     
+        search = self.request.GET.get('search', '')
+        if search:
+            queryset = queryset.filter(title__icontains=search)
+
+        
+        status = self.request.GET.get('status', '')
+        if status == 'active':
+            queryset = queryset.filter(is_active=True)
+        elif status == 'inactive':
+            queryset = queryset.filter(is_active=False)
+
+        return queryset
+
+    def render_to_response(self, context, **response_kwargs):
+        if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            html = render_to_string('plan_table_rows.html', context, request=self.request)
+            return JsonResponse({'html': html, 'has_plans': context['plans'].exists()})
+        return super().render_to_response(context, **response_kwargs)
+'''
+ def get_queryset(self):
     #    if self.request.user.role:
          #   if self.request.user.role.role_name in ['GM', 'CM', 'M']:
                  # تحديث الخطط المنتهية تلقائيًا
                 today = timezone.now().date()
-                StrategicPlan.objects.filter(is_active=True, end_date__lt=today).update(is_active=False)
+               # StrategicPlan.objects.filter(is_active=True, end_date__lt=today).update(is_active=False)
                 return StrategicPlan.objects.all()
            # else:
                # raise PermissionDenied 
-
+'''
+   
 #LoginRequiredMixin, DetailView 
 class PlanDetailsview(LoginRequiredMixin, DetailView):
     '''
@@ -516,7 +549,7 @@ class CreatePlanView(LoginRequiredMixin, UserPassesTestMixin, LogMixin, CreateVi
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
-        form.instance.user = self.request.user 
+        form.instance.created_by = self.request.user.get_full_name()
         response = super().form_valid(form) 
 
        # Recording the log after saving form
