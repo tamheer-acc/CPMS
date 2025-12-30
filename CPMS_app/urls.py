@@ -15,7 +15,6 @@ from .views import (
 
 urlpatterns = [
 
-    path('admin/', admin.site.urls),
     path('access-denied/', TemplateView.as_view(template_name='access_denied.html'), name='access_denied'),
 
     #Departments
