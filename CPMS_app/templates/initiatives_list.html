@@ -1,15 +1,15 @@
 {% extends 'base.html' %}
 {% block content %}
-<!-- ##add notes to general manager -->
+<!-- ##add notes  -->
 
 {% if user.role.role_name == 'M' or user.role.role_name == 'CM' %} <!-- the user is a manager -->
 
     <ul>
         {% for initiative in initiatives %}
             <li> 
-                <h2>{{initiative.title}}</h2> 
+                <h2><a href="{% url 'initiative_detail' initiative.pk %}">{{initiative.title}}</a></h2> 
                 <button 
-                onclick="openPopup('initiatives/{{initiative.id}}/assign')"> <!-- ##error handling -->
+                onclick="openPopup('/initiatives/{{initiative.id}}/assign')"> <!-- ##error handling -->
                     تعيين موظفين
                 </button> <!-- ##change message, add js -->
 
