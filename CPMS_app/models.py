@@ -88,21 +88,17 @@ class StrategicPlan (models.Model):
     mission = models.TextField(null=False, blank=False, help_text="الرسالة")
     start_date = models.DateField(null=True, blank=True, default=date.today, help_text="تاريخ بداية الخطة")
     end_date = models.DateField(null=True, blank=True, help_text="تاريخ نهاية الخطة")
+    created_by = models.CharField(max_length=200, blank=True, null=True)
     is_active = models.BooleanField(default=True)
 
     class Meta:
         verbose_name = "StrategicPlan"
         verbose_name_plural = "StrategicPlans"
+        ordering = ['start_date'] 
        
 
     def __str__(self):
         return self.plan_name
-    
-    def update_status(self):
-        if self.is_active and self.end_date < timezone.now().date():
-            self.is_active = False
-            self.save()
-
 
 
 # ---------------------------

@@ -1,6 +1,5 @@
 from django.forms.models import model_to_dict
 from CPMS_app.models import Log
-from .models import StrategicPlan, StrategicGoal, Initiative, Department
 
 
 def get_changed_fields(old_data, new_data):
