@@ -132,11 +132,25 @@ def log_action(action_type="AUTO"):
 
 #Helper class that acts like UserPassesTestMixin:
 class IsManagerUserMixin(UserPassesTestMixin):
-    def test_func(self): #only managers access this view
-        return self.request.user.role.role_name in ['M', 'CM']
+    def test_func(self): #only managers access this view and the goals should be theirs
+        user = self.request.user 
+        if not user.is_authenticated: #not logged in
+            return False
+        
+        if not user.role or user.role.role_name not in ['M', 'CM']: # not a manager
+            return False
+        
+        goal_id = self.kwargs.get('goal_id') 
+        if goal_id: #no goal id
+            goal = get_object_or_404(StrategicGoal, id=goal_id)
+            return goal.department == user.department 
+        return True
+    
     
     def handle_no_permission(self):
-        return redirect('access_denied') 
+        if not self.request.user.is_authenticated:
+            return redirect('login')
+        raise PermissionDenied('ليست لديك صلاحية لرؤية هذه الصفحة')
 
 
 
@@ -146,7 +160,7 @@ class IsManagerUserMixin(UserPassesTestMixin):
 
 
 
-#@login_required
+@login_required
 def dashboard_view(request):
     '''
     - Displays the main dashboard with an overview of the system
@@ -197,7 +211,7 @@ def dashboard_view(request):
 # ---------------------------
 #  Initiative Views
 # ---------------------------
-class AllInitiativeView(ListView): 
+class AllInitiativeView(LoginRequiredMixin, ListView): 
     '''
     List all initiatives
     - General Manager sees all initiatives
@@ -210,11 +224,17 @@ class AllInitiativeView(ListView):
     
     def get_queryset(self):
         goal_id = self.kwargs.get('goal_id')
+        user = self.request.user
         if goal_id:
-            if self.request.user.role.role_name == 'GM':
+            goal = get_object_or_404(StrategicGoal, id= goal_id)
+            if user.role.role_name == 'GM':
                 return Initiative.objects.all()
+            elif user.role.role_name in ['CM','M'] and user.department == goal.department:
+                return Initiative.objects.filter( strategic_goal__department = user.department, strategic_goal = goal  )
+            elif user.role.role_name == 'E':
+                return Initiative.objects.filter( userinitiative__user = user )
             else:  
-                return Initiative.objects.filter( strategic_goal_id = goal_id , userinitiative__user = self.request.user )
+                raise PermissionDenied('ليست لديك صلاحية لرؤية هذه الصفحة')
         else:
             if self.request.user.role.role_name == 'GM':
                 return Initiative.objects.all()
@@ -223,7 +243,7 @@ class AllInitiativeView(ListView):
 
 
 
-class InitiativeDetailsView(DetailView):
+class InitiativeDetailsView(LoginRequiredMixin, DetailView):
     '''
     - Shows details of a single initiative
     '''
@@ -233,12 +253,12 @@ class InitiativeDetailsView(DetailView):
 
 
 
-class CreateInitiativeView(IsManagerUserMixin,CreateView,LogMixin): #only Managers 
+class CreateInitiativeView(LoginRequiredMixin, IsManagerUserMixin, CreateView, LogMixin): #only Managers 
     '''
     - Allows Managers to create a new initiative
     - Sets the strategic goal based on the goal_id in the URL
     - Automatically assigns the current user to the initiative via UserInitiative
-    '''
+    '''    
     model = Initiative
     fields = ['title', 'description', 'start_date', 'end_date', 'priority', 'category']
     template_name = 'initiative_form.html'
@@ -255,11 +275,12 @@ class CreateInitiativeView(IsManagerUserMixin,CreateView,LogMixin): #only Manage
         
         return response
     def get_success_url(self):
-        return reverse('goal_detail', kwargs={'goal_id': self.kwargs['goal_id']})
+        # return reverse('goal_detail', kwargs={'goal_id': self.kwargs['goal_id']})
+        return reverse('initiatives_list')
 
 
 
-class UpdateInitiativeView(IsManagerUserMixin,UpdateView,LogMixin):  #managers only
+class UpdateInitiativeView(LoginRequiredMixin, IsManagerUserMixin,UpdateView,LogMixin):  #managers only
     '''
     - Allows updating an existing initiative
     - Only the initiative fields are editable (title, description, dates, priority, category)
@@ -271,14 +292,14 @@ class UpdateInitiativeView(IsManagerUserMixin,UpdateView,LogMixin):  #managers o
     
     def get_success_url(self):
         goal_id = self.kwargs.get('goal_id')
-        if goal_id:
-            return reverse('goal_initiatives_list', kwargs={'goal_id': goal_id})
-        else:
-            return reverse('initiatives_list')
+        # if goal_id:
+        #     return reverse('goal_initiatives_list', kwargs={'goal_id': goal_id})
+        # else:
+        return reverse('initiatives_list')
 
 
 
-class DeleteInitiativeView(IsManagerUserMixin, DeleteView,LogMixin):#managers only
+class DeleteInitiativeView(LoginRequiredMixin, IsManagerUserMixin, DeleteView,LogMixin):#managers only
     '''
     - Allows deletion of an initiative
     - All related UserInitiative entries are automatically deleted (on_delete=CASCADE)
@@ -289,10 +310,10 @@ class DeleteInitiativeView(IsManagerUserMixin, DeleteView,LogMixin):#managers on
     
     def get_success_url(self):
         goal_id = self.kwargs.get('goal_id')
-        if goal_id:
-            return reverse('goal_initiatives_list', kwargs={'goal_id': goal_id})
-        else:
-            return reverse('initiatives_list')
+        # if goal_id:
+        #     return reverse('goal_initiatives_list', kwargs={'goal_id': goal_id})
+        # else:
+        return reverse('initiatives_list')
 
 
 
@@ -301,19 +322,23 @@ def is_manager(user):
         return True
     return redirect('access_denied') 
 
-
+@login_required
 @log_action()
 @user_passes_test(is_manager)
-def assign_employee_to_initiative(request, initiative_id):
+def assign_employee_to_initiative(request, pk):
     '''
     - Allows assigning one or more employees to a given initiative
     - GET request: returns a list of employees in the current user's department to select from
     - POST request: receives a list of employee IDs from the form and creates UserInitiative entries
     - After successful assignment, redirects to the initiative detail page
     '''
-    initiative = get_object_or_404(Initiative, id=initiative_id)
+    initiative = get_object_or_404(Initiative, id=pk)
     employees = User.objects.filter(role__role_name='E', department = request.user.department)  
     
+    assigned_employee_ids = set(
+        UserInitiative.objects.filter(initiative=initiative).values_list('user_id', flat=True)
+    )
+
     if request.method == "POST": #Post request: receives a list of employees
         employees_ids_list = request.POST.getlist('user_ids') #$$use in template 
         if employees_ids_list:
@@ -330,7 +355,8 @@ def assign_employee_to_initiative(request, initiative_id):
     else: #Get request: returns a list of the department employees 
         return render(request, 'assign_employee.html', {
         'initiative': initiative,
-        'employees': employees
+        'employees': employees,
+        'assigned_employee_ids': assigned_employee_ids,
     })
 
 
