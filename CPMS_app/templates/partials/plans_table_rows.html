@@ -10,15 +10,11 @@
             <span class="px-3 py-1 text-xs bg-gray-200 text-gray-700 rounded-full">غير نشطة</span>
             {% endif %}
         </td>
-        <td>
-            <button 
+        <button 
     onclick="openDeleteModal(`{% url 'plan_delete' plan.id %}`, `هل تريد حذف هذه الخطة؟`)" 
     class="text-red-600">
                حذف
          </button>
-        </td>
-        
-
     </tr>
     {% empty %}
     <tr >
