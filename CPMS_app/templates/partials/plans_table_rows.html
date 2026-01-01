@@ -2,7 +2,7 @@
     {% for plan in plans %}
     <tr class="border-b hover:bg-gray-50" data-title="{{ plan.plan_name }}" data-status="{% if plan.is_active %}active{% else %}inactive{% endif %}">
         <td class="px-6 py-4 font-medium">{{ plan.plan_name }}</td>
-        <td class="px-6 py-4">  {{ plan.created_by.get_full_name|default:"-" }}</td>
+        <td class="px-6 py-4">  {{ plan.created_by|default:"-" }}</td>
         <td class="px-6 py-4">
             {% if plan.is_active %}
             <span class="px-3 py-1 text-xs bg-green-100 text-green-700 rounded-full">نشطة</span>
