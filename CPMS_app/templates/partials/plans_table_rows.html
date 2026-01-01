@@ -10,9 +10,15 @@
             <span class="px-3 py-1 text-xs bg-gray-200 text-gray-700 rounded-full">غير نشطة</span>
             {% endif %}
         </td>
-        <td class="px-6 py-4 text-center">
-            <a href="{% url 'plan_detail' plan.id %}" class="text-blue-600 hover:underline">عرض</a>
+        <td>
+            <button 
+    onclick="openDeleteModal(`{% url 'plan_delete' plan.pk %}`, `هل تريد حذف هذه الخطة؟`)" 
+    class="text-red-600">
+               حذف
+         </button>
         </td>
+        
+
     </tr>
     {% empty %}
     <tr >
