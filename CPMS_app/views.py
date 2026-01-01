@@ -570,7 +570,7 @@ class PlanDetailsview(DetailView):
 
     def get_queryset(self):
         return StrategicPlan.objects.all()
-  
+
             
 #LoginRequiredMixin
 class CreatePlanView(LogMixin, CreateView):
@@ -584,10 +584,10 @@ class CreatePlanView(LogMixin, CreateView):
     '''
     def dispatch(self, request, *args, **kwargs):
         if request.user.role.role_name != 'CM':
-          raise PermissionDenied("ليس لديك الصلاحية لإنشاء هذه الخطة.")
+            raise PermissionDenied("ليس لديك الصلاحية لإنشاء هذه الخطة.")
         return super().dispatch(request, *args, **kwargs)
 
-     '''
+    '''
     
     def form_valid(self, form):
         self.object = form.save(user=self.request.user)
@@ -608,7 +608,7 @@ class UpdatePlanView(LogMixin, UpdateView):
     def dispatch(self, request, *args, **kwargs):
         plan = self.get_object()
         if request.user.role.role_name != 'CM':
-          raise PermissionDenied("ليس لديك الصلاحية لتعديل هذه الخطة.")
+            raise PermissionDenied("ليس لديك الصلاحية لتعديل هذه الخطة.")
         if not plan.is_active:
             raise PermissionDenied("يمكنك تعديل الخطط النشطة فقط")
         return super().dispatch(request, *args, **kwargs)
@@ -645,17 +645,17 @@ class AllGoalsView(ListView):
     context_object_name = 'goals'
         
     def get_queryset(self):
-     user = self.request.user
-     role = user.role.role_name
+        user = self.request.user
+        role = user.role.role_name
 
-     if role == 'GM':
-        return StrategicGoal.objects.all()
-     elif role in ['M','CM']:
-        return StrategicGoal.objects.filter(department = user.department)
-     elif role == 'E':
-        return StrategicGoal.objects.filter(initiative__userinitiative__user = user).distinct()
-     
-     return StrategicGoal.objects.none()
+        if role == 'GM':
+            return StrategicGoal.objects.all()
+        elif role in ['M','CM']:
+            return StrategicGoal.objects.filter(department = user.department)
+        elif role == 'E':
+            return StrategicGoal.objects.filter(initiative__userinitiative__user = user).distinct()
+        
+        return StrategicGoal.objects.none()
 
 
 #LoginRequiredMixin  
@@ -680,12 +680,12 @@ class CreateGoalView(LogMixin, CreateView):
     template_name = 'goal_form.html'
     success_url = reverse_lazy('goals_list')
     allowed_roles = ['M', 'CM']  # Roles allowed to access this view
-   
+
     def form_valid(self, form):
         self.object = form.save(user=self.request.user, plan_id=self.kwargs['plan_id'])
         return super().form_valid(form)
 
-   
+
 #LoginRequiredMixin, RoleRequiredMixin
 class UpdateGoalView(LogMixin, UpdateView):
     '''
@@ -768,12 +768,12 @@ class CreateNoteView(LogMixin, CreateView):
     template_name = 'note_form.html'
     success_url = reverse_lazy('notes_list')
     
-   # This is to set the receiver's name from a custom dropdown
+    # This is to set the receiver's name from a custom dropdown
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
         user = self.request.user
         role = user.role.role_name
-       
+
         if role == 'GM':
             form.fields['receiver'].queryset = User.objects.filter(role__role_name='M')
         elif role in ['M','CM']:
@@ -782,7 +782,7 @@ class CreateNoteView(LogMixin, CreateView):
             form.fields['receiver'].queryset = User.objects.filter(
                 userinitiative__initiative__in=Initiative.objects.filter(
                     userinitiative__user=user)
-                      ).distinct()
+                        ).distinct()
         return form
 
     def form_valid(self, form):
@@ -803,12 +803,12 @@ class UpdateNoteView(LogMixin, UpdateView):
     success_url = reverse_lazy('notes_list')
 
     def get_queryset(self):
-       user = self.request.user
+        user = self.request.user
 
-       qs = Note.objects.filter(sender=user)
-       if not qs.filter(pk=self.kwargs['pk']).exists():
+        qs = Note.objects.filter(sender=user)
+        if not qs.filter(pk=self.kwargs['pk']).exists():
             raise PermissionDenied("ليس لديك صلاحية تعديل هذه الملاحظة.")
-       return qs
+        return qs
     
     def form_valid(self, form):
         form.instance.sender = self.request.user
@@ -847,7 +847,7 @@ class AllLogsView(ListView):
         return Log.objects.all()
     
 
-  
+
 
 
 
