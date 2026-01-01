@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto mt-10 bg-white shadow-md rounded-lg p-8" dir="rtl">
+
+   <h1>{% if object %}تعديل الهدف{% else %}إضافة هدف{% endif %}</h1>
+
+<form method="post">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+
+    <div>
+        {{ form.goal_title.label_tag }}
+        {{ form.goal_title }}
+        {{ form.goal_title.errors }}
+    </div>
+
+    <div>
+        {{ form.description.label_tag }}
+        {{ form.description }}
+        {{ form.description.errors }}
+    </div>
+
+    <div>
+        {{ form.goal_status.label_tag }}
+        {{ form.goal_status }}
+        {{ form.goal_status.errors }}
+    </div>
+
+    <div>
+        {{ form.goal_priority.label_tag }}
+        {{ form.goal_priority }}
+        {{ form.goal_priority.errors }}
+    </div>
+
+    <div>
+        {{ form.start_date.label_tag }}
+        {{ form.start_date }}
+        {{ form.start_date.errors }}
+    </div>
+
+    <div>
+        {{ form.end_date.label_tag }}
+        {{ form.end_date }}
+        {{ form.end_date.errors }}
+    </div>
+
+    <button type="submit">{% if object %}تعديل{% else %}إضافة{% endif %}</button>
+</form>
+
+</div>
+{% endblock %}

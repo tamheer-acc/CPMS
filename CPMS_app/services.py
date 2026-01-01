@@ -31,3 +31,7 @@ def create_log(user, action, instance=None, old_data=None):
 
 def generate_KPIs(initiative):
     pass
+
+
+
+

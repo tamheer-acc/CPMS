@@ -1,3 +1,4 @@
+from django.utils import timezone
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy, reverse
 from django.views.generic import ListView, DetailView, CreateView
@@ -14,7 +15,10 @@ from functools import wraps
 from .models import ( Role, Department, User, StrategicPlan, StrategicGoal, 
                         Initiative, UserInitiative, KPI, Note, Log, STATUS)
 from .services import generate_KPIs,  create_log
-from .forms import KPIForm
+from .forms import KPIForm, StrategicGoalForm, StrategicPlanForm
+from django.template.loader import render_to_string
+from django.db.models import Q
+
 
 
 
@@ -152,6 +156,15 @@ class IsManagerUserMixin(UserPassesTestMixin):
             return redirect('login')
         raise PermissionDenied('ليست لديك صلاحية لرؤية هذه الصفحة')
 
+#Helper class that acts like UserPassesTestMixin:
+class RoleRequiredMixin(UserPassesTestMixin):
+    allowed_roles = []  
+
+    def test_func(self):
+        return self.request.user.role.role_name in self.allowed_roles
+
+    def handle_no_permission(self):
+        return redirect('access_denied')
 
 
 #########################################################################################################################
@@ -404,7 +417,7 @@ def create_kpi_view(request, initiative_id):
 
 
 
-class DeleteKPIView(IsManagerUserMixin,DeleteView,LogMixin):
+class DeleteKPIView(IsManagerUserMixin, DeleteView, LogMixin):
     '''
     - Allows users to delete a KPI
     - Confirms deletion using a template
@@ -422,7 +435,7 @@ class DeleteKPIView(IsManagerUserMixin,DeleteView,LogMixin):
 
 
 
-class UpdateKPIView(IsManagerUserMixin,UpdateView,LogMixin):
+class UpdateKPIView(IsManagerUserMixin, UpdateView, LogMixin):
     '''
     - Allows users to update an existing KPI
     - Lets users edit fields like kpi name, unit, target, and actual values
@@ -462,7 +475,6 @@ class AllKPIsView(ListView): #not needed but here we go
 #                                                    WALAA's Views                                                      #
 #########################################################################################################################
 
-
 # ---------------------------
 #  Department View
 # ---------------------------
@@ -481,99 +493,132 @@ class AllDepartmentsView(LoginRequiredMixin, ListView):
 # ---------------------------
 #  StrategicPlan View
 # ---------------------------
-class AllPlansView(LoginRequiredMixin, ListView): 
-    '''
-    - Displays a list of all strategic plans
-    - Only accessible to users with roles GM, CM, or M
-    '''
-    model = StrategicPlan 
+#LoginRequiredMixin, RoleRequiredMixin, ListView
+class AllPlansView(ListView):
+    model = StrategicPlan
     template_name = 'plans_list.html'
     context_object_name = 'plans'
+    paginate_by = 1 # Number of plans to display per page
+    allowed_roles = ['M', 'CM', 'GM']  # Roles allowed to access this view
 
     def get_queryset(self):
-        if self.request.user.role:
-            if self.request.user.role.role_name in ['GM', 'CM', 'M']:
-                return StrategicPlan.objects.all()
-            else:
-                raise PermissionDenied 
+        """
+        - Retrieves the queryset of StrategicPlan objects.
+        - Automatically updates any active plan that has passed its end_date to inactive.
+        - Applies search and status filters if provided in GET parameters.
+        """
+        queryset = StrategicPlan.objects.all()
+        
+        # Update plans that ended to inactive
+        today = timezone.now().date()
+        queryset.filter(is_active=True, end_date__lt=today).update(is_active=False)
 
-#LoginRequiredMixin, DetailView 
-class PlanDetailsview(LoginRequiredMixin, DetailView):
+        # Handle search and status filtering
+        search = self.request.GET.get('search', '')
+        status = self.request.GET.get('status', '')
+        if search or status:
+            q = Q(plan_name__icontains=search) if search else Q()
+            if status == 'active':
+                q &= Q(is_active=True)
+            elif status == 'inactive':
+                q &= Q(is_active=False)
+            queryset = queryset.filter(q)
+
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        """
+        - Adds extra context to the template, such as custom pagination page numbers.
+        - Shows first, last, and surrounding pages (for better pagination navigation).
+        """
+        context = super().get_context_data(**kwargs)
+        page_obj = context['page_obj']
+        total_pages = context['paginator'].num_pages
+        current = page_obj.number
+
+        page_numbers = []
+        for num in range(1, total_pages + 1):
+            if num == 1 or num == total_pages or abs(num - current) <= 2:
+                page_numbers.append(num)
+            elif page_numbers[-1] != '...':
+                page_numbers.append('...')
+        context['page_numbers'] = page_numbers
+        return context
+
+    def render_to_response(self, context, **response_kwargs):
+        """
+        - Handles AJAX requests differently: returns only partial HTML for the table.
+        - For normal requests, renders the full template as usual.
+        """
+        if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            html = render_to_string('partials/plans_table_rows.html', context, request=self.request)
+            return JsonResponse({
+                'html': html,
+                'has_plans': context['page_obj'].object_list.exists()
+            })
+        return super().render_to_response(context, **response_kwargs)
+
+#LoginRequiredMixin, RoleRequiredMixin, DetailView
+class PlanDetailsview(DetailView):
     '''
     - Displays details of a single strategic plan
     '''
     model = StrategicPlan 
     template_name = 'plan_detail.html'
     context_object_name = 'plan'
+    allowed_roles = ['M', 'CM', 'GM']  # Roles allowed to access this view
 
     def get_queryset(self):
-        if self.request.user.role:
-            if self.request.user.role.role_name in ['GM', 'CM', 'M']:
-                return StrategicPlan.objects.all()
-            else:
-                raise PermissionDenied
-          
-class CreatePlanView(LoginRequiredMixin, UserPassesTestMixin, LogMixin, CreateView):
+        return StrategicPlan.objects.all()
+  
+            
+#LoginRequiredMixin
+class CreatePlanView(LogMixin, CreateView):
     '''
     - Only Committee Manager can create a new strategic plan
-    - Allows creating a new strategic plan if no active plan exists
     - Redirects to plan list after creation
     '''
-    model = StrategicPlan
-    fields = ['plan_name', 'vision', 'mission', 'start_date', 'end_date']
+    form_class = StrategicPlanForm
     template_name = 'plan_form.html'
     success_url = reverse_lazy('plans_list')
-    
+    '''
     def dispatch(self, request, *args, **kwargs):
-        user = request.user
-
-        # Only Committee Manager
-        if user.role.role_name != 'CM':
-            raise PermissionDenied("ليس مسموح لك بإنشاء خطة.")
-
-        # Check if an active plan already exists
-        if StrategicPlan.objects.filter(is_active=True).exists():
-            raise PermissionDenied("يوجد خطة استراتيجية نشطة بالفعل.")
-
+        if request.user.role.role_name != 'CM':
+          raise PermissionDenied("ليس لديك الصلاحية لإنشاء هذه الخطة.")
         return super().dispatch(request, *args, **kwargs)
 
+     '''
+    
     def form_valid(self, form):
-        form.instance.user = self.request.user 
-        response = super().form_valid(form) 
-
-       # Recording the log after saving form
-        create_log(user=self.request.user, action="CREATE", instance=self.object)
-
-        return response
+        self.object = form.save(user=self.request.user)
+        return super().form_valid(form)
 
 
-class UpdatePlanView(LoginRequiredMixin, UserPassesTestMixin, LogMixin, UpdateView):
+#LoginRequiredMixin
+class UpdatePlanView(LogMixin, UpdateView):
     '''
     - Only Committee Manager can update an existing plan
     - Redirects to plans list after update
     '''
     model = StrategicPlan
-    fields = ['plan_name', 'vision', 'mission', 'start_date', 'end_date']
+    form_class = StrategicPlanForm
     template_name = 'plan_form.html'
     success_url = reverse_lazy('plans_list')
-    
+    '''
     def dispatch(self, request, *args, **kwargs):
-        user = request.user
-
-        # Only Committee Manager
-        if user.role.role_name != 'CM':
-            raise PermissionDenied("ليس لديك صلاحية تعديل هذه الخطة.")
-
-        # Get the plan object that is going to be updated
         plan = self.get_object()
-
-        # Only allow updating if the plan is active
+        if request.user.role.role_name != 'CM':
+          raise PermissionDenied("ليس لديك الصلاحية لتعديل هذه الخطة.")
         if not plan.is_active:
-            raise PermissionDenied("يمكنك تعديل الخطط النشطة حاليًا فقط!")
+            raise PermissionDenied("يمكنك تعديل الخطط النشطة فقط")
+        return super().dispatch(request, *args, **kwargs)
+'''
+    def form_valid(self, form):
+        self.object = form.save(user=self.request.user)
+        return super().form_valid(form)
 
-    
-
-class DeletePlanView(LoginRequiredMixin, UserPassesTestMixin, LogMixin, DeleteView):
+#LoginRequiredMixin, RoleRequiredMixin
+class DeletePlanView(LogMixin, DeleteView):
     '''
     - Only Committee Manager can delete a plan 
     - Redirects to plans list after deletion
@@ -581,9 +626,8 @@ class DeletePlanView(LoginRequiredMixin, UserPassesTestMixin, LogMixin, DeleteVi
     model = StrategicPlan
     template_name = 'plan_confirm_delete.html'
     success_url = reverse_lazy('plans_list')
+    allowed_roles = ['CM']  # Roles allowed to access this view
 
-    def test_func(self):
-        return self.request.user.role.role_name == 'CM' 
 
 # ---------------------------
 #  StrategicGoal View
@@ -613,62 +657,55 @@ class AllGoalsView(ListView):
      
      return StrategicGoal.objects.none()
 
-        
-class GoalDetailsview(LoginRequiredMixin, DetailView):
+
+#LoginRequiredMixin  
+class GoalDetailsview(DetailView):
     '''
     - Shows details of a single goal
     '''
     model = StrategicGoal 
     template_name = 'goal_detail.html'
     context_object_name = 'goal'     
-        
-          
-class CreateGoalView(LoginRequiredMixin, UserPassesTestMixin, LogMixin, CreateView):
+
+
+#LoginRequiredMixin, RoleRequiredMixin
+class CreateGoalView(LogMixin, CreateView):
     '''
     - Allows Managers and Committee Managers to create a new goal
     - Links the goal to the plan and the user's department
     - Redirects to the goals list after creation
     '''
     model = StrategicGoal
-    fields = ['goal_title', 'description', 'start_date', 'end_date', 'goal_status', 'goal_priority']
+    form_class = StrategicGoalForm
     template_name = 'goal_form.html'
     success_url = reverse_lazy('goals_list')
-    
-    def test_func(self):
-        return self.request.user.role.role_name in ['CM','M'] 
-
+    allowed_roles = ['M', 'CM']  # Roles allowed to access this view
+   
     def form_valid(self, form):
-       form.instance.plan_id = self.kwargs['plan_id']   # ربط بالخطة
-       form.instance.department = self.request.user.department  # ربط بالإدارة
-       return super().form_valid(form) 
+        self.object = form.save(user=self.request.user, plan_id=self.kwargs['plan_id'])
+        return super().form_valid(form)
 
    
-  
-class UpdateGoalView(LoginRequiredMixin, UserPassesTestMixin, LogMixin, UpdateView):
+#LoginRequiredMixin, RoleRequiredMixin
+class UpdateGoalView(LogMixin, UpdateView):
     '''
     - Managers and Committee Managers can update goals in their department
     - Updates goal details
     - Redirects to goals list
     '''
     model = StrategicGoal
-    fields = ['goal_title', 'description', 'start_date', 'end_date', 'goal_status', 'goal_priority']
+    form_class = StrategicGoalForm
     template_name = 'goal_form.html'
     success_url = reverse_lazy('goals_list')
+    allowed_roles = ['M', 'CM']  # Roles allowed to access this view
 
-    def get_queryset(self):
-        user = self.request.user
-        role = user.role.role_name
-
-        if role in ['M', 'CM']:
-            qs = StrategicGoal.objects.filter(department=user.department)
-            if not qs.filter(pk=self.kwargs['pk']).exists():
-                raise PermissionDenied("ليس لديك صلاحية تعديل هذا الهدف.")
-            return qs
-
-        raise PermissionDenied("ليس لديك صلاحية تعديل هذا الهدف.")
+    def form_valid(self, form):
+        self.object = form.save(user=self.request.user)
+        return super().form_valid(form)
     
 
-class DeleteGoalView(LoginRequiredMixin, UserPassesTestMixin, LogMixin, DeleteView):
+#LoginRequiredMixin, RoleRequiredMixin
+class DeleteGoalView(LogMixin, DeleteView):
     '''
     - Managers and Committee Managers can delete goals in their department
     - Shows confirmation before deletion
@@ -677,24 +714,13 @@ class DeleteGoalView(LoginRequiredMixin, UserPassesTestMixin, LogMixin, DeleteVi
     model = StrategicGoal
     template_name = 'goal_confirm_delete.html'
     success_url = reverse_lazy('goals_list')
+    allowed_roles = ['M', 'CM']  # Roles allowed to access this view
 
-    def get_queryset(self):
-        user = self.request.user
-        role = user.role.role_name
-
-        if role in ['M', 'CM']:
-            qs = StrategicGoal.objects.filter(department=user.department)
-            if not qs.filter(pk=self.kwargs['pk']).exists():
-                raise PermissionDenied("ليس لديك صلاحية حذف هذا الهدف.")
-            return qs
-
-        raise PermissionDenied("ليس لديك صلاحية حذف هذا الهدف.")
-    
 # ---------------------------
 #  Note View
 # ---------------------------
-
-class AllNotesView(LoginRequiredMixin, ListView): 
+#LoginRequiredMixin
+class AllNotesView(ListView): 
     '''
     - Displays a list of notes for the current user
     - GM sees only notes they sent
@@ -721,8 +747,8 @@ class AllNotesView(LoginRequiredMixin, ListView):
 
         return Note.objects.none()
         
-
-class NoteDetailsview(LoginRequiredMixin, DetailView):
+#LoginRequiredMixin
+class NoteDetailsview(DetailView):
     '''
     - Shows details of a single note
     '''
@@ -730,8 +756,8 @@ class NoteDetailsview(LoginRequiredMixin, DetailView):
     template_name = 'note_detail.html'
     context_object_name = 'note'
         
-          
-class CreateNoteView(LoginRequiredMixin, UserPassesTestMixin, LogMixin, CreateView):
+#LoginRequiredMixin          
+class CreateNoteView(LogMixin, CreateView):
     '''
     - Allows creating a new note
     - Sets sender as current user
@@ -763,8 +789,8 @@ class CreateNoteView(LoginRequiredMixin, UserPassesTestMixin, LogMixin, CreateVi
         form.instance.sender = self.request.user
         return super().form_valid(form) 
 
-     
-class UpdateNoteView(LoginRequiredMixin, UserPassesTestMixin, LogMixin, UpdateView):
+#LoginRequiredMixin
+class UpdateNoteView(LogMixin, UpdateView):
     '''
     - Allows updating a note
     - Only the sender can update their own notes
@@ -788,8 +814,8 @@ class UpdateNoteView(LoginRequiredMixin, UserPassesTestMixin, LogMixin, UpdateVi
         form.instance.sender = self.request.user
         return super().form_valid(form)
     
-
-class DeleteNoteView(LoginRequiredMixin, UserPassesTestMixin, LogMixin, DeleteView):
+#LoginRequiredMixin
+class DeleteNoteView(LogMixin, DeleteView):
     '''
     - Allows deleting a note
     - Only the sender can delete their own notes

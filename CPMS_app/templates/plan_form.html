@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto mt-10 bg-white shadow-md rounded-lg p-8" dir="rtl">
+
+   <h1>{% if object %}تعديل الخطة{% else %}إنشاء خطة{% endif %}</h1>
+
+<form method="post">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+
+    <div>
+        {{ form.plan_name.label_tag }}
+        {{ form.plan_name }}
+        {{ form.plan_name.errors }}
+    </div>
+
+    <div>
+        {{ form.vision.label_tag }}
+        {{ form.vision }}
+        {{ form.vision.errors }}
+    </div>
+
+    <div>
+        {{ form.mission.label_tag }}
+        {{ form.mission }}
+        {{ form.mission.errors }}
+    </div>
+
+    <div>
+        {{ form.start_date.label_tag }}
+        {{ form.start_date }}
+        {{ form.start_date.errors }}
+    </div>
+
+    <div>
+        {{ form.end_date.label_tag }}
+        {{ form.end_date }}
+        {{ form.end_date.errors }}
+    </div>
+
+    <button type="submit">{% if object %}تعديل{% else %}إنشاء{% endif %}</button>
+</form>
+
+</div>
+{% endblock %}
