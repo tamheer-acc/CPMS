@@ -14,11 +14,21 @@
         <script defer src="{% static 'CPMS_app/app.js' %}"></script>
 
     </head>
-    <body>
-        <main>
-            {% block content %}
-            <!-- This is where the individual pages will be rendered -->
-            {% endblock %}
-        </main>
-    </body>
+<body>
+    
+    <nav> 
+        <div id="logo">
+            <p>CPMS</p>
+        </div>
+        <div class="flex">
+            <a href="{% url 'initiatives_list' %}" class="nav-items">Initiatives</a>
+            <a href="{% url 'login' %}">Log In</a>
+        </div>
+    </nav>
+    <main>
+        {% block content %}
+        <!-- This is where the individual pages will be rendered -->
+        {% endblock %}
+    </main>
+</body>
 </html>
