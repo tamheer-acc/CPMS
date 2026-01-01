@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<h1>الموظفين:</h1>
+
+<form method="post">
+    {% csrf_token %}
+    <ul>
+    {% for employee in employees %}
+        <li>
+            <label>
+                <input type="checkbox" name="user_ids" value="{{ employee.id }}"
+                {% if employee.id in assigned_employee_ids %}checked{% endif %}>
+                {{ employee.first_name }} {{ employee.last_name }}
+            </label>
+            <button> إضافة</button>
+            <button>إزالة </button>
+        </li>
+    {% empty %}
+        <li>لا يوجد موظفين في القسم</li>
+    {% endfor %}
+    </ul>
+
+    <button type="submit">تعيين الموظفين</button>
+</form>
+
+
+{% endblock %}
