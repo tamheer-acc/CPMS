@@ -498,7 +498,7 @@ class AllPlansView(ListView):
     model = StrategicPlan
     template_name = 'plans_list.html'
     context_object_name = 'plans'
-    paginate_by = 1 # Number of plans to display per page
+    paginate_by = 3 # Number of plans to display per page
     allowed_roles = ['M', 'CM', 'GM']  # Roles allowed to access this view
 
     def get_queryset(self):
@@ -618,13 +618,12 @@ class UpdatePlanView(LogMixin, UpdateView):
         return super().form_valid(form)
 
 #LoginRequiredMixin, RoleRequiredMixin
-class DeletePlanView(LogMixin, DeleteView):
+class DeletePlanView(DeleteView):
     '''
     - Only Committee Manager can delete a plan 
     - Redirects to plans list after deletion
     '''
     model = StrategicPlan
-    template_name = 'plan_confirm_delete.html'
     success_url = reverse_lazy('plans_list')
     allowed_roles = ['CM']  # Roles allowed to access this view
 
@@ -712,7 +711,6 @@ class DeleteGoalView(LogMixin, DeleteView):
     - Redirects to goals list
     '''
     model = StrategicGoal
-    template_name = 'goal_confirm_delete.html'
     success_url = reverse_lazy('goals_list')
     allowed_roles = ['M', 'CM']  # Roles allowed to access this view
 
@@ -823,7 +821,6 @@ class DeleteNoteView(LogMixin, DeleteView):
     - Redirects to notes list
     '''
     model = Note
-    template_name = 'note_confirm_delete.html'
     success_url = reverse_lazy('notes_list')
 
     def get_queryset(self):

@@ -23,10 +23,10 @@ class BaseForm(forms.ModelForm):
         obj = super().save(commit=False)
 
         if user and hasattr(obj, 'created_by'):
-            obj.created_by = getattr(user, 'get_full_name', lambda: None)()
+            obj.created_by = user.get_full_name()
 
-        if user and hasattr(obj, 'department'):
-            obj.department = getattr(user, 'department', None)
+        if user:
+           obj.department = user.department
 
         if plan_id and hasattr(obj, 'plan_id'):
             obj.plan_id = plan_id
