@@ -1,5 +1,7 @@
 {% extends 'base.html' %}
 {% block content %}    
+{% include "partials/confirm_delete.html" %}
+
 <!-- ##add notes to general manager -->
 <h1> مبادرة {{ initiative.title }}</h1>
 <ul>
@@ -17,10 +19,19 @@
         تعديل
     </button>
 
-    <button class="button" onclick="window.open(
+    <!-- <button class="button" onclick="window.open(
     '/initiatives/{{initiative.id}}/delete/','_blank');">
         حذف
+    </button> -->
+    <button
+        class="button"
+        onclick="openDeleteModal(
+            '/initiatives/{{ initiative.id }}/delete/',
+            'هل أنت متأكد أنك تريد حذف هذه المبادرة؟'
+        )">
+        حذف
     </button>
+
 
     <button  class="button"onclick="openPopup('/initiatives/{{initiative.id}}/assign')"> <!-- ##error handling -->
         تعيين موظفين

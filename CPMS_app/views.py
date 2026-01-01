@@ -135,28 +135,6 @@ def log_action(action_type="AUTO"):
 
 
 #Helper class that acts like UserPassesTestMixin:
-class IsManagerUserMixin(UserPassesTestMixin):
-    def test_func(self): #only managers access this view and the goals should be theirs
-        user = self.request.user 
-        if not user.is_authenticated: #not logged in
-            return False
-        
-        if not user.role or user.role.role_name not in ['M', 'CM']: # not a manager
-            return False
-        
-        goal_id = self.kwargs.get('goal_id') 
-        if goal_id: #no goal id
-            goal = get_object_or_404(StrategicGoal, id=goal_id)
-            return goal.department == user.department 
-        return True
-    
-    
-    def handle_no_permission(self):
-        if not self.request.user.is_authenticated:
-            return redirect('login')
-        raise PermissionDenied('ليست لديك صلاحية لرؤية هذه الصفحة')
-
-#Helper class that acts like UserPassesTestMixin:
 class RoleRequiredMixin(UserPassesTestMixin):
     allowed_roles = []  
 
@@ -165,6 +143,71 @@ class RoleRequiredMixin(UserPassesTestMixin):
 
     def handle_no_permission(self):
         return redirect('access_denied')
+
+
+
+class InitiativePermissionMixin(UserPassesTestMixin):
+    '''
+    Users can only access initiatives they are allowed to
+    GM: All initaitves 
+    M: initiatives in their department
+    CM: initiatives in their department
+    E: initiatives they are assigned to
+    Raise PermissionDenied for any URL tampering!
+    '''
+    
+    def get_initiative_queryset(self):
+        
+        qs = Initiative.objects.none()  
+        user = self.request.user
+        role = user.role.role_name
+        goal_id = self.kwargs.get('goal_id')
+        
+        if goal_id:
+            goal = get_object_or_404(StrategicGoal, id=goal_id)
+            
+            if role == 'GM':
+                return Initiative.objects.filter(strategic_goal = goal)
+
+            elif role in ['CM','M'] and user.department == goal.department:
+                qs = Initiative.objects.filter( strategic_goal = goal , strategic_goal__department = user.department)
+                
+            elif role == 'E':
+                qs = Initiative.objects.filter( strategic_goal = goal , userinitiative__user = user )
+            
+            else:
+                raise PermissionDenied("ليست لديك صلاحية لرؤية هذه الصفحة")
+        
+        else: # No goal id
+            
+            if role == 'GM' and not goal_id:
+                return Initiative.objects.all()
+
+            elif role in ['CM','M','E']:
+                qs = Initiative.objects.filter(userinitiative__user=user)
+                
+            else:
+                raise PermissionDenied("ليست لديك صلاحية لرؤية هذه الصفحة")
+        
+        return qs.distinct()
+
+    def get_queryset(self): #what will be returned 
+        qs = self.get_initiative_queryset()
+
+        pk = self.kwargs.get('pk')
+        if pk:
+            if not qs.filter(pk=pk).exists(): #trying to url tamper
+                raise PermissionDenied("ليست لديك صلاحية لرؤية هذه الصفحة")
+        return qs
+    
+    def test_func(self):
+        try:
+            # if user can see at least one initiative, allow
+            return self.get_initiative_queryset().exists()
+        except PermissionDenied:
+            return False
+
+
 
 
 #########################################################################################################################
@@ -224,7 +267,7 @@ def dashboard_view(request):
 # ---------------------------
 #  Initiative Views
 # ---------------------------
-class AllInitiativeView(LoginRequiredMixin, ListView): 
+class AllInitiativeView(LoginRequiredMixin, InitiativePermissionMixin, ListView): 
     '''
     List all initiatives
     - General Manager sees all initiatives
@@ -235,38 +278,20 @@ class AllInitiativeView(LoginRequiredMixin, ListView):
     template_name = 'initiatives_list.html'
     context_object_name = 'initiatives'
     
-    def get_queryset(self):
-        goal_id = self.kwargs.get('goal_id')
-        user = self.request.user
-        if goal_id:
-            goal = get_object_or_404(StrategicGoal, id= goal_id)
-            if user.role.role_name == 'GM':
-                return Initiative.objects.all()
-            elif user.role.role_name in ['CM','M'] and user.department == goal.department:
-                return Initiative.objects.filter( strategic_goal__department = user.department, strategic_goal = goal  )
-            elif user.role.role_name == 'E':
-                return Initiative.objects.filter( userinitiative__user = user )
-            else:  
-                raise PermissionDenied('ليست لديك صلاحية لرؤية هذه الصفحة')
-        else:
-            if self.request.user.role.role_name == 'GM':
-                return Initiative.objects.all()
-            else:  # Managers and Employees
-                return Initiative.objects.filter( userinitiative__user=self.request.user )
 
 
 
-class InitiativeDetailsView(LoginRequiredMixin, DetailView):
+class InitiativeDetailsView(LoginRequiredMixin, InitiativePermissionMixin, DetailView):
     '''
     - Shows details of a single initiative
     '''
     model = Initiative
     template_name = "initiative_detail.html"
     context_object_name = "initiative"
+    
 
 
-
-class CreateInitiativeView(LoginRequiredMixin, IsManagerUserMixin, CreateView, LogMixin): #only Managers 
+class CreateInitiativeView(LoginRequiredMixin, RoleRequiredMixin, InitiativePermissionMixin, CreateView, LogMixin): #only Managers 
     '''
     - Allows Managers to create a new initiative
     - Sets the strategic goal based on the goal_id in the URL
@@ -275,7 +300,8 @@ class CreateInitiativeView(LoginRequiredMixin, IsManagerUserMixin, CreateView, L
     model = Initiative
     fields = ['title', 'description', 'start_date', 'end_date', 'priority', 'category']
     template_name = 'initiative_form.html'
-
+    allowed_roles = ['M', 'CM']  
+    
     def form_valid(self, form): #overriding form valid to set strategic goal and employee
         form.instance.strategic_goal_id = self.kwargs['goal_id']
         response = super().form_valid(form)
@@ -293,7 +319,7 @@ class CreateInitiativeView(LoginRequiredMixin, IsManagerUserMixin, CreateView, L
 
 
 
-class UpdateInitiativeView(LoginRequiredMixin, IsManagerUserMixin,UpdateView,LogMixin):  #managers only
+class UpdateInitiativeView(LoginRequiredMixin, RoleRequiredMixin, InitiativePermissionMixin, UpdateView, LogMixin):  #managers only
     '''
     - Allows updating an existing initiative
     - Only the initiative fields are editable (title, description, dates, priority, category)
@@ -302,6 +328,11 @@ class UpdateInitiativeView(LoginRequiredMixin, IsManagerUserMixin,UpdateView,Log
     model = Initiative
     template_name = 'initiative_form.html'
     fields = ['title', 'description', 'start_date', 'end_date', 'priority', 'category']
+    allowed_roles = ['M', 'CM']
+    
+    def get_queryset(self):
+        # explicitly use the mixin’s logic
+        return super().get_queryset()
     
     def get_success_url(self):
         goal_id = self.kwargs.get('goal_id')
@@ -312,7 +343,7 @@ class UpdateInitiativeView(LoginRequiredMixin, IsManagerUserMixin,UpdateView,Log
 
 
 
-class DeleteInitiativeView(LoginRequiredMixin, IsManagerUserMixin, DeleteView,LogMixin):#managers only
+class DeleteInitiativeView(LoginRequiredMixin, RoleRequiredMixin, InitiativePermissionMixin, DeleteView, LogMixin):#managers only
     '''
     - Allows deletion of an initiative
     - All related UserInitiative entries are automatically deleted (on_delete=CASCADE)
@@ -320,7 +351,11 @@ class DeleteInitiativeView(LoginRequiredMixin, IsManagerUserMixin, DeleteView,Lo
     '''
     model = Initiative
     template_name = 'initiative_confirm_delete.html'
+    allowed_roles = ['M', 'CM']
     
+    def get_queryset(self):
+        return InitiativePermissionMixin.get_queryset(self)
+
     def get_success_url(self):
         goal_id = self.kwargs.get('goal_id')
         # if goal_id:
@@ -331,9 +366,9 @@ class DeleteInitiativeView(LoginRequiredMixin, IsManagerUserMixin, DeleteView,Lo
 
 
 def is_manager(user):
-    if user.role.role_name in ['M', 'CM']:
-        return True
-    return redirect('access_denied') 
+    return user.role and user.role.role_name in ['M', 'CM']
+
+
 
 @login_required
 @log_action()
@@ -346,8 +381,11 @@ def assign_employee_to_initiative(request, pk):
     - After successful assignment, redirects to the initiative detail page
     '''
     initiative = get_object_or_404(Initiative, id=pk)
-    employees = User.objects.filter(role__role_name='E', department = request.user.department)  
     
+    if request.user.role.role_name not in ['M', 'CM'] or initiative.strategic_goal.department != request.user.department:
+        raise PermissionDenied("ليست لديك صلاحية لرؤية هذه الصفحة")
+
+    employees = User.objects.filter(role__role_name='E', department = request.user.department)  
     assigned_employee_ids = set(
         UserInitiative.objects.filter(initiative=initiative).values_list('user_id', flat=True)
     )
@@ -417,7 +455,7 @@ def create_kpi_view(request, initiative_id):
 
 
 
-class DeleteKPIView(IsManagerUserMixin, DeleteView, LogMixin):
+class DeleteKPIView(RoleRequiredMixin, DeleteView, LogMixin):
     '''
     - Allows users to delete a KPI
     - Confirms deletion using a template
@@ -426,7 +464,7 @@ class DeleteKPIView(IsManagerUserMixin, DeleteView, LogMixin):
 
     model = KPI
     template_name = 'confirm_delete.html'
-    
+    allowed_roles = ['M', 'CM']
 
     success_url = reverse_lazy('initiative_detail')
     def get_success_url(self):
@@ -435,7 +473,7 @@ class DeleteKPIView(IsManagerUserMixin, DeleteView, LogMixin):
 
 
 
-class UpdateKPIView(IsManagerUserMixin, UpdateView, LogMixin):
+class UpdateKPIView(RoleRequiredMixin, UpdateView, LogMixin):
     '''
     - Allows users to update an existing KPI
     - Lets users edit fields like kpi name, unit, target, and actual values
@@ -444,6 +482,8 @@ class UpdateKPIView(IsManagerUserMixin, UpdateView, LogMixin):
     model = KPI
     fields = ['kpi', 'unit', 'target_value','actual_value']
     template_name = 'kpi_form.html'
+    allowed_roles = ['M', 'CM']
+    
     def get_success_url(self):
         initiative_id = self.kwargs.get('initiative_id')
         return reverse('kpi_detail', kwargs={'initiative_id': initiative_id, 'pk': self.object.pk})
