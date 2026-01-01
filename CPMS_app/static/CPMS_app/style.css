@@ -27,3 +27,137 @@
 }
 
 
+/* Dummy css */
+
+nav,html,em,strong{
+    margin: 0;
+}
+
+*{ 
+    margin-left: 1vw;
+    margin-right: 1vw;
+
+}
+
+body{
+    background-color: #e7d3ba;
+}
+
+input[type="checkbox"] {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    position: relative !important;
+    /* transform: translateY(-5) !important */
+}
+
+table {
+    width: 30%;
+}
+
+nav{
+    background-color:brown;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    min-height: 7vw;
+    padding-right: 1.5vw;
+    font-size: 1.7vw ;
+    
+}
+
+
+nav a {
+    color: #f4e4d1;
+}
+
+#logo{
+    font-weight: 100;
+    /* font-style: italic; */
+    font-size: 2.5vw;
+    /* font-family:Verdana, Geneva, Tahoma, sans-serif; */
+}
+
+#hidden-form{
+    visibility: hidden
+}
+
+#logout-btn{ 
+    /* because the logout is form button, style it as a reguler nav link */
+    position: static !important;
+    color: #f4e4d1;
+    background-color: transparent;
+    border: none;
+    padding: 0px;
+    cursor: pointer;
+    
+}
+
+.flex{
+    display: flex;
+    flex-direction: row;    
+}
+
+
+.yellow-heading{
+    font-family: 'Times New Roman', Times, serif;
+    color: #ec8f00	;
+    font-size: 7vw;
+    font-weight: 900;
+    padding-left: 2vw;
+}
+
+.book-title{
+    font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+    color: #002907	;
+    color: #02550f	;
+    margin: 0 !important;
+
+}
+
+
+.book-title:hover{
+        color: #02550f	;
+        color: #017112	;
+}
+
+.books{
+    padding: 0 !important;
+}
+
+.edit-form{
+    margin: 0 !important;
+    padding: 0 !important;
+    display: flex;
+    align-items: center;
+}
+.edit-button{
+    background-color: transparent !important;
+    border: none !important;
+    cursor: pointer;
+
+}
+
+
+.row-tag{
+    display: flex;
+    flex-wrap: wrap;
+}
+.hidden-form {
+    display: none;
+}
+
+.button {
+    background-color: #04aaa2;
+    border: none;
+    color: white;
+    padding: 5px 10px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin: 4px 2px;
+    cursor: pointer;
+}
+
+/* Dummy css */
