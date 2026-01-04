@@ -283,7 +283,25 @@ class InitiativeDetailsView(LoginRequiredMixin, InitiativePermissionMixin, Detai
     model = Initiative
     template_name = "initiative_detail.html"
     context_object_name = "initiative"
-    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs) 
+        user = self.request.user 
+        initiative = self.get_object() 
+        
+        if user.role.role_name in ['M', 'CM'] and initiative.strategic_goal.department == user.department: 
+            employees = User.objects.filter(role__role_name='E', department=user.department) 
+            assigned_employee_ids = set( 
+                                        UserInitiative.objects.filter(initiative=initiative)
+                                        .values_list('user_id', flat=True) ) 
+            
+            context['employees'] = employees 
+            context['assigned_employee_ids'] = assigned_employee_ids 
+        else:
+            context['employees'] = [] 
+            context['assigned_employee_ids'] = set() 
+        
+        return context
+
 
 
 class CreateInitiativeView(LoginRequiredMixin, RoleRequiredMixin, InitiativePermissionMixin, CreateView, LogMixin): #only Managers 
@@ -382,12 +400,16 @@ def is_manager(user):
     return user.role and user.role.role_name in ['M', 'CM']
 
 
+
 @login_required
 @log_action()
 @user_passes_test(is_manager)
 def assign_employee_to_initiative(request, pk):
     initiative = get_object_or_404(Initiative, id=pk)
     employees = User.objects.filter(role__role_name='E', department=request.user.department)
+
+    if request.user.role.role_name not in ['M', 'CM'] or initiative.strategic_goal.department != request.user.department:
+        raise PermissionDenied("ليست لديك صلاحية لرؤية هذه الصفحة")
 
     assigned_employee_ids = set(
         UserInitiative.objects.filter(initiative=initiative).values_list('user_id', flat=True)
@@ -411,43 +433,6 @@ def assign_employee_to_initiative(request, pk):
         'employees': employees,
         'assigned_employee_ids': assigned_employee_ids,
     })
-# @login_required
-# @log_action()
-# @user_passes_test(is_manager)
-# def assign_employee_to_initiative(request, pk):
-#     '''
-#     - Allows assigning one or more employees to a given initiative
-#     - GET request: returns a list of employees in the current user's department to select from
-#     - POST request: receives a list of employee IDs from the form and creates UserInitiative entries
-#     - After successful assignment, redirects to the initiative detail page
-#     '''
-#     if request.user.role.role_name not in ['M', 'CM'] or initiative.strategic_goal.department != request.user.department:
-#         raise PermissionDenied("ليست لديك صلاحية لرؤية هذه الصفحة")
-#     initiative = get_object_or_404(Initiative, id=pk)
-#     employees = User.objects.filter(role__role_name='E', department = request.user.department)  
-#     assigned_employee_ids = set(
-#         UserInitiative.objects.filter(initiative=initiative).values_list('user_id', flat=True)
-#     )
-
-    # if request.method == "POST": #Post request: receives a list of employees
-    #     employees_ids_list = request.POST.getlist('user_ids') #$$use in template 
-    #     if employees_ids_list:
-    #         for employee_id in employees_ids_list:
-    #             employee = get_object_or_404(User, id=employee_id)
-    #             UserInitiative.objects.get_or_create(
-    #             user=employee,
-    #             initiative=initiative,
-    #             status = STATUS[0][0],
-    #             progress = 0
-    #             )
-    #     return redirect('initiative_detail', pk=initiative.id)
-    
-    # else: #Get request: returns a list of the department employees 
-    #     return render(request, 'assign_employee.html', {
-    #     'initiative': initiative,
-    #     'employees': employees,
-    #     'assigned_employee_ids': assigned_employee_ids,
-    # })
 
 
 

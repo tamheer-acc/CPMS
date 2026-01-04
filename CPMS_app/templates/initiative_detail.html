@@ -19,10 +19,6 @@
         تعديل
     </button>
 
-    <!-- <button class="button" onclick="window.open(
-    '/initiatives/{{initiative.id}}/delete/','_blank');">
-        حذف
-    </button> -->
     <button
         class="button"
         onclick="openDeleteModal(
@@ -33,10 +29,11 @@
     </button>
 
 
-    <button  class="button"onclick="openPopup('/initiatives/{{initiative.id}}/assign')"> <!-- ##error handling -->
+    <button class = "assign_employee_button button"> <!-- ##error handling -->
         تعيين موظفين
     </button>
 {% endif %}
+{% include "assign_employee.html" %}
 
 {% if user.role.role_name != 'GM' %} <!-- managers and employees can send initiative-level notes -->
     <button class="button" onclick="openPopup('/notes/create')">أرسل ملاحظة</button>

@@ -8,11 +8,6 @@
         {% for initiative in initiatives %}
             <li> 
                 <h2><a href="{% url 'initiative_detail' initiative.pk %}">{{initiative.title}}</a></h2> 
-                <button 
-                onclick="openPopup('/initiatives/{{initiative.id}}/assign')"> <!-- ##error handling -->
-                    تعيين موظفين
-                </button> <!-- ##change message, add js -->
-
                 <div class="overflow-hidden">
                     <p>{{initiative.description}}</p>
                     <p>تاريخ البداية: {{ initiative.start_date }}</p>
@@ -27,8 +22,8 @@
                     <p> اضف بعض المبادرات </p> <!-- ##change the message -->
                 </li>
         {% endfor %}
+        
     </ul>
-
 {% elif user.role.role_name == 'E' or user.role.role_name == 'GM'  %} <!-- the user in an employee or the general manager -->
 
     <ul>
