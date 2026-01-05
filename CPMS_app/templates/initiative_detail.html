@@ -11,9 +11,20 @@
     <li><strong>الأهمية: </strong> {{ initiative.priority }}</li>
     <li><strong>التصنيف: </strong> {{ initiative.category }} </li>
     <li><strong>الهدف الاستراتيجي المرتبط بالمبادرة: </strong> {{ initiative.strategic_goal }}</li>
+    <li>مؤشرات الأداء الرئيسية: 
+        {% if initiative.kpi_set.exists %}
+            <ol>
+                {% for kpi in initiative.kpi_set.all %}
+                    <li>{{kpi.kpi}}</li>
+                {% endfor %}
+            </ol>
+        {% else %}
+            لا يوجد
+        {% endif %}
+    </li>
 </ul>
 
-{% if user.role.role_name == 'M' or user.role.role_name == 'CM' %}
+{% if user.role.role_name == 'M' or user.role.role_name == 'CM' %} <!-- add working employees if needed -->
     <button class="button" onclick="window.open(
     '/initiatives/{{initiative.id}}/update/','_blank');">
         تعديل
@@ -28,6 +39,11 @@
         حذف
     </button>
 
+    <button class="button" onclick="window.open( 
+    '/initiatives/{{initiative.id}}/kpis/add/','_blank');">
+
+
+    </button>
 
     <button class = "assign_employee_button button"> <!-- ##error handling -->
         تعيين موظفين
