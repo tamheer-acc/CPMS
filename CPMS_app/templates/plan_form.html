@@ -10,7 +10,7 @@
                 {% if object %}نموذج تعديل خطة{% else %}نموذج إنشاء خطة{% endif %}
             </h1>
 
-            <form method="post" id="plan_form" data-edit="{% if object %}true{% else %}false{% endif %}"
+            <form method="post" data-edit="{% if object %}true{% else %}false{% endif %}"
                 class="space-y-6">
                 {% csrf_token %}
                 <!--Plan Name-->
@@ -119,21 +119,6 @@
     </div>
 </div>
 
-<!--Java Script-->
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const form = document.getElementById('plan_form');
-        const isEdit = form.dataset.edit === 'true'; // قراءة الـ data attribute
 
-        if (isEdit) {
-            form.addEventListener('keydown', function (e) {
-                // منع Enter من إرسال الفورم إلا إذا كان داخل textarea
-                if (e.key === 'Enter' && e.target.tagName.toLowerCase() !== 'textarea') {
-                    e.preventDefault();
-                }
-            });
-        }
-    });
-</script>
 
 {% endblock %}

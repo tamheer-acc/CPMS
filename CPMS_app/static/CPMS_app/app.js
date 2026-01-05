@@ -1,5 +1,3 @@
-
-
 // ---------------------------
 //       open popoup js       
 // ---------------------------
@@ -15,15 +13,79 @@ function openPopup(url){
     );
 
 }
+
+// ---------------------------
+//       assign emp btn js       
+// ---------------------------
 document.querySelectorAll('.assign_employee_button').forEach(btn => { 
     btn.addEventListener('click', () => {
         document.getElementById('assign_employee').classList.remove('hidden');
     });
 });
 
+// ---------------------------
+//     js for update form      
+// ---------------------------
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('form[data-edit="true"]').forEach(form => {
+        form.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' && e.target.tagName.toLowerCase() !== 'textarea') {
+                e.preventDefault();
+            }
+        });
+    });
+});
 
+// --------------------------------------
+//       js for search & filter buttons    
+// --------------------------------------
+document.addEventListener("DOMContentLoaded", function() {
+    const dropdownBtn = document.getElementById("dropdownDefaultButton");
+    const dropdownMenu = document.getElementById("dropdown");
+    const dropdownIcon = document.getElementById("dropdownIcon");
+    const filterButtons = document.querySelectorAll(".filter-btn");
+    const searchInput = document.getElementById("search");
+    const plansBody = document.getElementById("plansBody");
 
+    let currentStatus = "";
 
+    function fetchPlans(search='', status='', page=1) {
+        const url = `?search=${encodeURIComponent(search)}&status=${status}&page=${page}`;
+        fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+        .then(res => res.json())
+        .then(data => {
+            plansBody.innerHTML = data.html;
+        });
+    }
+
+    // Dropdown toggle
+    dropdownBtn.addEventListener("click", e => {
+        e.stopPropagation();
+        dropdownMenu.classList.toggle("hidden");
+        dropdownIcon.style.transform = dropdownMenu.classList.contains("hidden") ? "rotate(0deg)" : "rotate(180deg)";
+    });
+    document.addEventListener("click", () => {
+        dropdownMenu.classList.add("hidden");
+        dropdownIcon.style.transform = "rotate(0deg)";
+    });
+    dropdownMenu.addEventListener("click", e => e.stopPropagation());
+
+    // Search input event
+    searchInput.addEventListener("input", () => {
+        fetchPlans(searchInput.value, currentStatus);
+    });
+
+    // Filter buttons
+    filterButtons.forEach(btn => {
+        btn.addEventListener("click", function() {
+            currentStatus = this.dataset.status;
+            fetchPlans(searchInput.value, currentStatus);
+            dropdownMenu.classList.add("hidden");
+            dropdownIcon.style.transform = "rotate(0deg)";
+        });
+    });
+
+});
 
 // ---------------------------
 //     confirm delete js     
@@ -41,7 +103,6 @@ function openDeleteModal(deleteUrl, message) {
 function closeDeleteModal() {
     document.getElementById('deleteModal').classList.add('hidden');
 }
-
 
 
 // ---------------------------

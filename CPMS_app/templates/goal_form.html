@@ -10,7 +10,7 @@
                 {% if object %}نموذج تعديل هدف{% else %}نموذج إضافة هدف{% endif %}
             </h1>
 
-            <form method="post" id="goal_form" data-edit="{% if object %}true{% else %}false{% endif %}"
+            <form method="post" data-edit="{% if object %}true{% else %}false{% endif %}"
                 class="space-y-6">
                 {% csrf_token %}
 
@@ -128,20 +128,6 @@
     </div>
 </div>
 
-<!--Java Script-->
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const form = document.getElementById('goal_form');
-        const isEdit = form.dataset.edit === 'true';
 
-        if (isEdit) {
-            form.addEventListener('keydown', function (e) {
-                if (e.key === 'Enter' && e.target.tagName.toLowerCase() !== 'textarea') {
-                    e.preventDefault();
-                }
-            });
-        }
-    });
-</script>
 
 {% endblock %}
