@@ -1,0 +1,25 @@
+<!-- goals_list.html -->
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-4xl mx-auto py-8">
+    <h1 class="text-2xl font-bold mb-6 text-gray-800">الأهداف لخطة: {{ plan.plan_name }}</h1>
+
+    {% if goals %}
+    <div class="grid grid-cols-1 gap-4">
+        {% for goal in goals %}
+        <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 hover:shadow-md transition">
+            <h2 class="text-lg font-semibold text-gray-700">{{ goal.goal_title }}</h2>
+            <p class="text-gray-600 mt-1">{{ goal.description }}</p>
+            <div class="flex items-center justify-between text-sm text-gray-500 mt-2">
+                <span>الحالة: {{ goal.goal_status }}</span>
+                <span>الأهمية: {{ goal.goal_priority }}</span>
+                <span>من {{ goal.start_date }} إلى {{ goal.end_date }}</span>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+        <p class="text-gray-500">لا توجد أهداف لهذه الخطة.</p>
+    {% endif %}
+</div>
+{% endblock %}

@@ -2,46 +2,138 @@
 {% load static %}
 
 {% block content %}
-<div class="max-w-3xl mx-auto mt-10 bg-white shadow-md rounded-lg p-8" dir="rtl">
+<div class="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8" dir="rtl">
+    <div class="max-w-2xl mx-auto">
+        <div class="bg-white shadow-lg rounded-2xl border-gray-900 p-8">
 
-   <h1>{% if object %}تعديل الخطة{% else %}إنشاء خطة{% endif %}</h1>
+            <h1 class="text-xl font-semibold text-gray-700 text-center mb-8">
+                {% if object %}نموذج تعديل خطة{% else %}نموذج إنشاء خطة{% endif %}
+            </h1>
 
-<form method="post">
-    {% csrf_token %}
-    {{ form.non_field_errors }}
+            <form method="post" id="plan_form" data-edit="{% if object %}true{% else %}false{% endif %}"
+                class="space-y-6">
+                {% csrf_token %}
+                <!--Plan Name-->
+                <div>
+                    <label for="{{ form.plan_name.id_for_label }}"
+                        class="block mb-2 px-2 text-sm font-semibold text-gray-800">
+                        اسم الخطة <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" name="{{ form.plan_name.name }}" value="{{ form.plan_name.value|default:'' }}"
+                        placeholder="مثال: الخطة الاستراتيجية 2026–2030" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm
+                        rounded-xl shadow-sm block w-full p-2.5
+                        focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-500
+                        hover:border-gray-400 transition-all duration-200">
+                    {% if form.plan_name.errors %}
+                    <div class="flex items-center gap-1 text-red-600 text-xs mt-1"> ⚠ {{ form.plan_name.errors }}</div>
+                    {% endif %}
+                </div>
 
-    <div>
-        {{ form.plan_name.label_tag }}
-        {{ form.plan_name }}
-        {{ form.plan_name.errors }}
+                <!-- Plan Vision -->
+                <div>
+                    <label for="{{ form.vision.id_for_label }}"
+                        class="block mb-2 px-2 text-sm font-semibold text-gray-800">
+                        الرؤية <span class="text-red-500">*</span>
+                    </label>
+                    <textarea name="{{ form.vision.name }}" id="{{ form.vision.id_for_label }}" rows="4"
+                        placeholder="ادخل الرؤية ..."
+                        class="block p-2.5 w-full text-sm text-gray-900
+                               bg-gray-50 rounded-xl shadow-sm border border-gray-300
+                               focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-500
+                               hover:border-gray-400 transition-all duration-200 resize-none">
+                               {{ form.vision.value|default:'' }}</textarea>
+
+                    {% if form.vision.errors %}
+                    <div class="flex items-center gap-1 text-red-600 text-xs mt-1"> ⚠ {{ form.vision.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- Plan Mission -->
+                <div>
+                    <label for="{{ form.mission.id_for_label }}"
+                        class="block mb-2 px-2 text-sm font-semibold text-gray-800">
+                        الرسالة <span class="text-red-500">*</span>
+                    </label>
+                    <textarea name="{{ form.mission.name }}" id="{{ form.mission.id_for_label }}" rows="4"
+                        placeholder="ادخل الرسالة ..."
+                        class="block p-2.5 w-full text-sm text-gray-900
+                               bg-gray-50 rounded-xl shadow-sm border border-gray-300
+                               focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-500
+                               hover:border-gray-400 transition-all duration-200 resize-none">
+                               {{ form.mission.value|default:'' }}</textarea>
+
+                    {% if form.mission.errors %}
+                    <div class="flex items-center gap-1 text-red-600 text-xs mt-1">⚠ {{ form.mission.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- Plan Satrt&End Date -->
+                <div>
+                    <label class="block mb-2 px-2 text-sm font-semibold text-gray-800">
+                        مدة الخطة <span class="text-red-500">*</span>
+                    </label>
+                    <div class="grid grid-cols-[1fr_auto_1fr] items-center gap-4">
+                        <!--Satrt Date-->
+                        <input type="date" name="{{ form.start_date.name }}"
+                            value="{% if form.start_date.value %}{{ form.start_date.value|date:'Y-m-d' }}{% endif %}"
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm
+                                   rounded-xl shadow-sm block w-full p-2.5
+                                   focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-500
+                                   hover:border-gray-400 transition-all duration-200">
+
+                        <span class="text-sm font-medium text-gray-600">إلى</span>
+
+                        <!--End Date-->
+                        <input type="date" name="{{ form.end_date.name }}"
+                            value="{% if form.end_date.value %}{{ form.end_date.value|date:'Y-m-d' }}{% endif %}" 
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm
+                                   rounded-xl shadow-sm block w-full p-2.5
+                                   focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-500
+                                   hover:border-gray-400 transition-all duration-200">
+                    </div>
+                </div>
+
+                <!--Buttons container-->
+                <div class="flex gap-4 mt-12">
+                    <!-- Create/Update Button-->
+                    <button type="submit"
+                     class="px-6 py-2.5 text-sm font-medium rounded-lg
+                            text-white bg-blue-600 hover:bg-blue-700
+                            shadow-md hover:shadow-lg transform hover:-translate-y-0.5
+                            transition duration-200 focus:ring-4 focus:ring-blue-200">
+                        {% if object %}تعديل{% else %}إنشاء{% endif %}
+                    </button>
+
+                    <!-- Cancel Button-->
+                    <button type="button" onclick="window.history.back()"
+                     class="px-6 py-2.5 text-sm font-medium rounded-lg
+                            text-gray-800 bg-gray-200 hover:bg-gray-300
+                            shadow-md hover:shadow-lg transform hover:-translate-y-0.5
+                            transition duration-200 focus:ring-4 focus:ring-gray-200">
+                        إلغاء
+                    </button>
+                </div>
+
+            </form>
+        </div>
     </div>
-
-    <div>
-        {{ form.vision.label_tag }}
-        {{ form.vision }}
-        {{ form.vision.errors }}
-    </div>
-
-    <div>
-        {{ form.mission.label_tag }}
-        {{ form.mission }}
-        {{ form.mission.errors }}
-    </div>
-
-    <div>
-        {{ form.start_date.label_tag }}
-        {{ form.start_date }}
-        {{ form.start_date.errors }}
-    </div>
-
-    <div>
-        {{ form.end_date.label_tag }}
-        {{ form.end_date }}
-        {{ form.end_date.errors }}
-    </div>
-
-    <button type="submit">{% if object %}تعديل{% else %}إنشاء{% endif %}</button>
-</form>
-
 </div>
+
+<!--Java Script-->
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const form = document.getElementById('plan_form');
+        const isEdit = form.dataset.edit === 'true'; // قراءة الـ data attribute
+
+        if (isEdit) {
+            form.addEventListener('keydown', function (e) {
+                // منع Enter من إرسال الفورم إلا إذا كان داخل textarea
+                if (e.key === 'Enter' && e.target.tagName.toLowerCase() !== 'textarea') {
+                    e.preventDefault();
+                }
+            });
+        }
+    });
+</script>
+
 {% endblock %}

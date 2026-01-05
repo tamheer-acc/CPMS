@@ -1,29 +1,55 @@
 <!-- Loop through plans and display each in a table row-->
- 
-    {% for plan in plans %}
-    <tr class="border-b hover:bg-gray-50" data-title="{{ plan.plan_name }}" data-status="{% if plan.is_active %}active{% else %}inactive{% endif %}">
-        <td class="px-6 py-4 font-medium">{{ plan.plan_name }}</td>
-        <td class="px-6 py-4">  {{ plan.created_by|default:"-" }}</td>
-        <td class="px-6 py-4">
-            {% if plan.is_active %}
-            <span class="px-3 py-1 text-xs bg-green-100 text-green-700 rounded-full">نشطة</span>
-            {% else %}
-            <span class="px-3 py-1 text-xs bg-gray-200 text-gray-700 rounded-full">غير نشطة</span>
-            {% endif %}
-        </td>
+     {% for plan in plans %}
+     <tr class="border-b hover:bg-gray-50 hover:font-medium" data-title="{{ plan.plan_name }}" data-status="{% if plan.is_active %}active{% else %}inactive{% endif %}">
+        <td class="px-8 py-4">{{ plan.plan_name }}</td>
+        <td class="py-4 text-right">  {{ plan.created_by|default:"-" }}</td>
         <td class="px-6 py-4 text-center">
-              <a href="{% url 'plan_detail' plan.id %}" class="text-blue-600 hover:underline">عرض</a>
-            <a href="{% url 'plan_update' plan.id %}" class="text-blue-600 hover:underline">تعديل</a>
-            <button 
-    onclick="openDeleteModal(`{% url 'plan_delete' plan.id %}`, `هل تريد حذف هذه الخطة؟`)" 
-    class="text-red-600">
-               حذف
-         </button>
-        </td>
-    </tr>
-    {% empty %}
-    <tr >
-        <td colspan="4" class="text-center py-4 text-gray-500 font-medium">لا توجد خطط</td>
-    </tr>
-    {% endfor %}
+             {% if plan.is_active %}
+             <span class="px-3 py-1 text-xs bg-green-100 text-green-700 rounded-full">نشطة</span>
+             {% else %}
+             <span class="px-3 py-1 text-xs bg-gray-200 text-gray-700 rounded-full">غير نشطة</span>
+             {% endif %}
+         </td>
+         <td class="px-6 py-4 text-center flex justify-center gap-3">
+          <!-- View Button -->
+          <a href="{% url 'plan_detail' plan.id %}" class="text-blue-600 hover:text-blue-800 p-1">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+              <circle cx="12" cy="12" r="3" />
+              <path d="M2 12c2-4 6-8 10-8s8 4 10 8c-2 4-6 8-10 8s-8-4-10-8" />
+            </svg>
+          </a>
+
+          <!-- Update Button -->
+         {% if plan.is_active %}
+          <a href="{% url 'plan_update' plan.id %}" class="text-yellow-600 hover:text-yellow-800 p-1">
+             <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+               <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+               <path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" />
+               <path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415" />
+               <path d="M16 5l3 3" />
+             </svg>
+          </a>
+         {% endif %}
+
+          <!-- Delete Button -->
+          <button class="text-red-600 hover:text-red-800 p-1" onclick="openDeleteModal(`{% url 'plan_delete' plan.id %}`, `هل تريد حذف هذه الخطة؟`)">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+              <path d="M4 7l16 0" />
+              <path d="M10 11l0 6" />
+              <path d="M14 11l0 6" />
+              <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" />
+              <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" />
+           </svg>
+          </button>
+          
+         </td>
+
+     </tr>
+     {% empty %}
+     <tr >
+     <td colspan="4" class="text-center py-4 text-gray-500 font-medium">لا توجد خطط</td>
+     </tr>
+     {% endfor %}
 

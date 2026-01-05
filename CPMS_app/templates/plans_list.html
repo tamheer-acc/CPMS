@@ -72,7 +72,7 @@
             <div>
                 {% if request.user.role.role_name == 'CM' %} 
                     <a href="{% url 'plan_create' %}"
-                        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium">
+                        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-semibold">
                         إضافة خطة
                     </a>
                 {% endif %}
@@ -82,12 +82,12 @@
 
         <!-- Table of Plans -->
         <table class="w-full text-sm text-right text-gray-700">
-            <thead class="text-xs bg-gray-50 border-b">
+            <thead class="text-xs bg-gray-50 border-b text-center">
                 <tr>
-                    <th class="px-6 py-3 font-semibold">عنوان الخطة</th>
-                    <th class="px-6 py-3 font-semibold">أُنشئت بواسطة</th>
-                    <th class="px-6 py-3 font-semibold">الحالة</th>
-                    <th class="px-6 py-3 font-semibold text-center"> </th>
+                    <th class="py-3 font-semibold">عنوان الخطة</th>
+                    <th class="px-0 py-3 font-semibold text-right">أُنشئت بواسطة</th>
+                    <th class="px-0 py-3 font-semibold">الحالة</th>
+                    <th class="px-0 py-3 font-semibold text-center"> </th>
                 </tr>
             </thead>
             <tbody id="plansBody">
@@ -97,13 +97,13 @@
 
         <!-- Pagination -->
         {% if is_paginated %}
-        <nav class="flex items-center flex-column flex-wrap md:flex-row justify-between p-4"
+        <div class="flex items-center flex-column flex-wrap md:flex-row justify-between p-4"
              aria-label="Table navigation" dir="rtl">
 
             <!-- Shows the range of results currently displayed and total number of pages -->
             <span class="text-sm font-normal text-gray-600 mb-4 md:mb-0 block w-full md:inline md:w-auto">
                 عرض
-                <span class="font-semibold text-gray-900">{{ page_obj.start_index }}-{{ page_obj.end_index }}</span>
+                <span class="font-semibold text-gray-900">{{page_obj.number}}</span>
                 من
                 <span class="font-semibold text-gray-900">{{ paginator.num_pages }}</span>
             </span>
@@ -137,8 +137,8 @@
                     {% elif num == page_obj.number %}
                         <li>
                             <span aria-current="page"
-                                  class="flex items-center justify-center text-gray-400 bg-blue-200 bg-neutral-secondary-medium border border-default-medium font-medium text-sm w-9 h-9
-                                      hover:bg-blue-300 transition-colors duration-200">
+                                  class="flex items-center justify-center text-blue-100 bg-blue-300 bg-neutral-secondary-medium border border-default-medium font-medium text-sm w-9 h-9
+                                      hover:bg-gray-200 hover:text-gray-400 duration-200">
                                 {{ num }}
                             </span>
                         </li>
@@ -169,7 +169,7 @@
                 </li>
 
             </ul>
-        </nav>
+        </div>
         {% endif %}
 
     </div>

@@ -1,59 +1,30 @@
-.pagination {
-    display: flex;
-    justify-content: flex-end;
-    gap: 4px;
-    margin-top: 16px;
-    flex-wrap: wrap;
-}
-
-.pagination button {
-    padding: 6px 10px;
-    border-radius: 6px;
-    border: 1px solid #d1d5db;
-    background-color: #f9fafb;
-    color: #374151;
-    cursor: pointer;
-    transition: background 0.2s, color 0.2s;
-}
-
-.pagination button:hover {
-    background-color: #e5e7eb;
-}
-
-.pagination button.active {
-    background-color: #3b82f6;
-    color: white;
-    border-color: #3b82f6;
-}
-
-
 /* Dummy css */
 
 nav,html,em,strong{
     margin: 0;
 }
-
+/*
 *{ 
     margin-left: 1vw;
     margin-right: 1vw;
 
-}
+}*/
 
 body{
     background-color: #e7d3ba;
 }
-
+/*
 input[type="checkbox"] {
     opacity: 1 !important;
     pointer-events: auto !important;
     position: relative !important;
     /* transform: translateY(-5) !important */
-}
-
+/*}*/
+/*
 table {
     width: 30%;
 }
-
+*/
 nav{
     background-color:brown;
     display: flex;
@@ -146,7 +117,7 @@ nav a {
 .hidden-form {
     display: none;
 }
-
+/*
 .button {
     background-color: #04aaa2;
     border: none;
@@ -158,6 +129,6 @@ nav a {
     font-size: 16px;
     margin: 4px 2px;
     cursor: pointer;
-}
+}*/
 
 /* Dummy css */

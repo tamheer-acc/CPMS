@@ -5,13 +5,15 @@
         <h2 id="deleteModalText" class="text-center text-md font-semibold text-gray-700 mb-4"></h2>
         <div class="px-6 py-4 flex  justify-center gap-3">
             <button type="button" onclick="closeDeleteModal()" 
-            class="bg-gray-200 border border-transparent hover:bg-gray-300 focus:ring-4 focus:ring-gray-200 shadow-sm font-medium rounded-lg text-sm px-4 py-2 focus:outline-none transition">
+            class="bg-gray-200 border border-transparent transform hover:-translate-y-0.5
+                   transition duration-200 hover:bg-gray-300 focus:ring-4 focus:ring-gray-200 shadow-sm font-medium rounded-lg text-sm px-4 py-2 focus:outline-none transition">
              إلغاء
             </button>
             <form id="deleteModalForm" method="post">
                         {% csrf_token %}
                  <button type="submit" 
-                    class="text-white bg-red-600 border border-transparent hover:bg-red-700 focus:ring-4 focus:ring-red-300 shadow-sm font-medium rounded-lg text-sm px-4 py-2 focus:outline-none transition">
+                    class="text-white bg-red-600 border border-transparent transform hover:-translate-y-0.5
+                           transition duration-200 hover:bg-red-700 focus:ring-4 focus:ring-red-300 shadow-sm font-medium rounded-lg text-sm px-4 py-2 focus:outline-none transition">
                     حذف
                  </button>
             </form>

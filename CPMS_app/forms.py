@@ -28,8 +28,8 @@ class BaseForm(forms.ModelForm):
         if user:
            obj.department = user.department
 
-        if plan_id and hasattr(obj, 'plan_id'):
-            obj.plan_id = plan_id
+        if plan_id and hasattr(obj, 'strategicplan_id'):
+            obj.strategicplan_id = plan_id
 
         if commit:
             obj.save()
@@ -48,11 +48,25 @@ class StrategicPlanForm(BaseForm):
             'end_date': 'تاريخ نهاية الخطة',
         }
         widgets = {
-            'plan_name': forms.TextInput(attrs={'class': 'input'}),
-            'vision': forms.Textarea(attrs={'rows': 1, 'class': 'textarea'}),
-            'mission': forms.Textarea(attrs={'rows': 1, 'class': 'textarea'}),
-            'start_date': forms.DateInput(attrs={'type': 'date', 'class': 'input'}),
-            'end_date': forms.DateInput(attrs={'type': 'date', 'class': 'input'}),
+            'plan_name': forms.TextInput(attrs={
+                'class': 'w-full bg-gray-100 border border-gray-300 rounded-lg p-2.5 focus:bg-white focus:ring-2 focus:ring-blue-500'
+            }),
+            'vision': forms.Textarea(attrs={
+                'class': 'w-full bg-gray-100 border border-gray-300 rounded-lg p-2.5 focus:bg-white focus:ring-2 focus:ring-blue-500',
+                'rows': 3
+            }),
+            'mission': forms.Textarea(attrs={
+                'class': 'w-full bg-gray-100 border border-gray-300 rounded-lg p-2.5 focus:bg-white focus:ring-2 focus:ring-blue-500',
+                'rows': 3
+            }),
+            'start_date': forms.DateInput(attrs={
+                'type': 'date',
+                'class': 'w-full bg-gray-100 border border-gray-300 rounded-lg p-2.5 focus:bg-white focus:ring-2 focus:ring-blue-500'
+            }),
+            'end_date': forms.DateInput(attrs={
+                'type': 'date',
+                'class': 'w-full bg-gray-100 border border-gray-300 rounded-lg p-2.5 focus:bg-white focus:ring-2 focus:ring-blue-500'
+            }),
         }
 
 # ===== Strategic Goal Form =====
@@ -73,6 +87,6 @@ class StrategicGoalForm(BaseForm):
             'description': forms.Textarea(attrs={'rows': 1, 'class': 'textarea'}),
             'start_date': forms.DateInput(attrs={'type': 'date', 'class': 'input'}),
             'end_date': forms.DateInput(attrs={'type': 'date', 'class': 'input'}),
-            'goal_status': forms.Select(attrs={'class': 'select'}),
-            'goal_priority': forms.Select(attrs={'class': 'select'}),
+            'goal_status': forms.Select(attrs={'class': 'block flex-1 text-sm text-gray-900 bg-gray-50 rounded-xl shadow-sm border border-gray-300 p-2.5 h-11 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-500 hover:border-gray-400'}),
+            'goal_priority': forms.Select(attrs={'class': 'block flex-1 text-sm text-gray-900 bg-gray-50 rounded-xl shadow-sm border border-gray-300 p-2.5 h-11 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-500 hover:border-gray-400'}),
         }

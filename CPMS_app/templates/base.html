@@ -12,8 +12,7 @@
         <script src="https://cdn.tailwindcss.com"></script>
         <!-- APP JS -->
         <script defer src="{% static 'CPMS_app/app.js' %}"></script>
-
-<body>
+        
     </head>
 <body>
     
@@ -23,6 +22,8 @@
         </div>
         <div class="flex">
             <a href="{% url 'initiatives_list' %}" class="nav-items">Initiatives</a>
+            <a href="{% url 'plans_list' %}" class="nav-items">Plans</a>
+            <a href="{% url 'goals_list' %}" class="nav-items">Goals</a>
             <a href="{% url 'login' %}">Log In</a>
         </div>
     </nav>
@@ -31,49 +32,7 @@
         <!-- This is where the individual pages will be rendered -->
         {% endblock %}
 
-        <!-- Global Delete Modal -->
-        <div id="deleteModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div class="bg-white rounded-lg shadow-lg w-96 p-6">
-                <h2 class="text-lg font-semibold text-gray-800 mb-4">تأكيد الحذف</h2>
-                <p id="deleteModalText" class="text-gray-600 mb-6">
-                    هل أنت متأكد أنك تريد الحذف؟
-                </p>
-                <div class="flex justify-end gap-3">
-                    <button 
-                        type="button" 
-                        onclick="closeDeleteModal()" 
-                        class="px-4 py-2 bg-gray-200 rounded">
-                        إلغاء
-                    </button>
-                    <form id="deleteModalForm" method="post">
-                        {% csrf_token %}
-                        <button 
-                            type="submit" 
-                            class="px-4 py-2 bg-red-600 text-white rounded">
-                            حذف
-                        </button>
-                    </form>
-                </div>
-            </div>
-        </div>
     </main>
-
-    <script>
-        function openDeleteModal(deleteUrl, message) {
-            const modal = document.getElementById('deleteModal');
-            const form  = document.getElementById('deleteModalForm');
-            const text  = document.getElementById('deleteModalText');
-
-            form.action = deleteUrl;
-            text.textContent = message || 'هل أنت متأكد أنك تريد الحذف؟';
-
-            modal.classList.remove('hidden');
-        }
-
-        function closeDeleteModal() {
-            document.getElementById('deleteModal').classList.add('hidden');
-        }
-    </script>
-    </main>
+ 
 </body>
 </html>

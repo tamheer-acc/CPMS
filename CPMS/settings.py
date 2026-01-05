@@ -78,10 +78,10 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'CPMS',
-        # 'USER': 'postgres',
-        # 'PASSWORD': 'post123',
-        # 'HOST': 'localhost',
-        # 'PORT': '5432',
+         'USER': 'postgres',
+         'PASSWORD': 'post123',
+         'HOST': 'localhost',
+         'PORT': '5432',
     }
 }
 
@@ -108,7 +108,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'ar'
 
 TIME_ZONE = 'UTC'
 
