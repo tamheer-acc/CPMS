@@ -1,145 +1,58 @@
-{% extends 'base.html' %}
-{% block content %}
 
-<h1>تعيين موظفين لمبادرة {{ initiative.title }}</h1>
+<div id="assign_employee" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-xl shadow-xl w-3/4 max-w-4xl max-h-[80vh] p-8 overflow-hidden">
+        <h1 class="text-2xl font-bold text-gray-800 mb-6"> تعيين موظفين لمبادرة {{ initiative.title }}</h1>
 
-<ul id="employee-list">
-    {% for emp in employees %}
-<li class="flex items-center gap-3">
-    <span>{{ emp.get_full_name }}</span>
+        <ul id="employee-list" class="overflow-y-auto max-h-[60vh] divide-y divide-gray-200">
+            {% for emp in employees %}
+            <li class="flex items-center justify-between gap-4 py-2">
+                <span class="text-lg font-medium">{{ emp.get_full_name }}</span>
 
-    <button
-        class="add-btn px-2 py-1 rounded bg-green-500 text-white disabled:bg-gray-300"
-        data-id="{{ emp.id }}"
-        data-assigned="{% if emp.id in assigned_employee_ids %}true{% else %}false{% endif %}"
-        {% if emp.id in assigned_employee_ids %}disabled{% endif %}
-    >
-        تعيين
-    </button>
 
-    <button
-        class="remove-btn px-2 py-1 rounded bg-red-500 text-white disabled:bg-gray-300"
-        data-id="{{ emp.id }}"
-        data-assigned="{% if emp.id in assigned_employee_ids %}true{% else %}false{% endif %}"
-        {% if emp.id not in assigned_employee_ids %}disabled{% endif %}
-    >
-        إلغاء
-    </button>
-</li>
-    {% endfor %}
-</ul>
+                <div class="flex gap-2">
+                    <button
+                        class="add-btn px-4 py-2 rounded-lg bg-green-500 text-white disabled:bg-gray-300 hover:bg-green-600"
+                        data-id="{{ emp.id }}"
+                        data-assigned="{% if emp.id in assigned_employee_ids %}true{% else %}false{% endif %}"
+                        {% if emp.id in assigned_employee_ids %}disabled{% endif %}>
+                        تعيين
+                    </button>
 
-<button id="done-btn">Done</button>
+                    <button
+                        class="remove-btn px-4 py-2 rounded-lg bg-red-500 text-white disabled:bg-gray-300 hover:bg-red-600"
+                        data-id="{{ emp.id }}"
+                        data-assigned="{% if emp.id in assigned_employee_ids %}true{% else %}false{% endif %}"
+                        {% if emp.id not in assigned_employee_ids %}disabled{% endif %}>
+                        إلغاء
+                    </button>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
 
-<!-- confirmation pop up -->
-<div id="confirm-popup" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white rounded-lg shadow-lg w-96 p-6">
-        <h2 class="text-lg font-semibold text-gray-800 mb-4">تأكيد التغييرات </h2>
-        <p id="popup-text" class="text-gray-600 mb-6 whitespace-pre-line"></p>
-
-        <div class="flex justify-end gap-3">
-            <button type="button" onclick="closePopup()" class="px-4 py-2 bg-gray-200 rounded">إلغاء</button>
-            <form id="assignForm" method="post">
-                {% csrf_token %}
-
-                <div id="hidden-inputs"></div>
-                <button type="submit" id="confirmAssign" class="px-4 py-2 bg-blue-600 text-white rounded">تأكيد</button>
-            </form>
+        <div class="flex justify-end gap-4 mt-6">
+            <button id="cancel-btn" class="px-6 py-3 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300">إلغاء</button>
+            <button id="done-btn" class="px-6 py-3 rounded-lg bg-blue-600 text-white hover:bg-blue-700">حفظ</button>
         </div>
+
+
+        <!-- confirmation pop up -->
+        <div id="confirm-popup" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-white rounded-lg shadow-lg w-96 p-6">
+                <h2 class="text-lg font-semibold text-gray-800 mb-4">تأكيد التغييرات </h2>
+                <p id="popup-text" class="text-gray-600 mb-6 whitespace-pre-line"></p>
+
+                <div class="flex justify-end gap-3">
+                    <button type="button" onclick="closePopup()" class="px-4 py-2 bg-gray-200 rounded">إلغاء</button>
+                    <form id="assignForm" method="post" action="{% url 'initiative_assign' initiative.id %}">
+                        {% csrf_token %}
+                        <div id="hidden-inputs"></div>
+                        <button type="submit" id="confirmAssign" class="px-4 py-2 bg-blue-600 text-white rounded">تأكيد</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
     </div>
 </div>
 
-<script>
-
-const toAdd = new Map();    // map to get emp name
-const toRemove = new Map(); 
-
-// Toggle buttons logic
-document.querySelectorAll('.add-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-        const li = btn.closest('li');
-        const removeBtn = li.querySelector('.remove-btn');
-        const id = btn.dataset.id;
-        const name = li.querySelector('span').textContent;
-        const wasAssigned = btn.dataset.assigned === 'true';
-
-        if (!wasAssigned) {
-            toAdd.set(id, name);
-        }
-        toRemove.delete(id);
-
-        btn.disabled = true;
-        removeBtn.disabled = false;
-    });
-});
-
-document.querySelectorAll('.remove-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-        const li = btn.closest('li');
-        const addBtn = li.querySelector('.add-btn');
-        const id = btn.dataset.id;
-        const name = li.querySelector('span').textContent;
-        const wasAssigned = btn.dataset.assigned === 'true';
-
-        if (wasAssigned) {
-            toRemove.set(id, name);
-        }
-        toAdd.delete(id);
-
-        btn.disabled = true;
-        addBtn.disabled = false;
-    });
-});
-
-
-
-// popup (uses names)
-document.getElementById('done-btn').addEventListener('click', () => {
-    if (toAdd.size === 0 && toRemove.size === 0) {
-        alert("لا توجد تغيرات");
-        return;
-    }
-
-    let text = '';
-    if (toAdd.size) text += 'تم تعيين: \n' + Array.from(toAdd.values()).join(', ') + '\n\n';
-    if (toRemove.size) text += 'تم إلغاء تعيين: \n' + Array.from(toRemove.values()).join(', ');
-
-    document.getElementById('popup-text').textContent = text;
-    document.getElementById('confirm-popup').classList.remove('hidden');
-});
-
-
-// emp IDs 
-document.getElementById('confirmAssign').addEventListener('click', function() {
-    const hiddenContainer = document.getElementById('hidden-inputs');
-    hiddenContainer.innerHTML = ''; // clear previous inputs
-
-    toAdd.forEach((name, id) => {
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = 'to_add[]';
-        input.value = id;  //id
-        hiddenContainer.appendChild(input);
-    });
-
-
-    toRemove.forEach((name, id) => {
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = 'to_remove[]';
-        input.value = id;  //  did
-        hiddenContainer.appendChild(input);
-    });
-
-    document.getElementById('assignForm').submit();
-});
-
-
-
-function closePopup() {
-    document.getElementById('confirm-popup').classList.add('hidden');
-}
-
-</script>
-
-{% endblock %}
