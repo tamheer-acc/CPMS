@@ -1,11 +1,12 @@
 
 
 // ---------------------------
-//       open popoup js       
+//          popoup js       
 // ---------------------------
+
 const params = "scrollbars=no,resizable=no,status=no,location=no,toolbar=no,menubar=no,width=400,height=300,left=100,top=100";
 
-function openPopup(url){
+function openWindow(url){
 
     window.open(
         url,        //url to open
@@ -15,19 +16,24 @@ function openPopup(url){
     );
 
 }
-document.querySelectorAll('.assign_employee_button').forEach(btn => { 
-    btn.addEventListener('click', () => {
-        document.getElementById('assign_employee').classList.remove('hidden');
-    });
-});
 
 
+function openPopup(id){
+    document.getElementById(id).classList.remove('hidden');
+
+}
+
+
+function closePopup(id){
+    document.getElementById(id).classList.add('hidden');
+}
 
 
 
 // ---------------------------
 //     confirm delete js     
 // ---------------------------
+
 function openDeleteModal(deleteUrl, message) {
     const modal = document.getElementById('deleteModal');
     const form  = document.getElementById('deleteModalForm');
@@ -38,6 +44,7 @@ function openDeleteModal(deleteUrl, message) {
     modal.classList.remove('hidden');
 }
 
+
 function closeDeleteModal() {
     document.getElementById('deleteModal').classList.add('hidden');
 }
@@ -47,10 +54,17 @@ function closeDeleteModal() {
 // ---------------------------
 //    assign employees js     
 // ---------------------------
-const toAdd = new Map();    // using map to get emp name not just id
+
+const toAdd = new Map();    
 const toRemove = new Map(); 
 
-// toggling buttons
+document.querySelectorAll('.assign_employee_button').forEach(btn => { 
+    btn.addEventListener('click', () => {
+        openPopup('assign_employee');
+    });
+});
+
+
 document.querySelectorAll('.add-btn').forEach(btn => {
     btn.addEventListener('click', () => {
         const li = btn.closest('li');
@@ -68,6 +82,7 @@ document.querySelectorAll('.add-btn').forEach(btn => {
         removeBtn.disabled = false;
     });
 });
+
 
 document.querySelectorAll('.remove-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -88,8 +103,6 @@ document.querySelectorAll('.remove-btn').forEach(btn => {
 });
 
 
-
-// popup
 document.getElementById('done-btn').addEventListener('click', () => {
     if (toAdd.size === 0 && toRemove.size === 0) {
         alert("لا توجد تغيرات");
@@ -101,7 +114,7 @@ document.getElementById('done-btn').addEventListener('click', () => {
     if (toRemove.size) text += 'تم إلغاء تعيين: \n' + Array.from(toRemove.values()).join(', ');
 
     document.getElementById('popup-text').textContent = text;
-    document.getElementById('confirm-popup').classList.remove('hidden');
+    openPopup('confirm-popup');
 });
 
 
@@ -119,15 +132,14 @@ document.getElementById('cancel-btn').addEventListener('click', () => {
         btn.disabled = !wasAssigned;
     });
 
-    document.getElementById('assign_employee').classList.add('hidden');
-    document.getElementById('confirm-popup').classList.add('hidden'); // hide confirm too
+    closePopup('assign_employee');
+    closePopup('confirm-popup');
 });
 
 
-// emp IDs 
 document.getElementById('confirmAssign').addEventListener('click', function() {
     const hiddenContainer = document.getElementById('hidden-inputs');
-    hiddenContainer.innerHTML = ''; // clear previous inputs
+    hiddenContainer.innerHTML = ''; // clear inputs
 
     toAdd.forEach((name, id) => {
         const input = document.createElement('input');
@@ -142,7 +154,7 @@ document.getElementById('confirmAssign').addEventListener('click', function() {
         const input = document.createElement('input');
         input.type = 'hidden';
         input.name = 'to_remove[]';
-        input.value = id;  //  did
+        input.value = id;  
         hiddenContainer.appendChild(input);
     });
 
@@ -150,11 +162,52 @@ document.getElementById('confirmAssign').addEventListener('click', function() {
 });
 
 
-
-function closePopup() {
-    document.getElementById('confirm-popup').classList.add('hidden');
+function closeConfirmPopup() {
+    closePopup('confirm-popup');
 }
+
 
 function closeAssignPopup() {
-    document.getElementById('assign_employee').classList.add('hidden');
+    closePopup('confirm-assign_employee');
 }
+
+
+
+// ---------------------------
+//        add KPI js     
+// ---------------------------
+
+document.getElementById('add_kpi_button').addEventListener('click', () => {
+    openPopup('kpi-modal');
+});
+
+
+document.querySelectorAll('.edit-kpi-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const kpiId = btn.dataset.kpiId;
+        const form = document.getElementById('kpiForm');
+        const initiativeId = document.getElementById('add_kpi_button').dataset.initiativeId;
+
+        form.action = `/initiatives/${initiativeId}/kpis/${kpiId}/update/`;
+        form.dataset.isUpdate = "true"; // is update 
+
+        form.kpi.value = btn.dataset.kpiName;
+        form.unit.value = btn.dataset.unit;
+        form.target_value.value = btn.dataset.target;
+        form.actual_value.value = btn.dataset.actual;
+
+        openPopup('kpi-modal');
+    });
+});
+
+
+document.getElementById('cancel-btn-kpi').addEventListener('click', () => {
+    const form  = document.getElementById('kpiForm');
+
+    closePopup('kpi-modal');
+
+    if (!form.dataset.isUpdate) { // reset the fields
+        form.reset();
+    }
+});
+

@@ -15,7 +15,25 @@
         {% if initiative.kpi_set.exists %}
             <ol>
                 {% for kpi in initiative.kpi_set.all %}
-                    <li>{{kpi.kpi}}</li>
+                    <li data-kpi-id="{{ kpi.id }}" data-initiative-id="{{ initiative.id }}">
+                        {{kpi.kpi}}
+                        {% if user.role.role_name == 'M' or user.role.role_name == 'CM' %} 
+                            <button class="edit-kpi-btn button" 
+                                    data-kpi-id="{{ kpi.id }}"
+                                    data-kpi-name="{{ kpi.kpi }}"
+                                    data-unit="{{ kpi.unit }}"
+                                    data-target="{{ kpi.target_value }}"
+                                    data-actual="{{ kpi.actual_value }}">                                
+                                تعديل   
+                            </button>
+                            
+                            <button class="button" onclick="openDeleteModal(
+                            '/initiatives/{{ initiative.id }}/kpis/{{ kpi.id }}/delete/',
+                            'هل أنت متأكد أنك تريد حذف هذا المؤشر')">
+                            حذف
+                            </button>
+                        {% endif %}
+                    </li> 
                 {% endfor %}
             </ol>
         {% else %}
@@ -39,20 +57,19 @@
         حذف
     </button>
 
-    <button class="button" onclick="window.open( 
-    '/initiatives/{{initiative.id}}/kpis/add/','_blank');">
-
-
+    <button id="add_kpi_button" class="button" data-initiative-id="{{ initiative.id }}">
+    إضافة مؤشر أداء رئيسي
     </button>
 
     <button class = "assign_employee_button button"> <!-- ##error handling -->
         تعيين موظفين
     </button>
 {% endif %}
-{% include "assign_employee.html" %}
+{% include "partials/assign_employee.html" %}
+{% include "partials/kpi_form.html" %}
 
 {% if user.role.role_name != 'GM' %} <!-- managers and employees can send initiative-level notes -->
-    <button class="button" onclick="openPopup('/notes/create')">أرسل ملاحظة</button>
+    <button class="button" onclick="openWindow('/notes/create')">أرسل ملاحظة</button>
 {% endif %}
 
 {% endblock %}

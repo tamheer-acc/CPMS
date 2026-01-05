@@ -296,6 +296,7 @@ class InitiativeDetailsView(LoginRequiredMixin, InitiativePermissionMixin, Detai
             
             context['employees'] = employees 
             context['assigned_employee_ids'] = assigned_employee_ids 
+            context['form'] = KPIForm()
         else:
             context['employees'] = [] 
             context['assigned_employee_ids'] = set() 
@@ -456,6 +457,10 @@ def create_kpi_view(request, initiative_id):
     - Fills AI-generated KPI suggestions for editing or adding
     - Redirects on submission or renders form (full or partial) on GET, handling errors as needed
     '''
+    
+    if not is_manager(request.user):
+        raise PermissionDenied("ليست لديك صلاحية لرؤية هذه الصفحة")
+
     initiative = get_object_or_404(Initiative, id=initiative_id)
     if request.method == "POST":
         form = KPIForm(request.POST)
@@ -475,7 +480,7 @@ def create_kpi_view(request, initiative_id):
             return render(request, 'partials/kpi_form.html', {'form': form, 'suggestions': ai_suggestion})
         
         #if someone opens the url normally
-        return render(request, 'kpi_page.html', {'initiative': initiative, 'form': form})
+        return render(request, 'kpi_form.html', {'initiative': initiative, 'form': form})
 
 
 
@@ -508,9 +513,15 @@ class UpdateKPIView(RoleRequiredMixin, UpdateView, LogMixin):
     template_name = 'kpi_form.html'
     allowed_roles = ['M', 'CM']
     
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['initiative'] = self.object.initiative
+        context['is_update'] = True
+        return context
+
     def get_success_url(self):
         initiative_id = self.kwargs.get('initiative_id')
-        return reverse('kpi_detail', kwargs={'initiative_id': initiative_id, 'pk': self.object.pk})
+        return reverse('initiative_detail', kwargs={'pk': initiative_id})
 
 
 
