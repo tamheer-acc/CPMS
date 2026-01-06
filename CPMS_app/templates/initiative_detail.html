@@ -11,9 +11,38 @@
     <li><strong>الأهمية: </strong> {{ initiative.priority }}</li>
     <li><strong>التصنيف: </strong> {{ initiative.category }} </li>
     <li><strong>الهدف الاستراتيجي المرتبط بالمبادرة: </strong> {{ initiative.strategic_goal }}</li>
+    <li>مؤشرات الأداء الرئيسية: 
+        {% if initiative.kpi_set.exists %}
+            <ol>
+                {% for kpi in initiative.kpi_set.all %}
+                    <li data-kpi-id="{{ kpi.id }}" data-initiative-id="{{ initiative.id }}">
+                        {{kpi.kpi}}
+                        {% if user.role.role_name == 'M' or user.role.role_name == 'CM' %} 
+                            <button class="edit-kpi-btn button" 
+                                    data-kpi-id="{{ kpi.id }}"
+                                    data-kpi-name="{{ kpi.kpi }}"
+                                    data-unit="{{ kpi.unit }}"
+                                    data-target="{{ kpi.target_value }}"
+                                    data-actual="{{ kpi.actual_value }}">                                
+                                تعديل   
+                            </button>
+                            
+                            <button class="button" onclick="openDeleteModal(
+                            '/initiatives/{{ initiative.id }}/kpis/{{ kpi.id }}/delete/',
+                            'هل أنت متأكد أنك تريد حذف هذا المؤشر')">
+                            حذف
+                            </button>
+                        {% endif %}
+                    </li> 
+                {% endfor %}
+            </ol>
+        {% else %}
+            لا يوجد
+        {% endif %}
+    </li>
 </ul>
 
-{% if user.role.role_name == 'M' or user.role.role_name == 'CM' %}
+{% if user.role.role_name == 'M' or user.role.role_name == 'CM' %} <!-- add working employees if needed -->
     <button class="button" onclick="window.open(
     '/initiatives/{{initiative.id}}/update/','_blank');">
         تعديل
@@ -28,15 +57,19 @@
         حذف
     </button>
 
+    <button id="add_kpi_button" class="button" data-initiative-id="{{ initiative.id }}">
+    إضافة مؤشر أداء رئيسي
+    </button>
 
     <button class = "assign_employee_button button"> <!-- ##error handling -->
         تعيين موظفين
     </button>
 {% endif %}
-{% include "assign_employee.html" %}
+{% include "partials/assign_employee.html" %}
+{% include "partials/kpi_form.html" %}
 
 {% if user.role.role_name != 'GM' %} <!-- managers and employees can send initiative-level notes -->
-    <button class="button" onclick="openPopup('/notes/create')">أرسل ملاحظة</button>
+    <button class="button" onclick="openWindow('/notes/create')">أرسل ملاحظة</button>
 {% endif %}
 
 {% endblock %}

@@ -43,7 +43,7 @@
                 <p id="popup-text" class="text-gray-600 mb-6 whitespace-pre-line"></p>
 
                 <div class="flex justify-end gap-3">
-                    <button type="button" onclick="closePopup()" class="px-4 py-2 bg-gray-200 rounded">إلغاء</button>
+                    <button type="button" onclick="closeConfirmPopup()" class="px-4 py-2 bg-gray-200 rounded">إلغاء</button>
                     <form id="assignForm" method="post" action="{% url 'initiative_assign' initiative.id %}">
                         {% csrf_token %}
                         <div id="hidden-inputs"></div>
