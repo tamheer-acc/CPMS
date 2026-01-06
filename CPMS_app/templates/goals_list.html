@@ -1,4 +1,4 @@
-<!-- goals_list.html -->
+<!-- goals_list.html
 <div class="max-w-4xl mx-auto py-8">
     {% if goals %}
     <div class="grid grid-cols-1 gap-4">
@@ -18,4 +18,21 @@
         <p class="text-gray-500">لا توجد أهداف لهذه الخطة.</p>
     {% endif %}
 </div>
-    {% include 'initiatives_list.html' %}
+ -->
+         <!-- Accordion toggle -->
+        
+            <tr class="border-b hover:bg-gray-50 hover:font-medium text-center">
+                <td class="px-8 py-4">{{ goal.goal_title }}</td>
+                <td class="py-4 text-center">{{ goal.description }}</td>
+                <td class="px-6 py-4 text-center">{{ goal.description }}</td>
+                <td class="px-6 py-4 text-center">{{ goal.description }}</td>
+                <td class="px-6 py-4 text-center">{{ goal.start_date }} - {{goal.end_date}}</td>
+                <td class="text-center">+</td>
+            </tr>
+
+            <!-- Accordion content (hidden by default) -->
+            <tbody id="goal-{{ goal.id }}">
+              
+            </tbody>
+
+

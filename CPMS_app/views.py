@@ -720,7 +720,7 @@ class AllGoalsView(LoginRequiredMixin, ListView):
     - Employees see goals linked to their initiatives
     '''
     model = StrategicGoal 
-    template_name = 'partials/goals_list.html'
+    template_name = 'goals_list.html'
     context_object_name = 'goals'
         
     def get_queryset(self):
@@ -756,12 +756,13 @@ class CreateGoalView(LoginRequiredMixin, RoleRequiredMixin, LogMixin, CreateView
     model = StrategicGoal
     form_class = StrategicGoalForm
     template_name = 'goal_form.html'
-    success_url = reverse_lazy('partials\goals_list.html')
     allowed_roles = ['M', 'CM']  # Roles allowed to access this view
 
     def form_valid(self, form):
         self.object = form.save(user=self.request.user, plan_id=self.kwargs['plan_id'])
         return super().form_valid(form)
+    def get_success_url(self):
+        return reverse('plan_detail', kwargs={'pk': self.kwargs['plan_id']})
 
 
 class UpdateGoalView(LoginRequiredMixin, RoleRequiredMixin, LogMixin, UpdateView):
@@ -773,7 +774,7 @@ class UpdateGoalView(LoginRequiredMixin, RoleRequiredMixin, LogMixin, UpdateView
     model = StrategicGoal
     form_class = StrategicGoalForm
     template_name = 'goal_form.html'
-    success_url = reverse_lazy('partials\goals_list.html')
+    success_url = reverse_lazy('plan_goals_list')
     allowed_roles = ['M', 'CM']  # Roles allowed to access this view
 
     def form_valid(self, form):
@@ -788,7 +789,7 @@ class DeleteGoalView(LoginRequiredMixin, RoleRequiredMixin, LogMixin, DeleteView
     - Redirects to goals list
     '''
     model = StrategicGoal
-    success_url = reverse_lazy('partials\goals_list.html')
+    success_url = reverse_lazy('plan_goals_list')
     allowed_roles = ['M', 'CM']  # Roles allowed to access this view
 
 # ---------------------------

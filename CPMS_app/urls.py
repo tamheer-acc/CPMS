@@ -38,10 +38,11 @@ urlpatterns = [
     path('goals/<int:pk>/delete/', DeleteGoalView.as_view(), name='goal_delete'),
 
     # Goals under a specific plan
-    path('plans/<int:plan_id>/goals/',AllGoalsView.as_view(), name='plan_goals_list'),
-    path('plans/<int:plan_id>/goals/<int:pk>/',GoalDetailsview.as_view(), name='plan_goal_detail'),
-    path('plans/<int:plan_id>/goals/<int:pk>/update/',UpdateGoalView.as_view(), name='plan_goal_update'),
-    path('plans/<int:plan_id>/goals/<int:pk>/delete/',DeleteGoalView.as_view(), name='plan_goal_delete'),
+    path('plans/<int:plan_id>/detail/goals/',AllGoalsView.as_view(), name='plan_goals_list'),
+    path('plans/<int:plan_id>/detail/goals/add/',CreateGoalView.as_view(), name='plan_goal_create'),
+    path('plans/<int:plan_id>/detail/goals/<int:pk>/',GoalDetailsview.as_view(), name='plan_goal_detail'),
+    path('plans/<int:plan_id>/detail/goals/<int:pk>/update/',UpdateGoalView.as_view(), name='plan_goal_update'),
+    path('plans/<int:plan_id>/detail/goals/<int:pk>/delete/',DeleteGoalView.as_view(), name='plan_goal_delete'),
 
     #Notes
     path('notes/', AllNotesView.as_view(), name='notes_list'),
