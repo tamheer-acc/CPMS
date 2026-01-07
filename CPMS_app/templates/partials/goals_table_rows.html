@@ -1,0 +1,112 @@
+<tr class="border-b hover:text-gray-500 text-center ">
+    <td class="px-8 py-4">{{ goal.goal_title }}</td>
+    <td class="py-4">{{ goal.description }}</td>
+    <td class="py-4">{{ goal.goal_status }}</td>
+    <td class="py-4">{{ goal.goal_priority }}</td>
+    <td class="py-4">
+        {{ goal.start_date }} - {{ goal.end_date }}
+    </td>
+
+    <td class="text-center">
+        <button onclick="toggleRow('goal-{{ goal.id }}')" class="text-blue-600 hover:text-blue-800">
+            +
+        </button>
+    </td>
+</tr>
+
+
+<tr id="goal-{{ goal.id }}" class="hidden bg-gray-50">
+    <td colspan="6" class="px-6 py-4">
+
+        {% if goal.initiative_set.exists %}
+
+
+        <div class="flex justify-between items-center mb-10">
+            <h3 class="font-semibold text-gray-800 text-lg">قائمة المبادرات</h3>
+            <!-- {% if can_edit %}
+            <a href="{% url 'initiative_create' goal.id %}"
+                class="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700">
+                إضافة مبادرة
+            </a>
+            {% endif %} -->
+        </div>
+
+
+        <ol class="list-disc list-inside space-y-2">
+            {% for initiative in goal.initiative_set.all %}
+            <li
+                class="border-b border-gray-200 last:border-b-0 py-2 space-y-1 md:space-y-0  md:flex md:justify-between md:items-center">
+
+
+                <div class="flex items-center space-x-8 px-4 hover:font-medium">
+                    <span class="font-normal"><a class="hover:font-medium"
+                            href="{% url 'initiative_detail' initiative.id %}">- {{ initiative.title }}</a></span>
+
+                    {% with initiative.userinitiative_set.first as ui %}
+                    {% if ui %}
+                    <span class="px-4 py-0.5 text-xs rounded-full font-normal
+                    {% if ui.status == 'C' %} bg-green-100 text-green-700
+                    {% elif ui.status == 'IP' %} bg-blue-100 text-blue-700
+                    {% elif ui.status == 'D' %} bg-red-100 text-red-700
+                    {% else %} bg-gray-100 text-gray-600 {% endif %}">
+                        {{ ui.status }}
+                    </span>
+                    {% else %}
+                    <span class="px-4 py-0.5 text-xs font-normal rounded-full bg-gray-100 text-gray-600">غير محدد</span>
+                    {% endif %}
+                    {% endwith %}
+
+                    <span class="text-sm font-normal text-gray-500">{{ initiative.start_date }} - {{
+                        initiative.end_date}}</span>
+                </div>
+
+
+                <!-- بخليها احتياط
+                <div class="flex space-x-2">
+                    {% if can_edit %}
+                    <a href="{% url 'initiative_update' initiative.id %}"
+                        class="text-yellow-600 hover:text-yellow-800 p-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" />
+                            <path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415" />
+                            <path d="M16 5l3 3" />
+                        </svg>
+                    </a>
+                    #Delete Button 
+                    <button class="text-red-600 hover:text-red-800 p-1"
+                        onclick="openDeleteModal(`{% url 'plan_delete' plan.id %}`, `هل تريد حذف هذه الخطة؟`)">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <path d="M4 7l16 0" />
+                            <path d="M10 11l0 6" />
+                            <path d="M14 11l0 6" />
+                            <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" />
+                            <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" />
+                        </svg>
+                    </button>
+                    {% endif %}
+                </div> -->
+            </li>
+            {% endfor %}
+
+        </ol>
+
+        {% else %}
+        <p class="text-center text-gray-400">
+            لا توجد مبادرات مرتبطة بهذا الهدف
+        </p>
+        {% endif %}
+
+    </td>
+</tr>
+
+<!--بنقلها بعدين JS-->
+<script>
+    function toggleRow(id) {
+        const row = document.getElementById(id);
+        row.classList.toggle("hidden");
+    }
+</script>

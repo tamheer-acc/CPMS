@@ -1,7 +1,7 @@
 from django.forms.models import model_to_dict
 from django.db.models import Count, Q
-from .models import StrategicGoal, Initiative, Log
-
+from .models import StrategicGoal, Initiative, Log, UserInitiative
+from django.db.models import Prefetch
 
 def get_changed_fields(old_data, new_data):
     '''
@@ -35,9 +35,13 @@ def generate_KPIs(initiative):
 
 def get_plan_dashboard(plan, user):
     role = user.role.role_name
-    can_edit = role in ['M', 'CM'] and plan.is_active
+    can_edit = False  # Read only
 
-    goals = plan.goals.all()  
+    goals = plan.goals.prefetch_related(
+    Prefetch(
+        'initiative_set__userinitiative_set',
+        queryset=UserInitiative.objects.select_related('user')
+        ))
 
     initiatives_qs = Initiative.objects.filter(strategic_goal__in=goals)
 

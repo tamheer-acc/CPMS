@@ -734,7 +734,6 @@ class AllGoalsView(LoginRequiredMixin, ListView):
         elif role == 'E':
             return StrategicGoal.objects.all().prefetch_related('initiative_set__userinitiative_set')
 
-        
         return StrategicGoal.objects.none()
 
  

@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load static %}
-
 {% block content %}
+
 <div class="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8" dir="rtl">
     <div class="max-w-2xl mx-auto">
         <div class="bg-white shadow-lg rounded-2xl border-gray-900 p-8">
@@ -35,7 +35,7 @@
                         class="block mb-2 px-2 text-sm font-semibold text-gray-800">
                         الرؤية <span class="text-red-500">*</span>
                     </label>
-                    <textarea name="{{ form.vision.name }}" id="{{ form.vision.id_for_label }}" rows="4"
+                    <textarea name="{{ form.vision.name }}" id="{{ form.vision.id_for_label }}" rows="1"
                         placeholder="ادخل الرؤية ..."
                         class="block p-2.5 w-full text-sm text-gray-900
                                bg-gray-50 rounded-xl shadow-sm border border-gray-300
@@ -54,7 +54,7 @@
                         class="block mb-2 px-2 text-sm font-semibold text-gray-800">
                         الرسالة <span class="text-red-500">*</span>
                     </label>
-                    <textarea name="{{ form.mission.name }}" id="{{ form.mission.id_for_label }}" rows="4"
+                    <textarea name="{{ form.mission.name }}" id="{{ form.mission.id_for_label }}" rows="1"
                         placeholder="ادخل الرسالة ..."
                         class="block p-2.5 w-full text-sm text-gray-900
                                bg-gray-50 rounded-xl shadow-sm border border-gray-300
@@ -118,7 +118,5 @@
         </div>
     </div>
 </div>
-
-
 
 {% endblock %}

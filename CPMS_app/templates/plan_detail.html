@@ -1,9 +1,8 @@
 {% extends 'base.html' %}
 {% load static %}
-
-{% block title %}تفاصيل الخطة{% endblock %}
-
+{% include 'partials/confirm_delete.html' %}
 {% block content %}
+
 <section class="bg-gray-100 py-12" dir="rtl">
     <div class="max-w-4xl mx-auto bg-white px-6 py-4 rounded-xl space-y-6">
 
@@ -55,22 +54,18 @@
                 ملخص الخطة
             </h2>
         </div>
-        <!-- الصف الرئيسي للكاردز -->
         <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
 
-            <!-- عدد الأهداف -->
             <div class="bg-white p-4 rounded-lg shadow text-center">
                 <h3 class="font-semibold mb-2">عدد الأهداف</h3>
                 <p class="text-2xl font-bold">{{ plan.goals.count }}</p>
             </div>
 
-            <!-- عدد المبادرات -->
             <div class="bg-white p-4 rounded-lg shadow text-center">
                 <h3 class="font-semibold mb-2">عدد المبادرات</h3>
                 <p class="text-2xl font-bold">{{ plan.initiatives_qs.count }}</p>
             </div>
 
-            <!-- أهم 3 أهداف -->
             <div class="bg-white p-4 rounded-lg shadow">
                 <button class="w-full text-left font-semibold flex justify-between items-center"
                     onclick="this.nextElementSibling.classList.toggle('hidden')">
@@ -84,7 +79,6 @@
                 </ol>
             </div>
 
-            <!-- أهم 3 مبادرات -->
             <div class="bg-white p-4 rounded-lg shadow">
                 <button class="w-full text-left font-semibold flex justify-between items-center"
                     onclick="this.nextElementSibling.classList.toggle('hidden')">
@@ -100,10 +94,8 @@
 
         </div>
 
-        <!-- ملخص الأهداف والملخص المبادرات كـ Dropdown -->
         <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
 
-            <!-- ملخص الأهداف -->
             <div class="bg-white p-4 rounded-lg shadow">
                 <label class="flex items-center justify-between cursor-pointer font-semibold"
                     onclick="this.nextElementSibling.classList.toggle('hidden')">
@@ -118,7 +110,6 @@
                 </ul>
             </div>
 
-            <!-- ملخص المبادرات -->
             <div class="bg-white p-4 rounded-lg shadow">
                 <label class="flex items-center justify-between cursor-pointer font-semibold"
                     onclick="this.nextElementSibling.classList.toggle('hidden')">
@@ -142,114 +133,103 @@
             </h2>
         </div>
         <div>
-        <!-- Container for Search, Filter, and Add Button -->
-        <div class="p-4 flex items-center justify-between gap-4">
+            <!-- Container for Search, Filter, and Add Button -->
+            <div class="p-4 flex items-center justify-between gap-4">
 
-            <!-- Container for Search and Filter -->
-            <div class="flex items-center gap-2">
+                <!-- Container for Search and Filter -->
+                <div class="flex items-center gap-2">
 
-                <!-- Search Input -->
-                <div class="relative">
-                    <div class="absolute inset-y-0 end-0 flex items-center pe-3 pointer-events-none">
-                        <!-- Search icon -->
-                        <svg class="w-4 h-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none"
-                            viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M21 21l-4.35-4.35M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0z" />
-                        </svg>
+                    <!-- Search Input -->
+                    <div class="relative">
+                        <div class="absolute inset-y-0 end-0 flex items-center pe-3 pointer-events-none">
+                            <!-- Search icon -->
+                            <svg class="w-4 h-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M21 21l-4.35-4.35M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0z" />
+                            </svg>
+                        </div>
+                        <input type="text" id="search"
+                            class="block w-80 pe-9 ps-3 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="ابحث عن خطة...">
                     </div>
-                    <input type="text" id="search"
-                        class="block w-80 pe-9 ps-3 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="ابحث عن خطة...">
+
+                    <!-- Filter Button -->
+                    <div class="relative">
+                        <button id="dropdownDefaultButton"
+                            class="flex flex-row-reverse items-center justify-between text-body bg-neutral-secondary-medium border rounded text-gray-500 hover:text-gray-800 hover:bg-neutral-tertiary-medium shadow-xs font-medium leading-5 rounded-base text-sm px-3 py-2 focus:outline-none gap-2 "
+                            type="button">
+                            <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-width="2"
+                                    d="M18.796 4H5.204a1 1 0 0 0-.753 1.659l5.302 6.058a1 1 0 0 1 .247.659v4.874a.5.5 0 0 0 .2.4l3 2.25a.5.5 0 0 0 .8-.4v-7.124a1 1 0 0 1 .247-.659l5.302-6.059c.566-.646.106-1.658-.753-1.658Z" />
+                            </svg>
+                            <span class="ml-1">الحالة</span>
+                            <svg id="dropdownIcon" class="w-4 h-4 transition-transform duration-200"
+                                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="m19 9-7 7-7-7" />
+                            </svg>
+                        </button>
+
+                        <!-- Dropdown Menu -->
+                        <div id="dropdown"
+                            class="absolute right-0 z-10 hidden bg-neutral-primary-medium border border-default-medium rounded-base shadow-lg w-32 overflow-hidden">
+                            <ul class="p-2 text-sm text-body font-medium">
+                                <li>
+                                    <button type="button" data-status=""
+                                        class="filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">الكل</button>
+                                </li>
+                                <li>
+                                    <button type="button" data-status="active"
+                                        class="filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">نشطة</button>
+                                </li>
+                                <li>
+                                    <button type="button" data-status="inactive"
+                                        class="filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">غير
+                                        نشطة</button>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- Filter Button -->
-                <div class="relative">
-                    <button id="dropdownDefaultButton"
-                        class="flex flex-row-reverse items-center justify-between text-body bg-neutral-secondary-medium border rounded text-gray-500 hover:text-gray-800 hover:bg-neutral-tertiary-medium shadow-xs font-medium leading-5 rounded-base text-sm px-3 py-2 focus:outline-none gap-2 "
-                        type="button">
-                        <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor">
-                            <path stroke-linecap="round" stroke-width="2"
-                                d="M18.796 4H5.204a1 1 0 0 0-.753 1.659l5.302 6.058a1 1 0 0 1 .247.659v4.874a.5.5 0 0 0 .2.4l3 2.25a.5.5 0 0 0 .8-.4v-7.124a1 1 0 0 1 .247-.659l5.302-6.059c.566-.646.106-1.658-.753-1.658Z" />
-                        </svg>
-                        <span class="ml-1">الحالة</span>
-                        <svg id="dropdownIcon" class="w-4 h-4 transition-transform duration-200"
-                            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 9-7 7-7-7" />
-                        </svg>
-                    </button>
+                <!-- Add Goal Button -->
+                <!-- <div>
 
-                    <!-- Dropdown Menu -->
-                    <div id="dropdown"
-                        class="absolute right-0 z-10 hidden bg-neutral-primary-medium border border-default-medium rounded-base shadow-lg w-32 overflow-hidden">
-                        <ul class="p-2 text-sm text-body font-medium">
-                            <li>
-                                <button type="button" data-status=""
-                                    class="filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">الكل</button>
-                            </li>
-                            <li>
-                                <button type="button" data-status="active"
-                                    class="filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">نشطة</button>
-                            </li>
-                            <li>
-                                <button type="button" data-status="inactive"
-                                    class="filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">غير
-                                    نشطة</button>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Add Plan Button -->
-            <div>
-                {% if request.user.role.role_name == 'CM' %}
-                <a href="{% url 'plan_goal_create' plan.pk %}"
-                    class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-semibold">
-                    إضافة هدف
-                </a>
-                {% endif %}
-            </div>
-
-        </div>
-
-        <table class="w-full text-right text-gray-700 border border-gray-200 rounded-lg">
-            <thead class="text-xs bg-gray-50 border-b text-center">
-                <tr>
-                    <th class="py-3 font-semibold">عنوان الهدف</th>
-                    <th class="px-0 py-3 font-semibold">وصف الهدف</th>
-                    <th class="px-0 py-3 font-semibold">الحالة</th>
-                    <th class="px-0 py-3 font-semibold">الأهمية</th>
-                    <th class="px-0 py-3 font-semibold">التاريخ</th>
-                    <th class="px-0 py-3 font-semibold">المبادرات</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for goal in goals %}
-                {% include 'goals_list.html' %}
-                {% empty %}
-                <tr>
-                    <td colspan="4" class="text-center text-gray-400 py-4">لا توجد أهداف تابعه لهذه الخطة</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-   
-
-
-    <!-- <a href="{% url 'goal_create' plan.id %}"
+                    {% if can_edit %}
+                    <a href="{% url 'plan_goal_create' plan.pk %}"
                         class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-semibold">
                         إضافة هدف
-                    </a> 
-                
-                {% if can_edit %}
-                <div class="edit-plan">
-                    <a href="{% url 'plan_edit' plan.id %}" class="btn btn-primary">تعديل الخطة</a>
-                </div>
-                {% endif %}
--->
+                    </a>
+                    {% endif %}
+                </div> -->
+
+            </div>
+
+            <table class="w-full text-right text-gray-700 border border-gray-200 rounded-lg">
+                <thead class="text-xs bg-gray-50 border-b text-center">
+                    <tr>
+                        <th class="py-3 font-semibold">عنوان الهدف</th>
+                        <th class="px-0 py-3 font-semibold">وصف الهدف</th>
+                        <th class="px-0 py-3 font-semibold">الحالة</th>
+                        <th class="px-0 py-3 font-semibold">الأهمية</th>
+                        <th class="px-0 py-3 font-semibold">التاريخ</th>
+                        <th class="px-0 py-3 font-semibold">المبادرات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for goal in goals %}
+                    {% include 'partials\goals_table_rows.html' %}
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center text-gray-400 py-4">لا توجد أهداف تابعه لهذه الخطة</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
     </div>
 </section>
