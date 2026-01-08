@@ -18,7 +18,7 @@ from .models import ( Role, Department, User, StrategicPlan, StrategicGoal,
 from .services import generate_KPIs,  create_log, get_plan_dashboard
 from .forms import InitiativeForm, KPIForm, StrategicGoalForm, StrategicPlanForm
 from django.template.loader import render_to_string
-from django.db.models import Q
+from django.db.models import Q, Case, When, Value, IntegerField
 
 
 
@@ -276,7 +276,7 @@ class AllInitiativeView(LoginRequiredMixin, InitiativePermissionMixin, ListView)
     allow_empty = True
 
     def get_paginate_by(self, queryset):
-        return int(self.request.GET.get('per_page', 5))
+        return int(self.request.GET.get('per_page', 25))
 
     def get_queryset(self):
         qs = self.get_initiative_queryset()
@@ -284,13 +284,25 @@ class AllInitiativeView(LoginRequiredMixin, InitiativePermissionMixin, ListView)
 
         search = self.request.GET.get('search', '')
         priority = self.request.GET.get('priority', '')
+        sort = self.request.GET.get('sort') 
 
         if search or priority:
             if search: 
                 qs = qs.filter(title__icontains=search)
             if priority:
                 qs = qs.filter(priority=priority)
-                
+
+        if sort == 'priority':
+            priority_order = Case(
+                When(priority='C', then=Value(1)),
+                When(priority='H', then=Value(2)),
+                When(priority='M', then=Value(3)),
+                When(priority='L', then=Value(4)),
+                default=Value(5),
+                output_field=IntegerField(),
+            )
+            qs = qs.order_by(priority_order)
+
         return qs.distinct()
 
 
