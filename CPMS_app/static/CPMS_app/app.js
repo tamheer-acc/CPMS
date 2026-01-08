@@ -10,15 +10,12 @@ function openWindow(url){
         url,        //url to open
         "popupWindow",   //target: new window
         params      //features
-
     );
-
 }
 
 
 function openPopup(id){
     document.getElementById(id).classList.remove('hidden');
-
 }
 
 
@@ -27,15 +24,6 @@ function closePopup(id){
 }
 
 
-
-// ---------------------------
-//       assign emp btn js       
-// ---------------------------
-document.querySelectorAll('.assign_employee_button').forEach(btn => { 
-    btn.addEventListener('click', () => {
-        document.getElementById('assign_employee').classList.remove('hidden');
-    });
-});
 
 // ---------------------------
 //     js for update form      
@@ -50,56 +38,135 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 
-// --------------------------------------
-//       js for search & filter buttons    
-// --------------------------------------
+
+
+// // --------------------------------------
+// //       js for search & filter buttons    
+// // --------------------------------------
+// document.addEventListener("DOMContentLoaded", function() {
+//     const dropdownBtn = document.getElementById("dropdownDefaultButton");
+//     const dropdownMenu = document.getElementById("dropdown");
+//     const dropdownIcon = document.getElementById("dropdownIcon");
+//     const filterButtons = document.querySelectorAll(".filter-btn");
+//     const searchInput = document.getElementById("search");
+//     const plansBody = document.getElementById("plansBody");
+
+//     let currentStatus = "";
+
+//     function fetchPlans(search='', status='', page=1) {
+//         const url = `?search=${encodeURIComponent(search)}&status=${status}&page=${page}`;
+//         fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+//         .then(res => res.json())
+//         .then(data => {
+//             plansBody.innerHTML = data.html;
+//         });
+//     }
+
+//     // Dropdown toggle
+//     dropdownBtn.addEventListener("click", e => {
+//         e.stopPropagation();
+//         dropdownMenu.classList.toggle("hidden");
+//         dropdownIcon.style.transform = dropdownMenu.classList.contains("hidden") ? "rotate(0deg)" : "rotate(180deg)";
+//     });
+//     document.addEventListener("click", () => {
+//         dropdownMenu.classList.add("hidden");
+//         dropdownIcon.style.transform = "rotate(0deg)";
+//     });
+//     dropdownMenu.addEventListener("click", e => e.stopPropagation());
+
+//     // Search input event
+//     searchInput.addEventListener("input", () => {
+//         fetchPlans(searchInput.value, currentStatus);
+//     });
+
+//     // Filter buttons
+//     filterButtons.forEach(btn => {
+//         btn.addEventListener("click", function() {
+//             currentStatus = this.dataset.status;
+//             fetchPlans(searchInput.value, currentStatus);
+//             dropdownMenu.classList.add("hidden");
+//             dropdownIcon.style.transform = "rotate(0deg)";
+//         });
+//     });
+
+// });
+
+
+
 document.addEventListener("DOMContentLoaded", function() {
+
+    // Detect which table exists
+    const plansBody = document.getElementById("plansBody");
+    const initiativesBody = document.getElementById("initiativesBody");
+    const isPlansPage = !!plansBody;
+    const isInitiativesPage = !!initiativesBody;
+
+    // Shared elements
     const dropdownBtn = document.getElementById("dropdownDefaultButton");
     const dropdownMenu = document.getElementById("dropdown");
     const dropdownIcon = document.getElementById("dropdownIcon");
     const filterButtons = document.querySelectorAll(".filter-btn");
     const searchInput = document.getElementById("search");
-    const plansBody = document.getElementById("plansBody");
 
-    let currentStatus = "";
+    let currentFilter = ""; // either status or priority
+    let pageParam = 1;
 
-    function fetchPlans(search='', status='', page=1) {
-        const url = `?search=${encodeURIComponent(search)}&status=${status}&page=${page}`;
-        fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
-        .then(res => res.json())
-        .then(data => {
-            plansBody.innerHTML = data.html;
-        });
+    // Universal fetch function
+    function fetchData(search = "", filter = "", page = 1) {
+        let url = `?search=${encodeURIComponent(search)}&page=${page}`;
+
+        if (isPlansPage) url += `&status=${filter}`;
+        if (isInitiativesPage) url += `&priority=${filter}`;
+
+        fetch(url, { headers: { "X-Requested-With": "XMLHttpRequest" } })
+            .then(res => res.json())
+            .then(data => {
+                if (isPlansPage) plansBody.innerHTML = data.html;
+                if (isInitiativesPage) initiativesBody.innerHTML = data.html;
+            });
     }
 
     // Dropdown toggle
-    dropdownBtn.addEventListener("click", e => {
-        e.stopPropagation();
-        dropdownMenu.classList.toggle("hidden");
-        dropdownIcon.style.transform = dropdownMenu.classList.contains("hidden") ? "rotate(0deg)" : "rotate(180deg)";
-    });
+    if (dropdownBtn) {
+        dropdownBtn.addEventListener("click", e => {
+            e.stopPropagation();
+            dropdownMenu.classList.toggle("hidden");
+            dropdownIcon.style.transform = dropdownMenu.classList.contains("hidden") ? "rotate(0deg)" : "rotate(180deg)";
+        });
+    }
+
+    // Click outside to close
     document.addEventListener("click", () => {
-        dropdownMenu.classList.add("hidden");
-        dropdownIcon.style.transform = "rotate(0deg)";
-    });
-    dropdownMenu.addEventListener("click", e => e.stopPropagation());
-
-    // Search input event
-    searchInput.addEventListener("input", () => {
-        fetchPlans(searchInput.value, currentStatus);
-    });
-
-    // Filter buttons
-    filterButtons.forEach(btn => {
-        btn.addEventListener("click", function() {
-            currentStatus = this.dataset.status;
-            fetchPlans(searchInput.value, currentStatus);
+        if (dropdownMenu) {
             dropdownMenu.classList.add("hidden");
             dropdownIcon.style.transform = "rotate(0deg)";
+        }
+    });
+
+    if (dropdownMenu) dropdownMenu.addEventListener("click", e => e.stopPropagation());
+
+    // Search input (auto fetch as user types)
+    if (searchInput) {
+        searchInput.addEventListener("input", () => {
+            fetchData(searchInput.value, currentFilter);
+        });
+    }
+
+
+    filterButtons.forEach(btn => {
+        btn.addEventListener("click", function() {
+            currentFilter = this.dataset.status || this.dataset.priority || "";
+            fetchData(searchInput.value, currentFilter);
+            if (dropdownMenu) {
+                dropdownMenu.classList.add("hidden");
+                dropdownIcon.style.transform = "rotate(0deg)";
+            }
         });
     });
 
 });
+
+
 
 // ---------------------------
 //     confirm delete js     
@@ -119,6 +186,7 @@ function openDeleteModal(deleteUrl, message) {
 function closeDeleteModal() {
     document.getElementById('deleteModal').classList.add('hidden');
 }
+
 
 
 // ---------------------------
@@ -244,40 +312,51 @@ function closeAssignPopup() {
 
 
 // ---------------------------
-//        add KPI js     
+//           KPI js     
 // ---------------------------
+document.addEventListener('DOMContentLoaded', () => {
 
-document.getElementById('add_kpi_button').addEventListener('click', () => {
-    openPopup('kpi-modal');
-});
+    const addKpiBtn = document.getElementById('add_kpi_button')
+    const title = document.getElementById('kpi-modal-title')
+    const cancelKpiBtn = document.getElementById('cancel-btn-kpi')
+    const form = document.getElementById('kpiForm');
+    const initiativeId = addKpiBtn.dataset.initiativeId
+    const initiativeTitle = addKpiBtn.dataset.initiativeTitle
+    
 
+    //  Add Kpi Button JS
+    addKpiBtn.addEventListener('click', () => {
+        form.reset(); // clear values
+        form.kpi.value = null;
+        form.unit.value = null;
+        form.target_value.value = null;
+        form.actual_value.value = null;
 
-document.querySelectorAll('.edit-kpi-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-        const kpiId = btn.dataset.kpiId;
-        const form = document.getElementById('kpiForm');
-        const initiativeId = document.getElementById('add_kpi_button').dataset.initiativeId;
-
-        form.action = `/initiatives/${initiativeId}/kpis/${kpiId}/update/`;
-        form.dataset.isUpdate = "true"; // is update 
-
-        form.kpi.value = btn.dataset.kpiName;
-        form.unit.value = btn.dataset.unit;
-        form.target_value.value = btn.dataset.target;
-        form.actual_value.value = btn.dataset.actual;
-
+        form.removeAttribute('data-is-update');
+        title.textContent = '  إضافة مؤشر أداء رئيسي لمبادرة' + initiativeTitle
         openPopup('kpi-modal');
     });
-});
 
+    // Edit Kpi Button JS
+    document.querySelectorAll('.edit-kpi-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const kpiId = btn.dataset.kpiId;
+            title.textContent = ' تعديل مؤشر ' + btn.dataset.kpiName
+            form.action = `/initiatives/${initiativeId}/kpis/${kpiId}/update/`;
+            form.dataset.isUpdate = "true"; // is update 
 
-document.getElementById('cancel-btn-kpi').addEventListener('click', () => {
-    const form  = document.getElementById('kpiForm');
+            form.kpi.value = btn.dataset.kpiName;
+            form.unit.value = btn.dataset.unit;
+            form.target_value.value = btn.dataset.target;
+            form.actual_value.value = btn.dataset.actual;
 
-    closePopup('kpi-modal');
+            openPopup('kpi-modal');
+        });
+    });
 
-    if (!form.dataset.isUpdate) { // reset the fields
+    cancelKpiBtn.addEventListener('click', () => {
+
+        closePopup('kpi-modal');
         form.reset();
-    }
+    });
 });
-

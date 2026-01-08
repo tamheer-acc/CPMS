@@ -1,19 +1,97 @@
 {% extends 'base.html' %}
 {% block content %}
+<div class="max-w-4xl mx-auto px-6 mt-10" dir="rtl">
+    <div class="max-w-3xl mx-auto px-6 mt-10">
+        <div class="bg-white shadow-lg rounded-2xl border-gray-900 p-8">
+            
+            <h1 class="text-xl font-semibold text-gray-700 text-center mb-8">
+                {% if object %}
+                    نموذج تعديل مبادرة {{ object.title}}
+                {%else%}
+                    نموذج إضافة مبادرة جديدة
+                {%endif%}
+            </h1>
 
-<h1>
-    {% if object %}
-        تعديل مبادرة {{ object.title}}
-    {%else%}
-        إضافة مبادرة جديدة
-    {%endif%}
-</h1>
+            <form method="post" class="space-y-6">
 
-<form method="post">
-    
-    {% csrf_token %}
-    {{ form.as_p }}    
-    <button type="submit" class="button">حفظ</button>
-</form>
+                {% csrf_token %}
+                <div> <!-- initiative title -->
+                    <label for="{{ form.title.id_for_label }}"
+                        class="block mb-2 px-2 text-base font-semibold text-gray-800">
+                        {{ form.title.label }} <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.title }}
 
+                    {% if form.title.errors %}
+                    <div class="flex items-center gap-1 text-red-600 text-xs mt-1"> ⚠ {{ form.title.errors }}</div>
+                    {% endif %}
+                </div>
+                    
+                <div> <!-- initiative description -->
+                    <label for="{{ form.description.id_for_label }}"
+                        class="block mb-2 px-2 text-base font-semibold text-gray-800">
+                        {{ form.description.label }} <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.description }}
+                    {% if form.description.errors %}
+                    <div class="flex items-center gap-1 text-red-600 text-xs mt-1"> ⚠ {{ form.description.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div> <!-- initiative start date -->
+                    <label class="block mb-2 px-2 text-base font-semibold text-gray-800">
+                        مدة تنفيذ المبادرة <span class="text-red-500">*</span>
+                    </label>
+                    <div class="grid grid-cols-[1fr_auto_1fr] items-center gap-4">
+                        {{ form.start_date.as_widget }}
+                        <span class="text-sm font-medium text-gray-600">إلى</span>
+                        {{ form.end_date.as_widget }}
+                    </div>
+                </div>
+
+                <div> <!-- initiative priority -->
+                    <label for="{{ form.priority.id_for_label }}"
+                        class="block mb-2 px-2 text-base font-semibold text-gray-800">
+                        {{ form.priority.label }} <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.priority }}
+                    {% if form.priority.errors %}
+                    <div class="flex items-center gap-1 text-red-600 text-xs mt-1"> ⚠ {{ form.priority.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div> <!-- initiative category -->
+                    <label for="{{ form.category.id_for_label }}"
+                        class="block mb-2 px-2 text-base font-semibold text-gray-800">
+                        {{ form.category.label }} <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.category }}
+                    {% if form.category.errors %}
+                    <div class="flex items-center gap-1 text-red-600 text-xs mt-1"> ⚠ {{ form.category.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="flex gap-4 mt-12">
+
+                    <button type="submit"
+                        class="px-6 py-2.5 text-sm font-medium rounded-lg
+                            text-white bg-blue-600 hover:bg-blue-700
+                            shadow-md hover:shadow-lg transform hover:-translate-y-0.5
+                            transition duration-200 focus:ring-4 focus:ring-blue-200">
+                        {% if object %}تعديل{% else %}إضافة{% endif %}
+                    </button>
+
+                    <button type="button" onclick="window.history.back()"
+                        class="px-6 py-2.5 text-sm font-medium rounded-lg
+                            text-gray-800 bg-gray-200 hover:bg-gray-300
+                            shadow-md hover:shadow-lg transform hover:-translate-y-0.5
+                            transition duration-200 focus:ring-4 focus:ring-gray-200">
+                        إلغاء
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
 {% endblock %}

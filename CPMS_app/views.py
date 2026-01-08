@@ -16,7 +16,7 @@ from functools import wraps
 from .models import ( Role, Department, User, StrategicPlan, StrategicGoal, 
                         Initiative, UserInitiative, KPI, Note, Log, STATUS)
 from .services import generate_KPIs,  create_log, get_plan_dashboard
-from .forms import KPIForm, StrategicGoalForm, StrategicPlanForm
+from .forms import InitiativeForm, KPIForm, StrategicGoalForm, StrategicPlanForm
 from django.template.loader import render_to_string
 from django.db.models import Q
 
@@ -273,8 +273,47 @@ class AllInitiativeView(LoginRequiredMixin, InitiativePermissionMixin, ListView)
     model = Initiative 
     template_name = 'initiatives_list.html'
     context_object_name = 'initiatives'
-    
+    allow_empty = True
 
+    def get_paginate_by(self, queryset):
+        return int(self.request.GET.get('per_page', 5))
+
+    def get_queryset(self):
+        qs = self.get_initiative_queryset()
+        
+
+        search = self.request.GET.get('search', '')
+        priority = self.request.GET.get('priority', '')
+
+        if search or priority:
+            if search: 
+                qs = qs.filter(title__icontains=search)
+            if priority:
+                qs = qs.filter(priority=priority)
+                
+        return qs.distinct()
+
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        page_obj = context['page_obj']
+        total_pages = context['paginator'].num_pages
+        current = page_obj.number
+
+        page_numbers = []
+        for num in range(1, total_pages + 1):
+            if num == 1 or num == total_pages or abs(num - current) <= 2:
+                page_numbers.append(num)
+            elif page_numbers[-1] != '...':
+                page_numbers.append('...')
+        context['page_numbers'] = page_numbers
+        return context
+
+    def render_to_response(self, context, **response_kwargs):
+        if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            html = render_to_string('partials/initiatives_table_rows.html', context, request=self.request)
+            return JsonResponse({'html': html})
+        return super().render_to_response(context, **response_kwargs)
 
 
 class InitiativeDetailsView(LoginRequiredMixin, InitiativePermissionMixin, DetailView):
@@ -306,14 +345,14 @@ class InitiativeDetailsView(LoginRequiredMixin, InitiativePermissionMixin, Detai
 
 
 
-class CreateInitiativeView(LoginRequiredMixin, RoleRequiredMixin, InitiativePermissionMixin, CreateView, LogMixin): #only Managers 
+class CreateInitiativeView(LoginRequiredMixin, RoleRequiredMixin, InitiativePermissionMixin, CreateView, LogMixin):  
     '''
     - Allows Managers to create a new initiative
     - Sets the strategic goal based on the goal_id in the URL
     - Automatically assigns the current user to the initiative via UserInitiative
     '''    
     model = Initiative
-    fields = ['title', 'description', 'start_date', 'end_date', 'priority', 'category']
+    form_class = InitiativeForm
     template_name = 'initiative_form.html'
     allowed_roles = ['M', 'CM']  
     
@@ -326,11 +365,24 @@ class CreateInitiativeView(LoginRequiredMixin, RoleRequiredMixin, InitiativePerm
             status = STATUS[0][0],
             progress = 0
         )
-        
+        messages.success(self.request, "تمت إضافة المبادرة بنجاح!")
+
         return response
     
+    def form_invalid(self, form):
+        # Field-specific errors
+        for field, errors in form.errors.items():
+            if field != '__all__':
+                for error in errors:
+                    messages.error(self.request, f"{form.fields[field].label}: {error}")
+
+        # Non-field errors
+        for error in form.non_field_errors():
+            messages.error(self.request, error)
+
+        return super().form_invalid(form)
+
     def get_success_url(self):
-        # return reverse('goal_detail', kwargs={'goal_id': self.kwargs['goal_id']})
         return reverse('initiatives_list')
     
     
@@ -478,7 +530,7 @@ def create_kpi_view(request, initiative_id):
         ai_suggestion = generate_KPIs(initiative)
 
         if request.headers.get('x-requested-with') == 'XMLHttpRequest':    # only return partial HTML if request is via JS
-            return render(request, 'partials/kpi_form.html', {'form': form, 'suggestions': ai_suggestion})
+            return render(request, 'partials/kpi_modal.html', {'form': form, 'suggestions': ai_suggestion})
         
         #if someone opens the url normally
         return render(request, 'kpi_form.html', {'initiative': initiative, 'form': form})
