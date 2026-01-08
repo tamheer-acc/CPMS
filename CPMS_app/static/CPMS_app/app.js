@@ -40,59 +40,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
 
-// // --------------------------------------
-// //       js for search & filter buttons    
-// // --------------------------------------
-// document.addEventListener("DOMContentLoaded", function() {
-//     const dropdownBtn = document.getElementById("dropdownDefaultButton");
-//     const dropdownMenu = document.getElementById("dropdown");
-//     const dropdownIcon = document.getElementById("dropdownIcon");
-//     const filterButtons = document.querySelectorAll(".filter-btn");
-//     const searchInput = document.getElementById("search");
-//     const plansBody = document.getElementById("plansBody");
-
-//     let currentStatus = "";
-
-//     function fetchPlans(search='', status='', page=1) {
-//         const url = `?search=${encodeURIComponent(search)}&status=${status}&page=${page}`;
-//         fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
-//         .then(res => res.json())
-//         .then(data => {
-//             plansBody.innerHTML = data.html;
-//         });
-//     }
-
-//     // Dropdown toggle
-//     dropdownBtn.addEventListener("click", e => {
-//         e.stopPropagation();
-//         dropdownMenu.classList.toggle("hidden");
-//         dropdownIcon.style.transform = dropdownMenu.classList.contains("hidden") ? "rotate(0deg)" : "rotate(180deg)";
-//     });
-//     document.addEventListener("click", () => {
-//         dropdownMenu.classList.add("hidden");
-//         dropdownIcon.style.transform = "rotate(0deg)";
-//     });
-//     dropdownMenu.addEventListener("click", e => e.stopPropagation());
-
-//     // Search input event
-//     searchInput.addEventListener("input", () => {
-//         fetchPlans(searchInput.value, currentStatus);
-//     });
-
-//     // Filter buttons
-//     filterButtons.forEach(btn => {
-//         btn.addEventListener("click", function() {
-//             currentStatus = this.dataset.status;
-//             fetchPlans(searchInput.value, currentStatus);
-//             dropdownMenu.classList.add("hidden");
-//             dropdownIcon.style.transform = "rotate(0deg)";
-//         });
-//     });
-
-// });
-
-
-
+// --------------------------------------
+//       js for search & filter buttons    
+// --------------------------------------
 document.addEventListener("DOMContentLoaded", function() {
 
     // Detect which table exists
@@ -161,6 +111,61 @@ document.addEventListener("DOMContentLoaded", function() {
                 dropdownMenu.classList.add("hidden");
                 dropdownIcon.style.transform = "rotate(0deg)";
             }
+        });
+    });
+
+});
+
+
+
+// ---------------------------
+//      page number js     
+// ---------------------------
+document.addEventListener('DOMContentLoaded', function(){
+    const pageDropdownButton = document.getElementById('page-dropdown-button'); //button that has the word عدد الصفوف
+    const pageDropdownIcon = document.getElementById('page-dropdown-icon'); //icon to be rotated
+    const pageDropdown = document.getElementById('page-dropdown'); //the div to be not hidden
+    const pageFilterButtons = document.querySelectorAll(".page-filter-btn");// buttons to be clicked an reload
+    const pageDropdownText = document.getElementById('page-dropdown-text');
+    const currentUrl = new URL(window.location.href);
+
+
+
+    if (currentUrl.searchParams.get('per_page')){
+        pageDropdownText.textContent = currentUrl.searchParams.get('per_page')
+    }
+    if (pageDropdownButton) {
+        pageDropdownButton.addEventListener("click", e => {
+            e.stopPropagation();
+            pageDropdown.classList.toggle("hidden");
+            pageDropdownIcon.style.transform = pageDropdown.classList.contains("hidden") ? "rotate(0deg)" : "rotate(180deg)";
+        });
+    }
+
+    // Click outside to close
+    document.addEventListener("click", () => {
+        if (pageDropdown) {
+            pageDropdown.classList.add("hidden");
+            pageDropdownIcon.style.transform = "rotate(0deg)";
+        }
+    });
+
+    if (pageDropdown) pageDropdown.addEventListener("click", e => e.stopPropagation());
+
+
+    pageFilterButtons.forEach(btn => {
+        btn.addEventListener("click", function() {
+            const perPage = this.dataset.number;
+            
+            if (pageDropdown) {
+                pageDropdown.classList.add("hidden");
+                pageDropdownIcon.style.transform = "rotate(0deg)";
+            }
+
+            const url = new URL(window.location.href);
+            url.searchParams.set("per_page", perPage);
+            url.searchParams.set("page", 1); // reset to first page
+            window.location.href = url.toString();
         });
     });
 
