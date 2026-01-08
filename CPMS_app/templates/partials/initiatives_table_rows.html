@@ -1,0 +1,88 @@
+
+
+{% for initiative in initiatives %}
+    <tr class="border-b hover:bg-gray-50 hover:font-medium" data-title="{{ initiative.title }}">
+        <td class="px-4 py-4"> <a href="{% url 'initiative_detail' initiative.id %}">{{ initiative.title }}</td>
+        <td class="py-4 text-right max-w-[200px] relative group">
+            <div class="overflow-hidden max-h-[1.5em] group-hover:max-h-[1000px] transition-all duration-300 ease-in-out">
+                {{ initiative.description }}
+            </div>
+        </td> 
+
+        <td class="px-2 py-4 text-center"> <div class=" rounded-lg {% if initiative.priority == 'C' %} red-600   bg-red-100   text-red-800 border-red-500 {% elif initiative.priority == 'H' %} border-orange-500 orange-500 bg-orange-100 text-orange-800
+        {% elif initiative.priority == 'M' %} border-yellow-500 yellow-500 bg-yellow-100 text-yellow-800 {% else %} border-green-500 green-500 bg-green-100 text-green-800{% endif %}">{{ initiative.get_priority_display }}</div></td>
+        <td class="px-2 py-4 text-center min-w-[150px]"> {{ initiative.start_date }} - {{ initiative.end_date }}</td>
+        {% if user.role and user.role.role_name == 'GM' %} <!-- only GM sees department -->
+            <td class="px-3 py-4 text-center"> {{ initiative.strategic_goal.department.department_name|default:"-"  }}</td>
+        {% endif %}
+        <td class="px-3 py-4 text-center"> {{ initiative.category }}</td>
+        <td class="px-3 py-4 text-center relative group "> 
+            <span class="inline-flex items-center gap-1 cursor-pointer">
+                {{ initiative.userinitiative_set.count }} 
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="size-4">
+                    <path d="M8 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5ZM3.156 11.763c.16-.629.44-1.21.813-1.72a2.5 2.5 0 0 0-2.725 1.377c-.136.287.102.58.418.58h1.449c.01-.077.025-.156.045-.237ZM12.847 11.763c.02.08.036.16.046.237h1.446c.316 0 .554-.293.417-.579a2.5 2.5 0 0 0-2.722-1.378c.374.51.653 1.09.813 1.72ZM14 7.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0ZM3.5 9a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3ZM5 13c-.552 0-1.013-.455-.876-.99a4.002 4.002 0 0 1 7.753 0c.136.535-.324.99-.877.99H5Z" />
+                </svg>
+            </span>
+            <div class="absolute left-1/2 -translate-x-1/2 mt-1 w-max max-w-xs p-2 text-sm bg-gray-800 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity z-50">
+                {% for ui in initiative.userinitiative_set.all %}
+                {{ ui.user.get_full_name }}<br>
+                {% endfor %}
+            </div>
+        </td>
+
+        <td class="px-6 py-4 text-center flex justify-center gap-3">
+            <span class="inline-flex items-center">
+                <!-- View Button -->
+                <a href="{% url 'initiative_detail' initiative.id %}" class="text-blue-600 hover:text-blue-800 p-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                        <circle cx="12" cy="12" r="3" />
+                        <path d="M2 12c2-4 6-8 10-8s8 4 10 8c-2 4-6 8-10 8s-8-4-10-8" />
+                    </svg>
+                </a>
+
+                <!-- Update Button -->
+                {% if user.role.role_name == 'CM' or  user.role.role_name == 'M' %}
+                    <a href="{% url 'goal_initiative_update' initiative.strategic_goal.id initiative.id %}" class="text-yellow-600 hover:text-yellow-800 p-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                            <path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" />
+                            <path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415" />
+                            <path d="M16 5l3 3" />
+                        </svg>
+                    </a>
+
+                <!-- Delete Button -->
+                    <button class="text-red-600 hover:text-red-800 p-1" onclick="openDeleteModal(`{% url 'initiative_delete' initiative.id %}`, `هل تريد حذف هذه المبادرة`)">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                            <path d="M4 7l16 0" />
+                            <path d="M10 11l0 6" />
+                            <path d="M14 11l0 6" />
+                            <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" />
+                            <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" />
+                        </svg>
+                    </button>
+                {% endif %}
+            </span>
+        </td>
+
+    </tr>
+    {% empty %}
+        {% if user.role.role_name == 'M' or user.role.role_name == 'CM' %} <!-- the user is a manager -->
+            <tr >
+                <td colspan="4" class="text-center py-4 text-gray-500 font-medium">لم تُسجل أي مبادرة بعد</td>
+            </tr>
+        {% elif user.role.role_name == 'E' %}
+            <tr > 
+                <td colspan="4" class="text-center py-4 text-gray-500 font-medium">لم تُسجَّل في أي مبادرة بعد</td>
+            </tr>
+        {% else %}
+            <tr >
+                <td colspan="4" class="text-center py-4 text-gray-500 font-medium">لا توجد مبادرات</td>
+            </tr>
+        {% endif %}
+
+
+{% endfor %}
+

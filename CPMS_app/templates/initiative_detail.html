@@ -22,8 +22,8 @@
                                     data-kpi-id="{{ kpi.id }}"
                                     data-kpi-name="{{ kpi.kpi }}"
                                     data-unit="{{ kpi.unit }}"
-                                    data-target="{{ kpi.target_value }}"
-                                    data-actual="{{ kpi.actual_value }}">                                
+                                    data-target="{{ kpi.target_value|default_if_none:'' }}"
+                                    data-actual="{{ kpi.actual_value|default_if_none:'' }}">
                                 تعديل   
                             </button>
                             
@@ -57,7 +57,7 @@
         حذف
     </button>
 
-    <button id="add_kpi_button" class="button" data-initiative-id="{{ initiative.id }}">
+    <button id="add_kpi_button" class="button" data-initiative-id="{{ initiative.id }}" data-initiative-title="{{ initiative.title }}">
     إضافة مؤشر أداء رئيسي
     </button>
 
@@ -66,7 +66,7 @@
     </button>
 {% endif %}
 {% include "partials/assign_employee.html" %}
-{% include "partials/kpi_form.html" %}
+{% include "partials/kpi_modal.html" %}
 
 {% if user.role.role_name != 'GM' %} <!-- managers and employees can send initiative-level notes -->
     <button class="button" onclick="openWindow('/notes/create')">أرسل ملاحظة</button>

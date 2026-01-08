@@ -1,13 +1,8 @@
 from django import forms
 from django.forms import ModelForm
-from .models import KPI, StrategicPlan, StrategicGoal
+from .models import Initiative, KPI, StrategicPlan, StrategicGoal
 
-#we are using this insted of creating another view BECAUSE we want it 
-#to be viewd INSID the page, alongside everything else in that page
-class KPIForm(ModelForm):
-    class Meta():
-        model = KPI
-        fields = ['kpi', 'unit', 'target_value','actual_value']
+
 
 # ============== Base Form =================
 # Base form with shared clean and save logic
@@ -36,6 +31,8 @@ class BaseForm(forms.ModelForm):
             obj.save()
         return obj
 
+
+
 # ===== Strategic Plan Form =====
 class StrategicPlanForm(BaseForm):
     class Meta:
@@ -48,6 +45,8 @@ class StrategicPlanForm(BaseForm):
             'start_date': 'تاريخ بداية الخطة',
             'end_date': 'تاريخ نهاية الخطة',
         }
+
+
 
 # ===== Strategic Goal Form =====
 class StrategicGoalForm(BaseForm):
@@ -69,4 +68,151 @@ class StrategicGoalForm(BaseForm):
             'end_date': forms.DateInput(attrs={'type': 'date', 'class': 'input'}),
             'goal_status': forms.Select(attrs={'class': 'block flex-1 text-sm text-gray-900 bg-gray-50 rounded-xl shadow-sm border border-gray-300 p-2.5 h-11 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-500 hover:border-gray-400'}),
             'goal_priority': forms.Select(attrs={'class': 'block flex-1 text-sm text-gray-900 bg-gray-50 rounded-xl shadow-sm border border-gray-300 p-2.5 h-11 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-500 hover:border-gray-400'}),
+        }
+
+
+
+# ===== KPI Form =====
+class KPIForm(BaseForm):
+    class Meta:
+        model = KPI
+        fields = ['kpi', 'unit', 'target_value', 'actual_value']
+
+        error_messages = {
+            'kpi': {
+                'required': 'يرجى إدخال اسم مؤشر الأداء',
+                'max_length': 'اسم المؤشر طويل جداً'
+            },
+            'unit': {
+                'required': 'يرجى تحديد وحدة القياس',
+            },
+            'target_value': {
+                'required': 'يرجى إدخال القيمة المستهدفة',
+                'invalid': 'القيمة المستهدفة غير صحيحة'
+            },
+            'actual_value': {
+                'required': 'يرجى إدخال القيمة الفعلية',
+                'invalid': 'القيمة الفعلية غير صحيحة'
+            }
+        }
+
+        labels = {
+            'kpi': 'اسم مؤشر الأداء',
+            'unit': 'وحدة القياس',
+            'target_value': 'القيمة المستهدفة',
+            'actual_value': 'القيمة الحالية',
+        }
+
+        widgets = {
+            'kpi': forms.TextInput(attrs={
+                'placeholder': 'مثال: نسبة إنجاز المشاريع',
+                'class': (
+                    'block w-full p-2.5 text-sm text-gray-900 '
+                    'bg-gray-50 border border-gray-300 rounded-xl shadow-sm '
+                    'focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-500 '
+                    'hover:border-gray-400 transition-all duration-200'
+                )
+            }),
+
+            'unit': forms.TextInput(attrs={
+                'placeholder': 'مثال: % ، عدد ، أيام',
+                'class': (
+                    'block w-full p-2.5 text-sm text-gray-900 '
+                    'bg-gray-50 border border-gray-300 rounded-xl shadow-sm '
+                    'focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-500 '
+                    'hover:border-gray-400 transition-all duration-200'
+                )
+            }),
+
+            'target_value': forms.NumberInput(attrs={
+                'class': (
+                    'block w-full p-2.5 text-sm text-gray-900 '
+                    'bg-gray-50 border border-gray-300 rounded-xl shadow-sm '
+                    'focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-500 '
+                    'hover:border-gray-400 transition-all duration-200'
+                )
+            }),
+
+            'actual_value': forms.NumberInput(attrs={
+                'class': (
+                    'block w-full p-2.5 text-sm text-gray-900 '
+                    'bg-gray-50 border border-gray-300 rounded-xl shadow-sm '
+                    'focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-500 '
+                    'hover:border-gray-400 transition-all duration-200'
+                )
+            }),
+        }
+
+
+
+# ===== Initiative Form =====
+class InitiativeForm(BaseForm):
+    class Meta:
+        model = Initiative
+        fields = ['title', 'description', 'start_date', 'end_date', 'priority', 'category']
+        error_messages = {
+            'title': {
+                'required': 'يرجى إدخال عنوان المبادرة',
+                'max_length': 'العنوان طويل جداً، الرجاء اختصاره'
+            },
+            'description': {
+                'required': 'يرجى إدخال وصف المبادرة',
+                'max_length': 'الوصف طويل جداً، الرجاء اختصاره'
+            },
+            'start_date': {
+                'required': 'يرجى تحديد تاريخ البداية',
+            },
+            'end_date': {
+                'required': 'يرجى تحديد تاريخ النهاية',
+            },
+            'priority': {
+                'required': 'يرجى تحديد أهمية المبادرة',
+            },
+            'category': {
+                'required': 'يرجى إدخال فئة المبادرة',
+                'max_length': 'اختر اسم أقصر للفئة'
+            }
+        }
+
+        labels = {
+            'title': 'عنوان المبادرة',
+            'description': 'وصف المبادرة',
+            'start_date': 'تاريخ بداية المبادرة',
+            'end_date': 'تاريخ نهاية المبادرة',
+            'priority': 'أهمية المبادرة',
+            'category': 'فئة المبادرة',
+            'strategic_goal': 'الهدف الاستراتيجي',
+        }
+
+        widgets = {
+            'title': forms.TextInput(attrs={
+                'placeholder': 'مثال: مبادرة إطلاق مشاريع لتعزيز اللوجستيات',
+            'class': (
+                'block w-full p-2.5 text-sm text-gray-900 '       
+                'bg-gray-50 border border-gray-300 rounded-xl shadow-sm '  
+                'focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-500 '  
+                'hover:border-gray-400 transition-all duration-200'  
+            )            
+            }),
+            'description': forms.Textarea(attrs={
+                'rows': 3,
+                'placeholder': 'صف المبادرة باختصار',
+                'class': 'w-full bg-gray-50 border border-gray-300 rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-500 hover:border-gray-400'
+            }),
+            'start_date': forms.DateInput(attrs={
+                'type': 'date',
+                'class': 'w-full bg-gray-50 border border-gray-300 rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-500 hover:border-gray-400'
+            }),
+            'end_date': forms.DateInput(attrs={
+                'type': 'date',
+                'class': 'w-full bg-gray-50 border border-gray-300 rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-500 hover:border-gray-400'
+            }),
+            'priority': forms.Select(attrs={
+                'class': 'block w-full bg-gray-50 border border-gray-300 rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-500 hover:border-gray-400'
+            }),           
+
+            'category': forms.TextInput(attrs={
+                'placeholder': 'مثال: تطوير، إدارة ',
+                'class': 'w-full bg-gray-50 border border-gray-300 rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-500 hover:border-gray-400'
+            }),
         }

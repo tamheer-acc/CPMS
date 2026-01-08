@@ -3,30 +3,28 @@
 nav,html,em,strong{
     margin: 0;
 }
-/*
-*{ 
+
+/* *{ 
     margin-left: 1vw;
     margin-right: 1vw;
-
-}*/
+} */
 
 body{
-    background-color: #e7d3ba;
+    background-color: #e7e7e7db;
 }
-/*
+
 input[type="checkbox"] {
     opacity: 1 !important;
     pointer-events: auto !important;
     position: relative !important;
     /* transform: translateY(-5) !important */
-/*}*/
-/*
+}
 table {
     width: 30%;
 }
-*/
+
 nav{
-    background-color:brown;
+    background-color:rgb(192, 192, 192);
     display: flex;
     flex-direction: row;
     justify-content: space-between;
@@ -117,7 +115,7 @@ nav a {
 .hidden-form {
     display: none;
 }
-/*
+
 .button {
     background-color: #04aaa2;
     border: none;
@@ -129,6 +127,7 @@ nav a {
     font-size: 16px;
     margin: 4px 2px;
     cursor: pointer;
-}*/
+}
 
 /* Dummy css */
+/* Real CSS*/
