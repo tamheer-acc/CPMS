@@ -1,8 +1,24 @@
-<tr class="border-b hover:text-gray-500 text-center ">
+{% for goal in goals %}
+<tr class="border-b hover:text-gray-500 text-center" data-title="{{ plan.plan_name }}">
+
     <td class="px-8 py-4">{{ goal.goal_title }}</td>
     <td class="py-4">{{ goal.description }}</td>
-    <td class="py-4">{{ goal.goal_status }}</td>
-    <td class="py-4">{{ goal.goal_priority }}</td>
+    {% if request.user.role.role_name == 'GM' %}
+    <td>{{ goal.department }}</td>
+    {% endif %}
+    <td ><div class="px-3 py-1 text-xs rounded-full
+    {% if goal.goal_status == 'C' %} bg-green-100 text-green-700
+    {% elif goal.goal_status == 'IP' %} bg-blue-100 text-blue-700
+    {% elif goal.goal_status == 'D' %} bg-red-100 text-red-700
+    {% else %} bg-gray-100 text-gray-600 {% endif %}">
+    {{ goal.get_goal_status_display }}</div></td>
+
+    <td> <div class=" px-3 py-1 text-xs rounded-full
+         {% if goal.goal_priority == 'C' %} red-600 bg-red-100 text-red-800 border-red-500
+         {% elif goal.goal_priority == 'H' %} border-orange-500 orange-500 bg-orange-100 text-orange-800
+         {% elif goal.goal_priority == 'M' %} border-yellow-500 yellow-500 bg-yellow-100 text-yellow-800
+         {% else %} border-green-500 green-500 bg-green-100 text-green-800{% endif %}">
+         {{ goal.get_goal_priority_display }}</div></td>
     <td class="py-4">
         {{ goal.start_date }} - {{ goal.end_date }}
     </td>
@@ -23,12 +39,12 @@
 
         <div class="flex justify-between items-center mb-10">
             <h3 class="font-semibold text-gray-800 text-lg">قائمة المبادرات</h3>
-            <!-- {% if can_edit %}
+
             <a href="{% url 'initiative_create' goal.id %}"
                 class="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700">
                 إضافة مبادرة
             </a>
-            {% endif %} -->
+
         </div>
 
 
@@ -44,20 +60,19 @@
 
                     {% with initiative.userinitiative_set.first as ui %}
                     {% if ui %}
-                    <span class="px-4 py-0.5 text-xs rounded-full font-normal
+                    <span class="px-3 py-1 text-xs rounded-full
                     {% if ui.status == 'C' %} bg-green-100 text-green-700
                     {% elif ui.status == 'IP' %} bg-blue-100 text-blue-700
                     {% elif ui.status == 'D' %} bg-red-100 text-red-700
                     {% else %} bg-gray-100 text-gray-600 {% endif %}">
-                        {{ ui.status }}
+                        {{ ui.get_status_display }}
                     </span>
                     {% else %}
                     <span class="px-4 py-0.5 text-xs font-normal rounded-full bg-gray-100 text-gray-600">غير محدد</span>
                     {% endif %}
                     {% endwith %}
 
-                    <span class="text-sm font-normal text-gray-500">{{ initiative.start_date }} - {{
-                        initiative.end_date}}</span>
+                    <span class="text-sm font-normal text-gray-500">{{ initiative.start_date }} - {{ initiative.end_date}}</span>
                 </div>
 
 
@@ -102,6 +117,11 @@
 
     </td>
 </tr>
+{% empty %}
+<tr>
+    <td colspan="4" class="text-center text-gray-400 py-4">لا توجد أهداف تابعه لهذه الخطة</td>
+</tr>
+{% endfor %}
 
 <!--بنقلها بعدين JS-->
 <script>

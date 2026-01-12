@@ -70,19 +70,19 @@
 
     </tr>
     {% empty %}
-        <!-- {% if user.role.role_name == 'M' or user.role.role_name == 'CM' %} 
-            <tr >
-                <td colspan="4" class="text-center py-4 text-gray-500 font-medium">لم تُسجل أي مبادرة بعد</td>
-            </tr>
-        {% elif user.role.role_name == 'E' %}
-            <tr > 
-                <td colspan="4" class="text-center py-4 text-gray-500 font-medium">لم تُسجَّل في أي مبادرة بعد</td>
-            </tr>
-        {% else %} -->
+        {% if user.role.role_name == 'M' or user.role.role_name == 'CM' %} 
             <tr >
                 <td colspan="4" class="text-center py-4 text-gray-500 font-medium">لا توجد مبادرات</td>
             </tr>
-        <!-- {% endif %} -->
+        {% elif user.role.role_name == 'E' %}
+            <tr > 
+                <td colspan="4" class="text-center py-4 text-gray-500 font-medium">لا توجد مبادرات</td>
+            </tr>
+        {% else %} 
+            <tr >
+                <td colspan="4" class="text-center py-4 text-gray-500 font-medium">لا توجد مبادرات</td>
+            </tr>
+        {% endif %}
 
 
 {% endfor %}

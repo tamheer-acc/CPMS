@@ -1,22 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Document</title>
-        {% load static %}        
-        
-        <!-- APP CSS -->
-        <link rel="stylesheet" href="{% static 'CPMS_app/style.css' %}">
-        <!-- Tailwind CSS -->
-        <script src="https://cdn.tailwindcss.com"></script>
-        <!-- APP JS -->
-        <script defer src="{% static 'CPMS_app/app.js' %}"></script>
 
-    </head>
-<body dir="rtl" >
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    {% load static %}
 
-    <nav> 
+    <!-- APP CSS -->
+    <link rel="stylesheet" href="{% static 'CPMS_app/style.css' %}">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- APP JS -->
+    <script defer src="{% static 'CPMS_app/app.js' %}"></script>
+
+</head>
+
+<body dir="rtl">
+
+    <nav>
         <div id="logo">
             <p>CPMS</p>
         </div>
@@ -28,7 +30,60 @@
         </div>
     </nav>
 
-    <!-- toastify like message -->
+    {% if messages %}
+    <div id="django-messages" class="fixed top-5 right-5 space-y-3 z-50 w-96">
+
+        {% for message in messages %}
+
+        <div role="alert" class="toast-message rounded-lg p-4 shadow-md flex items-center gap-3 text-sm font-semibold
+     {% if 'delete' in message.tags %}bg-red-50 text-red-600 {% endif %}
+     {% if 'update' in message.tags %}bg-yellow-50 text-yellow-600{% endif %}
+     {% if 'create' in message.tags %}bg-green-50 text-green-600{% endif %}">
+
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0 stroke-current" fill="none"
+                viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+
+            <span>{{ message }}</span>
+        </div>
+
+
+        {% endfor %}
+    </div>
+<style>
+    .toast-message {
+        transform: translateY(-20px);
+        opacity: 0;
+        animation: slide-in 0.5s forwards, fade-out 0.5s 2.5s forwards;
+    }
+    
+    @keyframes slide-in {
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+    
+    @keyframes fade-out {
+        to {
+            opacity: 0;
+        }
+    }</style>
+    <script>
+        setTimeout(() => {
+            const container = document.getElementById("django-messages");
+            if (container) {
+                container.style.opacity = 0;
+                setTimeout(() => container.remove(), 500);
+            }
+        }, 3000);
+    </script>
+    {% endif %}
+
+
+    <!-- toastify like message
     {% if messages %}
         <div id="django-messages" class="fixed top-50 right-5 space-y-2 z-50">
         {% for message in messages %}
@@ -41,7 +96,6 @@
                     
                     {{ message }}
 
-                    <!-- icons  -->
                     {% if message.tags == 'error' %}
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
@@ -61,7 +115,6 @@
 
 
         <script>
-        // hide messages after 3 seconds
         setTimeout(() => {
             const container = document.getElementById("django-messages");
             if(container) {
@@ -71,7 +124,7 @@
             }
         }, 3000);
         </script>
-    {% endif %}
+    {% endif %} -->
 
     <main>
         {% block content %}
@@ -81,4 +134,5 @@
     </main>
 
 </body>
+
 </html>

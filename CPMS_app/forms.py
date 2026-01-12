@@ -2,8 +2,7 @@ from django import forms
 from django.forms import ModelForm
 from .models import Initiative, KPI, StrategicPlan, StrategicGoal
 
-
-
+# ============== Base Form =================
 # Base form with shared clean and save logic
 class BaseForm(forms.ModelForm):
     def clean(self):
@@ -44,28 +43,25 @@ class StrategicPlanForm(BaseForm):
             'start_date': 'تاريخ بداية الخطة',
             'end_date': 'تاريخ نهاية الخطة',
         }
-        widgets = {
-            'plan_name': forms.TextInput(attrs={
-                'class': 'w-full bg-gray-100 border border-gray-300 rounded-lg p-2.5 focus:bg-white focus:ring-2 focus:ring-blue-500'
-            }),
-            'vision': forms.Textarea(attrs={
-                'class': 'w-full bg-gray-100 border border-gray-300 rounded-lg p-2.5 focus:bg-white focus:ring-2 focus:ring-blue-500',
-                'rows': 3
-            }),
-            'mission': forms.Textarea(attrs={
-                'class': 'w-full bg-gray-100 border border-gray-300 rounded-lg p-2.5 focus:bg-white focus:ring-2 focus:ring-blue-500',
-                'rows': 3
-            }),
-            'start_date': forms.DateInput(attrs={
-                'type': 'date',
-                'class': 'w-full bg-gray-100 border border-gray-300 rounded-lg p-2.5 focus:bg-white focus:ring-2 focus:ring-blue-500'
-            }),
-            'end_date': forms.DateInput(attrs={
-                'type': 'date',
-                'class': 'w-full bg-gray-100 border border-gray-300 rounded-lg p-2.5 focus:bg-white focus:ring-2 focus:ring-blue-500'
-            }),
+        error_messages = {
+            'plan_name': {
+                'required': 'يرجى إدخال اسم الخطة',
+                'max_length': 'اسم الخطة طويل جدًا',
+                'unique': 'اسم الخطة موجود مسبقًا، الرجاء اختيار اسم آخر'
+            },
+            'vision': {
+                'required': 'يرجى إدخال الرؤية',
+            },
+            'mission': {
+                'required': 'يرجى إدخال الرسالة',
+            },
+            'start_date': {
+                'required': 'يرجى تحديد تاريخ البداية',
+            },
+            'end_date': {
+                'required': 'يرجى تحديد تاريخ النهاية',
+            }
         }
-
 
 
 # ===== Strategic Goal Form =====
@@ -81,15 +77,37 @@ class StrategicGoalForm(BaseForm):
             'goal_status': 'حالة الهدف',
             'goal_priority': 'أهمية الهدف',
         }
+        error_messages = {
+            'goal_title': {
+                'required': 'يرجى إدخال عنوان الهدف',
+                'max_length': 'اسم الهدف طويل جدًا',
+            },
+            'description': {
+                'required': 'يرجى إدخال وصف الهدف',
+                'max_length': 'الوصف طويل جداً، الرجاء اختصاره'
+            },
+            'start_date': {
+                'required': 'يرجى تحديد تاريخ البداية',
+            },
+            'end_date': {
+                'required': 'يرجى تحديد تاريخ النهاية',
+            },
+            'goal_status': {
+                'required': 'يرجى تحديد حالة الهدف',
+            },
+            'goal_priority': {
+                'required': 'يرجى تحديد أهمية الهدف',
+            },
+        }
+
         widgets = {
             'goal_title': forms.TextInput(attrs={'class': 'input'}),
             'description': forms.Textarea(attrs={'rows': 1, 'class': 'textarea'}),
             'start_date': forms.DateInput(attrs={'type': 'date', 'class': 'input'}),
             'end_date': forms.DateInput(attrs={'type': 'date', 'class': 'input'}),
-            'goal_status': forms.Select(attrs={'class': 'block flex-1 text-sm text-gray-900 bg-gray-50 rounded-xl shadow-sm border border-gray-300 p-2.5 h-11 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-500 hover:border-gray-400'}),
-            'goal_priority': forms.Select(attrs={'class': 'block flex-1 text-sm text-gray-900 bg-gray-50 rounded-xl shadow-sm border border-gray-300 p-2.5 h-11 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-500 hover:border-gray-400'}),
+            'goal_status': forms.Select(attrs={'class':'rounded-xl border px-12 py-2 text-sm text-gray-900 bg-gray-50 hover:border-gray-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-500'}),
+            'goal_priority': forms.Select(attrs={'class':'rounded-xl border px-12 py-2 text-sm text-gray-900 bg-gray-50 hover:border-gray-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-500'}),
         }
-
 
 
 # ===== KPI Form =====

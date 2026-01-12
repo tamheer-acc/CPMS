@@ -6,16 +6,16 @@ from django.views.generic import ListView, DetailView, CreateView
 from django.views.generic.edit import UpdateView, DeleteView
 from django.http import JsonResponse
 from django.forms import ModelForm
-from django.forms.models import model_to_dict  
+from django.forms.models import model_to_dict
 from django.contrib.auth import login, get_user_model
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
-from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin #class based view 
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin #class based view
 from django.contrib.auth.decorators import login_required, user_passes_test #function based view
 from django.core.exceptions import PermissionDenied
 from functools import wraps
-from .models import ( Role, Department, User, StrategicPlan, StrategicGoal, 
+from .models import ( Role, Department, User, StrategicPlan, StrategicGoal,
                         Initiative, UserInitiative, KPI, Note, Log, STATUS)
-from .services import generate_KPIs,  create_log, get_plan_dashboard
+from .services import generate_KPIs,  create_log, get_plan_dashboard, filter_queryset, get_page_numbers, paginate_queryset
 from .forms import InitiativeForm, KPIForm, StrategicGoalForm, StrategicPlanForm
 from django.template.loader import render_to_string
 from django.db.models import Q, Case, When, Value, IntegerField
@@ -39,18 +39,18 @@ class LogMixin:
         '''
         # Check if this is an UPDATE
         if hasattr(self, 'object') and self.object.pk:
-            old_data = model_to_dict(self.object)  
+            old_data = model_to_dict(self.object)
         else:
-            old_data = None 
+            old_data = None
 
         response = super().form_valid(form)
 
         # Log the action after saving
         create_log(
-            user=self.request.user,  
+            user=self.request.user,
             action="CREATE" if self.request.method.lower() == "post" and not old_data else "UPDATE",
             instance=self.object,
-            old_data=old_data  
+            old_data=old_data
         )
 
         return response
@@ -137,7 +137,7 @@ def log_action(action_type="AUTO"):
 
 #Helper class that acts like UserPassesTestMixin:
 class RoleRequiredMixin(UserPassesTestMixin):
-    allowed_roles = []  
+    allowed_roles = []
 
     def test_func(self):
         return self.request.user.role.role_name in self.allowed_roles
@@ -150,52 +150,52 @@ class RoleRequiredMixin(UserPassesTestMixin):
 class InitiativePermissionMixin:
     '''
     Users can only access initiatives they are allowed to
-    GM: All initaitves 
+    GM: All initaitves
     M: initiatives in their department
     CM: initiatives in their department
     E: initiatives they are assigned to
     Raise PermissionDenied for any URL tampering!
     '''
-    
+
     def get_initiative_queryset(self):
-        
-        qs = Initiative.objects.none()  
+
+        qs = Initiative.objects.none()
         user = self.request.user
         role = user.role.role_name
         goal_id = self.kwargs.get('goal_id')
-        
+
         if goal_id:
             goal = get_object_or_404(StrategicGoal, id=goal_id)
-            
+
             if role == 'GM':
                 return Initiative.objects.filter(strategic_goal = goal)
-            
+
             elif user.department != goal.department:
                 raise PermissionDenied("ليست لديك صلاحية لرؤية هذه الصفحة")
 
             elif role in ['CM','M']:
                 qs = Initiative.objects.filter( strategic_goal = goal , strategic_goal__department = user.department)
-                
+
             elif role == 'E':
                 qs = Initiative.objects.filter( strategic_goal = goal , userinitiative__user = user )
-            
+
             else:
                 raise PermissionDenied("ليست لديك صلاحية لرؤية هذه الصفحة")
-        
+
         else: # No goal id
-            
+
             if role == 'GM' and not goal_id:
                 return Initiative.objects.all()
 
             elif role in ['CM','M','E']:
                 qs = Initiative.objects.filter(userinitiative__user=user)
-                
+
             else:
                 raise PermissionDenied("ليست لديك صلاحية لرؤية هذه الصفحة")
-        
+
         return qs.distinct()
 
-    def get_queryset(self): #what will be returned 
+    def get_queryset(self): #what will be returned
         qs = self.get_initiative_queryset()
 
         pk = self.kwargs.get('pk')
@@ -243,7 +243,7 @@ def dashboard_view(request):
     # Departments (optional)
     departments = Department.objects.all() if user.role.role_name in ['GM', 'CM', 'M'] else None
     department = user.department
-    
+
     # Strategic Plans
     plans = StrategicPlan.objects.all() if user.role.role_name in ['GM', 'CM', 'M'] else None
 
@@ -263,14 +263,14 @@ def dashboard_view(request):
 # ---------------------------
 #  Initiative Views
 # ---------------------------
-class AllInitiativeView(LoginRequiredMixin, InitiativePermissionMixin, ListView): 
+class AllInitiativeView(LoginRequiredMixin, InitiativePermissionMixin, ListView):
     '''
     List all initiatives
     - General Manager sees all initiatives
-    - Managers see their departments initiatives 
+    - Managers see their departments initiatives
     - Employee see the initiatives they are assigned to
     '''
-    model = Initiative 
+    model = Initiative
     template_name = 'initiatives_list.html'
     context_object_name = 'initiatives'
     allow_empty = True
@@ -278,32 +278,44 @@ class AllInitiativeView(LoginRequiredMixin, InitiativePermissionMixin, ListView)
     def get_paginate_by(self, queryset):
         return int(self.request.GET.get('per_page', 25))
 
+    # def get_queryset(self):
+    #     qs = self.get_initiative_queryset()
+
+    #     search = self.request.GET.get('search', '')
+    #     priority = self.request.GET.get('priority', '')
+    #     sort = self.request.GET.get('sort')
+
+    #     if search or priority:
+    #         if search:
+    #             qs = qs.filter(title__icontains=search)
+    #         if priority:
+    #             qs = qs.filter(priority=priority)
+
+    #     if sort == 'priority':
+    #         priority_order = Case(
+    #             When(priority='C', then=Value(1)),
+    #             When(priority='H', then=Value(2)),
+    #             When(priority='M', then=Value(3)),
+    #             When(priority='L', then=Value(4)),
+    #             default=Value(5),
+    #             output_field=IntegerField(),
+    #         )
+    #         qs = qs.order_by(priority_order)
+
+    #     return qs.distinct()
+
     def get_queryset(self):
         qs = self.get_initiative_queryset()
-        
 
-        search = self.request.GET.get('search', '')
-        priority = self.request.GET.get('priority', '')
-        sort = self.request.GET.get('sort') 
-
-        if search or priority:
-            if search: 
-                qs = qs.filter(title__icontains=search)
-            if priority:
-                qs = qs.filter(priority=priority)
-
-        if sort == 'priority':
-            priority_order = Case(
-                When(priority='C', then=Value(1)),
-                When(priority='H', then=Value(2)),
-                When(priority='M', then=Value(3)),
-                When(priority='L', then=Value(4)),
-                default=Value(5),
-                output_field=IntegerField(),
-            )
-            qs = qs.order_by(priority_order)
-
-        return qs.distinct()
+       #search & filter function
+        qs = filter_queryset(
+          queryset=qs,
+          request=self.request,
+          search_fields=['title'],
+          status_field='status',
+          priority_field='priority'
+    )
+        return qs
 
 
     def get_context_data(self, **kwargs):
@@ -336,38 +348,38 @@ class InitiativeDetailsView(LoginRequiredMixin, InitiativePermissionMixin, Detai
     template_name = "initiative_detail.html"
     context_object_name = "initiative"
     def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs) 
-        user = self.request.user 
-        initiative = self.get_object() 
-        
-        if user.role.role_name in ['M', 'CM'] and initiative.strategic_goal.department == user.department: 
-            employees = User.objects.filter(role__role_name='E', department=user.department) 
-            assigned_employee_ids = set( 
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+        initiative = self.get_object()
+
+        if user.role.role_name in ['M', 'CM'] and initiative.strategic_goal.department == user.department:
+            employees = User.objects.filter(role__role_name='E', department=user.department)
+            assigned_employee_ids = set(
                                         UserInitiative.objects.filter(initiative=initiative)
-                                        .values_list('user_id', flat=True) ) 
-            
-            context['employees'] = employees 
-            context['assigned_employee_ids'] = assigned_employee_ids 
+                                        .values_list('user_id', flat=True) )
+
+            context['employees'] = employees
+            context['assigned_employee_ids'] = assigned_employee_ids
             context['form'] = KPIForm()
         else:
-            context['employees'] = [] 
-            context['assigned_employee_ids'] = set() 
-        
+            context['employees'] = []
+            context['assigned_employee_ids'] = set()
+
         return context
 
 
 
-class CreateInitiativeView(LoginRequiredMixin, RoleRequiredMixin, InitiativePermissionMixin, CreateView, LogMixin):  
+class CreateInitiativeView(LoginRequiredMixin, RoleRequiredMixin, InitiativePermissionMixin, CreateView, LogMixin):
     '''
     - Allows Managers to create a new initiative
     - Sets the strategic goal based on the goal_id in the URL
     - Automatically assigns the current user to the initiative via UserInitiative
-    '''    
+    '''
     model = Initiative
     form_class = InitiativeForm
     template_name = 'initiative_form.html'
-    allowed_roles = ['M', 'CM']  
-    
+    allowed_roles = ['M', 'CM']
+
     def form_valid(self, form): #overriding form valid to set strategic goal and employee
         form.instance.strategic_goal_id = self.kwargs['goal_id']
         response = super().form_valid(form)
@@ -380,7 +392,7 @@ class CreateInitiativeView(LoginRequiredMixin, RoleRequiredMixin, InitiativePerm
         messages.success(self.request, "تمت إضافة المبادرة بنجاح!")
 
         return response
-    
+
     def form_invalid(self, form):
         # Field-specific errors
         for field, errors in form.errors.items():
@@ -396,8 +408,8 @@ class CreateInitiativeView(LoginRequiredMixin, RoleRequiredMixin, InitiativePerm
 
     def get_success_url(self):
         return reverse('initiatives_list')
-    
-    
+
+
     def test_func(self):
         user = self.request.user
         goal_id = self.kwargs.get('goal_id')
@@ -426,11 +438,11 @@ class UpdateInitiativeView(LoginRequiredMixin, RoleRequiredMixin, InitiativePerm
     template_name = 'initiative_form.html'
     fields = ['title', 'description', 'start_date', 'end_date', 'priority', 'category']
     allowed_roles = ['M', 'CM']
-    
+
     def get_queryset(self):
         # explicitly use the mixin’s logic
         return super().get_queryset()
-    
+
     def get_success_url(self):
         goal_id = self.kwargs.get('goal_id')
         # if goal_id:
@@ -449,7 +461,7 @@ class DeleteInitiativeView(LoginRequiredMixin, RoleRequiredMixin, InitiativePerm
     model = Initiative
     template_name = 'initiative_confirm_delete.html'
     allowed_roles = ['M', 'CM']
-    
+
     def get_queryset(self):
         return InitiativePermissionMixin.get_queryset(self)
 
@@ -494,7 +506,7 @@ def assign_employee_to_initiative(request, pk):
 
         return redirect('initiative_detail', pk=initiative.id)
 
-    return render(request, 'assign_employee.html', { #Get request: returns a list of the department employees 
+    return render(request, 'assign_employee.html', { #Get request: returns a list of the department employees
         'initiative': initiative,
         'employees': employees,
         'assigned_employee_ids': assigned_employee_ids,
@@ -511,7 +523,7 @@ class KPIDetailsView(DetailView):
     '''
     model = KPI
     template_name = "KPI_detail.html"
-    context_object_name = "KPI" 
+    context_object_name = "KPI"
 
 
 @log_action()
@@ -522,7 +534,7 @@ def create_kpi_view(request, initiative_id):
     - Fills AI-generated KPI suggestions for editing or adding
     - Redirects on submission or renders form (full or partial) on GET, handling errors as needed
     '''
-    
+
     if not is_manager(request.user):
         raise PermissionDenied("ليست لديك صلاحية لرؤية هذه الصفحة")
 
@@ -543,7 +555,7 @@ def create_kpi_view(request, initiative_id):
 
         if request.headers.get('x-requested-with') == 'XMLHttpRequest':    # only return partial HTML if request is via JS
             return render(request, 'partials/kpi_modal.html', {'form': form, 'suggestions': ai_suggestion})
-        
+
         #if someone opens the url normally
         return render(request, 'kpi_form.html', {'initiative': initiative, 'form': form})
 
@@ -577,7 +589,7 @@ class UpdateKPIView(RoleRequiredMixin, UpdateView, LogMixin):
     fields = ['kpi', 'unit', 'target_value','actual_value']
     template_name = 'kpi_form.html'
     allowed_roles = ['M', 'CM']
-    
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['initiative'] = self.object.initiative
@@ -596,10 +608,10 @@ class AllKPIsView(ListView): #not needed but here we go
     - Filters KPIs based on the user's assigned initiatives
     - Renders the KPIs in the specified template
     '''
-    model = KPI 
+    model = KPI
     template_name = 'kpis_list.html'
     context_object_name = 'kpis'
-    
+
     def get_queryset(self):
         return KPI.objects.filter(initiative__userinitiative__user=self.request.user)
 
@@ -607,7 +619,7 @@ class AllKPIsView(ListView): #not needed but here we go
 
 # Paths and URLs [done]
 # conditioning (depending on Role) [done]
-# AI Model Handling 
+# AI Model Handling
 
 
 
@@ -618,17 +630,17 @@ class AllKPIsView(ListView): #not needed but here we go
 # ---------------------------
 #  Department View
 # ---------------------------
-class AllDepartmentsView(LoginRequiredMixin, ListView): 
+class AllDepartmentsView(LoginRequiredMixin, ListView):
     '''
     - List all departments
     '''
-    model = Department 
+    model = Department
     template_name = 'departments_list.html'
     context_object_name = 'departments'
 
     def get_queryset(self):
         return Department.objects.all()
-    
+
 
 # ---------------------------
 #  StrategicPlan View
@@ -637,7 +649,7 @@ class AllPlansView(LoginRequiredMixin, RoleRequiredMixin, ListView):
     model = StrategicPlan
     template_name = 'plans_list.html'
     context_object_name = 'plans'
-    paginate_by = 2 # Number of plans to display per page
+    paginate_by = 5
     allowed_roles = ['M', 'CM', 'GM']  # Roles allowed to access this view
 
     def get_queryset(self):
@@ -647,42 +659,30 @@ class AllPlansView(LoginRequiredMixin, RoleRequiredMixin, ListView):
         - Applies search and status filters if provided in GET parameters.
         """
         queryset = StrategicPlan.objects.all()
-        
+
         # Update plans that ended to inactive
         today = timezone.now().date()
         queryset.filter(is_active=True, end_date__lt=today).update(is_active=False)
-
-        # Handle search and status filtering
-        search = self.request.GET.get('search', '')
-        status = self.request.GET.get('status', '')
-        if search or status:
-            q = Q(plan_name__icontains=search) if search else Q()
-            if status == 'active':
-                q &= Q(is_active=True)
-            elif status == 'inactive':
-                q &= Q(is_active=False)
-            queryset = queryset.filter(q)
+        #search & filter function
+        queryset = filter_queryset(
+          queryset=queryset,
+          request=self.request,
+          search_fields=['plan_name'],
+          status_field='is_active',
+          priority_field=None
+    )
 
         return queryset
 
     def get_context_data(self, **kwargs):
-        """
-        - Adds extra context to the template, such as custom pagination page numbers.
-        - Shows first, last, and surrounding pages (for better pagination navigation).
-        """
-        context = super().get_context_data(**kwargs)
-        page_obj = context['page_obj']
-        total_pages = context['paginator'].num_pages
-        current = page_obj.number
+          context = super().get_context_data(**kwargs)
+          page_obj = context.get('page_obj')
+          paginator = context.get('paginator')
+          #
+          context['page_numbers'] = get_page_numbers(page_obj, paginator)
+          return context
 
-        page_numbers = []
-        for num in range(1, total_pages + 1):
-            if num == 1 or num == total_pages or abs(num - current) <= 2:
-                page_numbers.append(num)
-            elif page_numbers[-1] != '...':
-                page_numbers.append('...')
-        context['page_numbers'] = page_numbers
-        return context
+
 
     def render_to_response(self, context, **response_kwargs):
         """
@@ -699,24 +699,57 @@ class AllPlansView(LoginRequiredMixin, RoleRequiredMixin, ListView):
 
 
 class PlanDetailsview(LoginRequiredMixin, RoleRequiredMixin, DetailView):
-    '''
-    - Displays details of a single strategic plan
-    '''
-    model = StrategicPlan 
-    template_name = 'plan_detail.html'
-    context_object_name = 'plan'
-    allowed_roles = ['M', 'CM', 'GM']  # Roles allowed to access this view
+     '''
+     - Displays details of a single strategic plan
+     '''
+     model = StrategicPlan
+     template_name = 'plan_detail.html'
+     context_object_name = 'plan'
+     allowed_roles = ['M', 'CM', 'GM']  # Roles allowed to access this view
 
-    def get_queryset(self):
-        return StrategicPlan.objects.all()
-    
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        dashboard_data = get_plan_dashboard(self.object, self.request.user)
-        context.update(dashboard_data)
-        return context
+     def get_queryset(self):
+         return StrategicPlan.objects.all()
 
-            
+     def get_context_data(self, **kwargs):
+         context = super().get_context_data(**kwargs)
+         dashboard_data = get_plan_dashboard(self.object, self.request.user)
+         context.update(dashboard_data)
+         user = self.request.user
+         role = user.role.role_name
+         goals_qs = StrategicGoal.objects.filter(strategicplan=self.object)
+
+         #search & filter function
+         goals_qs = filter_queryset(
+           queryset=goals_qs,
+           request=self.request,
+           search_fields=['goal_title'],
+           status_field='goal_status',
+           priority_field='goal_priority'
+         )
+
+         if role in ['M', 'CM']:
+            goals_qs = goals_qs.filter(department=user.department)
+
+         per_page = int(self.request.GET.get('per_page', 5))
+         goal_list, page_obj, paginator = paginate_queryset(goals_qs, self.request, per_page)
+
+         context['goals'] = goal_list
+        #  context['page_obj'] = page_obj
+        #  context['paginator'] = paginator
+        #  context['page_numbers'] = get_page_numbers(page_obj, paginator)
+         return context
+
+     def render_to_response(self, context, **response_kwargs):
+         if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
+             html = render_to_string('partials/goals_table_rows.html', context, request=self.request)
+             return JsonResponse({
+                 'html': html
+               #  'has_goals': context['page_obj'].object_list.exists()
+             })
+
+         return super().render_to_response(context, **response_kwargs)
+
+
 class CreatePlanView(LoginRequiredMixin, LogMixin, CreateView):
     '''
     - Only Committee Manager can create a new strategic plan
@@ -725,19 +758,19 @@ class CreatePlanView(LoginRequiredMixin, LogMixin, CreateView):
     form_class = StrategicPlanForm
     template_name = 'plan_form.html'
     success_url = reverse_lazy('plans_list')
-    
+
     def dispatch(self, request, *args, **kwargs):
         if request.user.role.role_name != 'CM':
             raise PermissionDenied("ليس لديك الصلاحية لإنشاء هذه الخطة.")
         if  StrategicPlan.objects.filter(is_active=True):
             raise PermissionDenied("توجد خطة نشطة حاليًا")
         return super().dispatch(request, *args, **kwargs)
-    
+
     def form_valid(self, form):
         self.object = form.save(user=self.request.user)
-        messages.success(self.request, "تمت إضافة الخطة بنجاح")
+        messages.success(self.request, "تمت إضافة الخطة بنجاح", extra_tags="create")
         return super().form_valid(form)
- 
+
 
 class UpdatePlanView(LoginRequiredMixin, LogMixin, UpdateView):
     '''
@@ -748,7 +781,7 @@ class UpdatePlanView(LoginRequiredMixin, LogMixin, UpdateView):
     form_class = StrategicPlanForm
     template_name = 'plan_form.html'
     success_url = reverse_lazy('plans_list')
-    
+
     def dispatch(self, request, *args, **kwargs):
         plan = self.get_object()
         if request.user.role.role_name != 'CM':
@@ -758,56 +791,78 @@ class UpdatePlanView(LoginRequiredMixin, LogMixin, UpdateView):
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
-        messages.success(self.request, "تم تحديث الخطة بنجاح")
+        messages.success(self.request, "تم تحديث الخطة بنجاح", extra_tags="update")
         return super().form_valid(form)
 
 
 class DeletePlanView(LoginRequiredMixin, RoleRequiredMixin, DeleteView):
     '''
-    - Only Committee Manager can delete a plan 
+    - Only Committee Manager can delete a plan
     - Redirects to plans list after deletion
     '''
     model = StrategicPlan
     success_url = reverse_lazy('plans_list')
     allowed_roles = ['CM']  # Roles allowed to access this view
 
-   
-       
+    def form_valid(self, form):
+        """Custom deletion logic inside form_valid"""
+        response = super().form_valid(form)
+        messages.success(self.request, "تم حذف الخطة بنجاح", extra_tags="delete")
+        return response
+
+
 # ---------------------------
 #  StrategicGoal View
 # ---------------------------
-class AllGoalsView(LoginRequiredMixin, ListView): 
+class AllGoalsView(LoginRequiredMixin, ListView):
     '''
     Displays a list of all strategic plans
     - General Manager sees all goals
     - Managers and Committee Managers see goals of their department
     - Employees see goals linked to their initiatives
     '''
-    model = StrategicGoal 
+    model = StrategicGoal
     template_name = 'goals_list.html'
     context_object_name = 'goals'
-        
+
     def get_queryset(self):
         user = self.request.user
         role = user.role.role_name
 
         if role == 'GM':
-            return StrategicGoal.objects.all()
+            qs = StrategicGoal.objects.all()
         elif role in ['M','CM']:
-            return StrategicGoal.objects.filter(department = user.department)
+            qs = StrategicGoal.objects.filter(department = user.department)
         elif role == 'E':
-            return StrategicGoal.objects.all().prefetch_related('initiative_set__userinitiative_set')
+            qs = StrategicGoal.objects.all().prefetch_related('initiative_set__userinitiative_set')
 
-        return StrategicGoal.objects.none()
+        search = self.request.GET.get('search', '').strip()
 
- 
+        if search:
+                qs = qs.filter(goal_title__icontains=search)
+
+
+        return qs
+    def render_to_response(self, context, **response_kwargs):
+        """
+        - Handles AJAX requests differently: returns only partial HTML for the table.
+        - For normal requests, renders the full template as usual.
+        """
+        if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            html = render_to_string('partials/goals_table_rows.html', context, request=self.request)
+            return JsonResponse({
+                'html': html
+            })
+        return super().render_to_response(context, **response_kwargs)
+
+
 class GoalDetailsview(LoginRequiredMixin, DetailView):
     '''
     - Shows details of a single goal
     '''
-    model = StrategicGoal 
+    model = StrategicGoal
     template_name = 'goal_detail.html'
-    context_object_name = 'goal'     
+    context_object_name = 'goal'
 
 
 class CreateGoalView(LoginRequiredMixin, RoleRequiredMixin, LogMixin, CreateView):
@@ -823,6 +878,7 @@ class CreateGoalView(LoginRequiredMixin, RoleRequiredMixin, LogMixin, CreateView
 
     def form_valid(self, form):
         self.object = form.save(user=self.request.user, plan_id=self.kwargs['plan_id'])
+        messages.success(self.request, "تمت إضافة الهدف بنجاح", extra_tags="create")
         return super().form_valid(form)
     def get_success_url(self):
         return reverse('plan_detail', kwargs={'pk': self.kwargs['plan_id']})
@@ -842,8 +898,9 @@ class UpdateGoalView(LoginRequiredMixin, RoleRequiredMixin, LogMixin, UpdateView
 
     def form_valid(self, form):
         self.object = form.save(user=self.request.user)
+        messages.success(self.request, "تم تحديث الهدف بنجاح", extra_tags="update")
         return super().form_valid(form)
-    
+
 
 class DeleteGoalView(LoginRequiredMixin, RoleRequiredMixin, LogMixin, DeleteView):
     '''
@@ -855,20 +912,26 @@ class DeleteGoalView(LoginRequiredMixin, RoleRequiredMixin, LogMixin, DeleteView
     success_url = reverse_lazy('plan_goals_list')
     allowed_roles = ['M', 'CM']  # Roles allowed to access this view
 
+    def form_valid(self, form):
+        """Custom deletion logic inside form_valid"""
+        response = super().form_valid(form)
+        messages.success(self.request, "تم حذف الهدف بنجاح", extra_tags="delete")
+        return response
+
 # ---------------------------
 #  Note View
 # ---------------------------
-class AllNotesView(LoginRequiredMixin, ListView): 
+class AllNotesView(LoginRequiredMixin, ListView):
     '''
     - Displays a list of notes for the current user
     - GM sees only notes they sent
     - M and CM see notes they sent plus notes sent by GM in their department
     - E sees notes they sent and notes related to initiatives they are part of, or notes sent to them by their manager
     '''
-    model = Note 
+    model = Note
     template_name = 'notes_list.html'
     context_object_name = 'notes'
-        
+
     def get_queryset(self):
         user = self.request.user
         role = user.role.role_name
@@ -884,17 +947,17 @@ class AllNotesView(LoginRequiredMixin, ListView):
             return Note.objects.filter(user=user,initiative__userinitiative__user=user,department=user.department).distinct()
 
         return Note.objects.none()
-        
+
 
 class NoteDetailsview(LoginRequiredMixin, DetailView):
     '''
     - Shows details of a single note
     '''
-    model = Note 
+    model = Note
     template_name = 'note_detail.html'
     context_object_name = 'note'
-        
-        
+
+
 class CreateNoteView(LoginRequiredMixin, LogMixin, CreateView):
     '''
     - Allows creating a new note
@@ -905,7 +968,7 @@ class CreateNoteView(LoginRequiredMixin, LogMixin, CreateView):
     fields = ['content', 'initiative', 'department', 'receiver']
     template_name = 'note_form.html'
     success_url = reverse_lazy('notes_list')
-    
+
     # This is to set the receiver's name from a custom dropdown
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
@@ -925,7 +988,8 @@ class CreateNoteView(LoginRequiredMixin, LogMixin, CreateView):
 
     def form_valid(self, form):
         form.instance.sender = self.request.user
-        return super().form_valid(form) 
+        messages.success(self.request, "تمت إضافة الملاحظة بنجاح", extra_tags="create")
+        return super().form_valid(form)
 
 
 class UpdateNoteView(LoginRequiredMixin, LogMixin, UpdateView):
@@ -947,11 +1011,12 @@ class UpdateNoteView(LoginRequiredMixin, LogMixin, UpdateView):
         if not qs.filter(pk=self.kwargs['pk']).exists():
             raise PermissionDenied("ليس لديك صلاحية تعديل هذه الملاحظة.")
         return qs
-    
+
     def form_valid(self, form):
         form.instance.sender = self.request.user
+        messages.success(self.request, "تم تحديث الملاحظة بنجاح", extra_tags="update")
         return super().form_valid(form)
-    
+
 
 class DeleteNoteView(LoginRequiredMixin, LogMixin, DeleteView):
     '''
@@ -970,19 +1035,24 @@ class DeleteNoteView(LoginRequiredMixin, LogMixin, DeleteView):
         if not qs.filter(pk=self.kwargs['pk']).exists():
             raise PermissionDenied("ليس لديك صلاحية حذف هذه الملاحظة.")
         return qs
-    
-    
+
+    def form_valid(self, form):
+        """Custom deletion logic inside form_valid"""
+        response = super().form_valid(form)
+        messages.success(self.request, "تم حذف الملاحظة بنجاح", extra_tags="delete")
+        return response
+
 # ---------------------------
 #  Log View
 # ---------------------------
-class AllLogsView(ListView): 
-    model = Log 
+class AllLogsView(ListView):
+    model = Log
     template_name = 'logs_list.html'
     context_object_name = 'logs'
 
     def get_queryset(self):
         return Log.objects.all()
-    
+
 
 
 

@@ -149,7 +149,7 @@ class Initiative(models.Model):  # 1 : M Relationship with StrategicGoal (Many S
 #  UserInitiative Model
 # ---------------------------
 class UserInitiative(models.Model): # M : M relationshp  
-    status = models.CharField(max_length=2)
+    status = models.CharField(max_length=2, choices=STATUS)
     progress = models.DecimalField(max_digits=10, decimal_places=0)
     initiative = models.ForeignKey(Initiative, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE)

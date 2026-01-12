@@ -1,7 +1,8 @@
 from django.forms.models import model_to_dict
-from django.db.models import Count, Q
+from django.db.models import Count, Q, Case, When, Value, IntegerField
 from .models import StrategicGoal, Initiative, Log, UserInitiative
 from django.db.models import Prefetch
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 def get_changed_fields(old_data, new_data):
     '''
@@ -32,6 +33,7 @@ def create_log(user, action, instance=None, old_data=None):
 
 def generate_KPIs(initiative):
     pass
+
 
 def get_plan_dashboard(plan, user):
     role = user.role.role_name
@@ -110,3 +112,85 @@ def get_plan_dashboard(plan, user):
         'departments_progress': departments_progress,
         'employees_progress': employees_progress
     }
+
+def filter_queryset(queryset, request, search_fields=None, status_field=None, priority_field=None):
+
+    search = request.GET.get('search', '').strip()
+    status = request.GET.get('status', '').strip()
+    priority = request.GET.get('priority', '').strip()
+    sort = request.GET.get('sort', '').strip()
+    q = Q()
+
+    if search and search_fields:
+        for field in search_fields:
+            q |= Q(**{f"{field}__icontains": search})
+
+    if status and status_field:
+        field = queryset.model._meta.get_field(status_field)
+        if field.get_internal_type() == 'BooleanField':
+            q &= Q(**{status_field: status.lower() == 'active'})
+        elif field.choices:
+            q &= Q(**{status_field: status})
+
+    if priority and priority_field:
+      q &= Q(**{priority_field: priority})
+
+    queryset = queryset.filter(q)
+
+    if sort == 'priority' and priority_field:
+        priority_order = Case(
+            When(**{priority_field: 'C'}, then=Value(1)),
+            When(**{priority_field: 'H'}, then=Value(2)),
+            When(**{priority_field: 'M'}, then=Value(3)),
+            When(**{priority_field: 'L'}, then=Value(4)),
+            default=Value(5),
+            output_field=IntegerField()
+        )
+        queryset = queryset.order_by(priority_order)
+
+    if sort == 'date':
+        queryset = queryset.order_by('-start_date')
+
+
+    return queryset.distinct()
+
+
+def paginate_queryset(queryset, request, per_page):
+    """
+    Returns paginated objects for a given QuerySet.
+    """
+    page = request.GET.get('page', 1)
+    paginator = Paginator(queryset, per_page)
+    
+    try:
+        page_obj = paginator.page(page)
+    except PageNotAnInteger:
+        page_obj = paginator.page(1)
+    except EmptyPage:
+        page_obj = paginator.page(paginator.num_pages)
+    
+    return page_obj.object_list, page_obj, paginator
+
+
+def get_page_numbers(page_obj, paginator, max_surrounding=1):
+    """
+    Returns a list of page numbers for pagination, including:
+    - always first and last page
+    - pages around current page (max_surrounding before/after)
+    - ellipsis ('...') where pages are skipped
+    """
+    if not page_obj or not paginator:
+        return []
+        
+    total_pages = paginator.num_pages
+    current = page_obj.number
+    page_numbers = []
+
+    for num in range(1, total_pages + 1):
+        if num == 1 or num == total_pages or abs(num - current) <= max_surrounding:
+            page_numbers.append(num)
+        elif page_numbers[-1] != '...':
+            page_numbers.append('...')
+
+    return page_numbers
+

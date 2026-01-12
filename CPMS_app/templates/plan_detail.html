@@ -4,7 +4,7 @@
 {% block content %}
 
 <section class="bg-gray-100 py-12" dir="rtl">
-    <div class="max-w-4xl mx-auto bg-white px-6 py-4 rounded-xl space-y-6">
+    <div class="max-w-6xl mx-auto bg-white px-6 py-4 rounded-xl space-y-6">
 
         <div class="bg-gray-200/60 px-4 py-2 rounded-md">
             <h2 class="text-sm font-semibold text-gray-800">
@@ -58,12 +58,12 @@
 
             <div class="bg-white p-4 rounded-lg shadow text-center">
                 <h3 class="font-semibold mb-2">عدد الأهداف</h3>
-                <p class="text-2xl font-bold">{{ plan.goals.count }}</p>
+                <p class="text-2xl font-bold">{{ goals_count }}</p>
             </div>
 
             <div class="bg-white p-4 rounded-lg shadow text-center">
                 <h3 class="font-semibold mb-2">عدد المبادرات</h3>
-                <p class="text-2xl font-bold">{{ plan.initiatives_qs.count }}</p>
+                <p class="text-2xl font-bold">{{ initiatives_count }}</p>
             </div>
 
             <div class="bg-white p-4 rounded-lg shadow">
@@ -133,7 +133,7 @@
             </h2>
         </div>
         <div>
-            <!-- Container for Search, Filter, and Add Button -->
+            <!-- Container for Search, Filter, and rows number -->
             <div class="p-4 flex items-center justify-between gap-4">
 
                 <!-- Container for Search and Filter -->
@@ -151,7 +151,7 @@
                         </div>
                         <input type="text" id="search"
                             class="block w-80 pe-9 ps-3 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                            placeholder="ابحث عن خطة...">
+                            placeholder="ابحث عن هدف...">
                     </div>
 
                     <!-- Filter Button -->
@@ -177,34 +177,79 @@
                         <div id="dropdown"
                             class="absolute right-0 z-10 hidden bg-neutral-primary-medium border border-default-medium rounded-base shadow-lg w-32 overflow-hidden">
                             <ul class="p-2 text-sm text-body font-medium">
-                                <li>
-                                    <button type="button" data-status=""
-                                        class="filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">الكل</button>
-                                </li>
-                                <li>
-                                    <button type="button" data-status="active"
-                                        class="filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">نشطة</button>
-                                </li>
-                                <li>
-                                    <button type="button" data-status="inactive"
-                                        class="filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">غير
-                                        نشطة</button>
-                                </li>
-                            </ul>
+                            <li>
+                                <button type="button" data-status=""
+                                    class="filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">الكل</button>
+                            </li>
+                            <li>
+                                <button type="button" data-status="NS"
+                                    class="filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">لم يبدأ بعد</button>
+                            </li>
+                            <li>
+                                <button type="button" data-status="IP"
+                                    class="filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">قيد التنفيذ</button>
+                            </li>
+                            <li>
+                                <button type="button" data-status="C"
+                                    class="filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">مكتمل</button>
+                            </li>
+                            <li>
+                                <button type="button" data-status="D"
+                                    class="filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">متأخر</button>
+                            </li>
+                        </ul>
                         </div>
                     </div>
                 </div>
 
                 <!-- Add Goal Button -->
-                <!-- <div>
+                {% if can_edit %}
+                <a href="{% url 'plan_goal_create' plan.pk %}"
+                    class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-semibold">
+                    إضافة هدف
+                </a>
+                {% else %}
+                <!-- dropdown page number -->
+                <div class="relative">
+                    <button id="page-dropdown-button"
+                        class="flex flex-row-reverse items-center justify-between text-body bg-neutral-secondary-medium border rounded text-gray-500 hover:text-gray-800 hover:bg-neutral-tertiary-medium shadow-xs font-medium leading-5 rounded-base text-sm px-3 py-2 focus:outline-none gap-2 "
+                        type="button">
+                        <span id="page-dropdown-text" class="ml-1">عدد الصفوف</span>
+                        <svg id="page-dropdown-icon" class="w-4 h-4 transition-transform duration-200"
+                            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 9-7 7-7-7" />
+                        </svg>
+                    </button>
 
-                    {% if can_edit %}
-                    <a href="{% url 'plan_goal_create' plan.pk %}"
-                        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-semibold">
-                        إضافة هدف
-                    </a>
-                    {% endif %}
-                </div> -->
+                    <!-- Dropdown Menu -->
+                    <div id="page-dropdown"
+                        class="absolute right-0 z-10 hidden bg-neutral-primary-medium border border-default-medium rounded-base shadow-lg w-32 overflow-hidden">
+                        <ul class="p-2 text-sm text-body font-medium">
+                            <li>
+                                <button type="button" data-number="5"
+                                    class="page-filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">عدد الصفوف</button>
+                            </li>
+                            <li>
+                                <button type="button" data-number="10"
+                                    class="page-filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">10</button>
+                            </li>
+                            <li>
+                                <button type="button" data-number="25"
+                                    class="page-filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">25</button>
+                            </li>
+                            <li>
+                                <button type="button" data-number="50"
+                                    class="page-filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">50</button>
+                            </li>
+                            <li>
+                                <button type="button" data-number="100"
+                                    class="page-filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">100</button>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                {% endif %}
+
 
             </div>
 
@@ -213,24 +258,100 @@
                     <tr>
                         <th class="py-3 font-semibold">عنوان الهدف</th>
                         <th class="px-0 py-3 font-semibold">وصف الهدف</th>
+                        {% if request.user.role.role_name == 'GM' %}
+                        <th class="px-0 py-3 font-semibold">الإدارة</th>
+                        {% endif %}
                         <th class="px-0 py-3 font-semibold">الحالة</th>
-                        <th class="px-0 py-3 font-semibold">الأهمية</th>
-                        <th class="px-0 py-3 font-semibold">التاريخ</th>
+                        <th class="px-0 py-3 font-semibold"> <span>الأهمية</span>
+                        <a href="?{% if request.GET.sort == 'priority' %}{% else %}sort=priority{% endif %}&per_page={{ request.GET.per_page|default:5 }}&page=1">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="size-4">
+                                <path fill-rule="evenodd" d="M5.22 10.22a.75.75 0 0 1 1.06 0L8 11.94l1.72-1.72a.75.75 0 1 1 1.06 1.06l-2.25 2.25a.75.75 0 0 1-1.06 0l-2.25-2.25a.75.75 0 0 1 0-1.06ZM10.78 5.78a.75.75 0 0 1-1.06 0L8 4.06 6.28 5.78a.75.75 0 0 1-1.06-1.06l2.25-2.25a.75.75 0 0 1 1.06 0l2.25 2.25a.75.75 0 0 1 0 1.06Z" clip-rule="evenodd" />
+                            </svg>
+                        </a></th>
+                        <th class="px-0 py-3 font-semibold"><span>مدة تنفيذ الهدف</span>
+                            <a href="?{% if request.GET.sort == 'date' %}{% else %}sort=date{% endif %}&per_page={{ request.GET.per_page|default:5 }}&page=1">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="size-4">
+                                    <path fill-rule="evenodd" d="M5.22 10.22a.75.75 0 0 1 1.06 0L8 11.94l1.72-1.72a.75.75 0 1 1 1.06 1.06l-2.25 2.25a.75.75 0 0 1-1.06 0l-2.25-2.25a.75.75 0 0 1 0-1.06ZM10.78 5.78a.75.75 0 0 1-1.06 0L8 4.06 6.28 5.78a.75.75 0 0 1-1.06-1.06l2.25-2.25a.75.75 0 0 1 1.06 0l2.25 2.25a.75.75 0 0 1 0 1.06Z" clip-rule="evenodd" />
+                                </svg>
+                            </a></th>
                         <th class="px-0 py-3 font-semibold">المبادرات</th>
                     </tr>
                 </thead>
-                <tbody>
-                    {% for goal in goals %}
+                <tbody id="goalsBody">
                     {% include 'partials\goals_table_rows.html' %}
-                    {% empty %}
-                    <tr>
-                        <td colspan="4" class="text-center text-gray-400 py-4">لا توجد أهداف تابعه لهذه الخطة</td>
-                    </tr>
-                    {% endfor %}
                 </tbody>
             </table>
+
+            <!-- Pagination -->
+            {% if is_paginated %}
+            <div class="flex items-center flex-column flex-wrap md:flex-row justify-between p-4"
+                aria-label="Table navigation" dir="rtl">
+                <span class="text-sm font-normal text-gray-600 mb-4 md:mb-0 block w-full md:inline md:w-auto">
+                    عرض
+                    <span class="font-semibold text-gray-900">{{ page_obj.number }}</span>
+                    من
+                    <span class="font-semibold text-gray-900">{{ paginator.num_pages }}</span>
+                </span>
+                <ul class="flex -space-x-px text-sm ">
+                    <!-- Previous button -->
+                    <li>
+                        {% if page_obj.has_previous %}
+                        <a href="?page={{ page_obj.previous_page_number }}&per_page={{ request.GET.per_page|default:5 }}&search={{ search }}&priority={{ priority }}"
+                            class="flex items-center justify-center text-body bg-neutral-secondary-medium border border-default-medium rounded-s-full text-sm px-3 h-9 hover:bg-gray-200 transition-colors duration-200 bg-gray-50">
+                            ‹
+                        </a>
+                        {% else %}
+                        <span
+                            class="flex items-center justify-center text-gray-400 bg-gray-100 border border-default-medium rounded-s-full text-sm px-3 h-9 cursor-not-allowed bg-gray-50">
+                            ‹
+                        </span>
+                        {% endif %}
+                    </li>
+
+                    <!-- Page numbers -->
+                    {% for num in page_numbers %}
+                    {% if num == '...' %}
+                    <li>
+                        <span
+                            class="flex items-center justify-center text-body bg-neutral-secondary-medium border border-default-medium font-medium text-sm w-9 h-9 bg-gray-50">
+                            ...
+                        </span>
+                    </li>
+                    {% elif num == page_obj.number %}
+                    <li>
+                        <span aria-current="page"
+                            class="flex items-center justify-center text-blue-100 bg-blue-300 bg-neutral-secondary-medium border border-default-medium font-medium text-sm w-9 h-9 hover:bg-gray-200 hover:text-gray-400 duration-200">
+                            {{ num }}
+                        </span>
+                    </li>
+                    {% else %}
+                    <li>
+                        <a href="?page={{ num }}&per_page={{ request.GET.per_page|default:5 }}&search={{ search }}&priority={{ priority }}"
+                            class="flex items-center justify-center text-body bg-neutral-secondary-medium border border-default-medium font-medium text-sm w-9 h-9 hover:bg-gray-200 bg-gray-50">
+                            {{ num }}
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% endfor %}
+
+                    <!-- Next button -->
+                    <li>
+                        {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}&per_page={{ request.GET.per_page|default:5 }}&search={{ search }}&priority={{ priority }}"
+                            class="flex items-center justify-center text-body bg-neutral-secondary-medium border border-default-medium rounded-e-full text-sm px-3 h-9 hover:bg-gray-200 transition-colors duration-200 bg-gray-50">
+                            ›
+                        </a>
+                        {% else %}
+                        <span
+                            class="flex items-center justify-center text-gray-400 bg-gray-100 border border-default-medium rounded-e-full text-sm px-3 h-9 cursor-not-allowed">
+                            ›
+                        </span>
+                        {% endif %}
+                    </li>
+                </ul>
+            </div>
+            {% endif %}
         </div>
-    </div>
     </div>
 </section>
 {% endblock %}

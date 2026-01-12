@@ -48,8 +48,10 @@ document.addEventListener("DOMContentLoaded", function() {
     // Detect which table exists
     const plansBody = document.getElementById("plansBody");
     const initiativesBody = document.getElementById("initiativesBody");
+    const goalsBody = document.getElementById("goalsBody");
     const isPlansPage = !!plansBody;
     const isInitiativesPage = !!initiativesBody;
+    const isPlanDetailsPage = !!goalsBody;
 
     // Shared elements
     const dropdownBtn = document.getElementById("dropdownDefaultButton");
@@ -59,7 +61,6 @@ document.addEventListener("DOMContentLoaded", function() {
     const searchInput = document.getElementById("search");
 
     let currentFilter = ""; // either status or priority
-    let pageParam = 1;
 
     // Universal fetch function
     function fetchData(search = "", filter = "", page = 1) {
@@ -67,12 +68,14 @@ document.addEventListener("DOMContentLoaded", function() {
 
         if (isPlansPage) url += `&status=${filter}`;
         if (isInitiativesPage) url += `&priority=${filter}`;
+        if (isPlanDetailsPage) url += `&status=${filter}`;
 
         fetch(url, { headers: { "X-Requested-With": "XMLHttpRequest" } })
             .then(res => res.json())
             .then(data => {
                 if (isPlansPage) plansBody.innerHTML = data.html;
                 if (isInitiativesPage) initiativesBody.innerHTML = data.html;
+                if (isPlanDetailsPage) goalsBody.innerHTML = data.html;
             });
     }
 
@@ -118,31 +121,90 @@ document.addEventListener("DOMContentLoaded", function() {
 
 
 
+// // ---------------------------
+// //      page number js     
+// // ---------------------------
+// document.addEventListener('DOMContentLoaded', function(){
+//     const pageDropdownButton = document.getElementById('page-dropdown-button'); //button that has the word عدد الصفوف
+//     const pageDropdownIcon = document.getElementById('page-dropdown-icon'); //icon to be rotated
+//     const pageDropdown = document.getElementById('page-dropdown'); //the div to be not hidden
+//     const pageFilterButtons = document.querySelectorAll(".page-filter-btn");// buttons to be clicked an reload
+//     const pageDropdownText = document.getElementById('page-dropdown-text');
+//     const currentUrl = new URL(window.location.href);
+
+
+
+//     if (currentUrl.searchParams.get('per_page')){
+//         pageDropdownText.textContent = currentUrl.searchParams.get('per_page')
+//     }
+//     if (pageDropdownButton) {
+//         pageDropdownButton.addEventListener("click", e => {
+//             e.stopPropagation();
+//             pageDropdown.classList.toggle("hidden");
+//             pageDropdownIcon.style.transform = pageDropdown.classList.contains("hidden") ? "rotate(0deg)" : "rotate(180deg)";
+//         });
+//     }
+
+//     // Click outside to close
+//     document.addEventListener("click", () => {
+//         if (pageDropdown) {
+//             pageDropdown.classList.add("hidden");
+//             pageDropdownIcon.style.transform = "rotate(0deg)";
+//         }
+//     });
+
+//     if (pageDropdown) pageDropdown.addEventListener("click", e => e.stopPropagation());
+
+
+//     pageFilterButtons.forEach(btn => {
+//         btn.addEventListener("click", function() {
+//             const perPage = this.dataset.number;
+            
+//             if (pageDropdown) {
+//                 pageDropdown.classList.add("hidden");
+//                 pageDropdownIcon.style.transform = "rotate(0deg)";
+//             }
+
+//             const url = new URL(window.location.href);
+//             url.searchParams.set("per_page", perPage);
+//             url.searchParams.set("page", 1); // reset to first page
+//             window.location.href = url.toString();
+//         });
+//     });
+
+// });
+
 // ---------------------------
-//      page number js     
+//      page number js (AJAX)
 // ---------------------------
-document.addEventListener('DOMContentLoaded', function(){
-    const pageDropdownButton = document.getElementById('page-dropdown-button'); //button that has the word عدد الصفوف
-    const pageDropdownIcon = document.getElementById('page-dropdown-icon'); //icon to be rotated
-    const pageDropdown = document.getElementById('page-dropdown'); //the div to be not hidden
-    const pageFilterButtons = document.querySelectorAll(".page-filter-btn");// buttons to be clicked an reload
+document.addEventListener('DOMContentLoaded', function () {
+
+    const plansBody = document.getElementById("plansBody");
+    const initiativesBody = document.getElementById("initiativesBody");
+    const goalsBody = document.getElementById("goalsBody");
+    const isPlansPage = !!plansBody;
+    const isInitiativesPage = !!initiativesBody;
+    const isPlanDetailsPage = !!goalsBody;
+
+    const pageDropdownButton = document.getElementById('page-dropdown-button');
+    const pageDropdownIcon = document.getElementById('page-dropdown-icon');
+    const pageDropdown = document.getElementById('page-dropdown');
+    const pageFilterButtons = document.querySelectorAll(".page-filter-btn");
     const pageDropdownText = document.getElementById('page-dropdown-text');
-    const currentUrl = new URL(window.location.href);
 
-
-
-    if (currentUrl.searchParams.get('per_page')){
-        pageDropdownText.textContent = currentUrl.searchParams.get('per_page')
-    }
+    // toggle dropdown
     if (pageDropdownButton) {
         pageDropdownButton.addEventListener("click", e => {
             e.stopPropagation();
             pageDropdown.classList.toggle("hidden");
-            pageDropdownIcon.style.transform = pageDropdown.classList.contains("hidden") ? "rotate(0deg)" : "rotate(180deg)";
+            pageDropdownIcon.style.transform =
+                pageDropdown.classList.contains("hidden")
+                    ? "rotate(0deg)"
+                    : "rotate(180deg)";
         });
     }
 
-    // Click outside to close
+    // click outside
     document.addEventListener("click", () => {
         if (pageDropdown) {
             pageDropdown.classList.add("hidden");
@@ -150,13 +212,21 @@ document.addEventListener('DOMContentLoaded', function(){
         }
     });
 
-    if (pageDropdown) pageDropdown.addEventListener("click", e => e.stopPropagation());
+    if (pageDropdown) {
+        pageDropdown.addEventListener("click", e => e.stopPropagation());
+    }
 
-
+    // AJAX per_page
     pageFilterButtons.forEach(btn => {
-        btn.addEventListener("click", function() {
+        btn.addEventListener("click", function () {
             const perPage = this.dataset.number;
-            
+
+            // update dropdown text
+            if (pageDropdownText) {
+                pageDropdownText.textContent = perPage;
+            }
+
+            // close dropdown
             if (pageDropdown) {
                 pageDropdown.classList.add("hidden");
                 pageDropdownIcon.style.transform = "rotate(0deg)";
@@ -164,13 +234,23 @@ document.addEventListener('DOMContentLoaded', function(){
 
             const url = new URL(window.location.href);
             url.searchParams.set("per_page", perPage);
-            url.searchParams.set("page", 1); // reset to first page
-            window.location.href = url.toString();
+            url.searchParams.set("page", 1);
+
+            fetch(url, {
+                headers: {
+                    "X-Requested-With": "XMLHttpRequest"
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (isPlansPage) plansBody.innerHTML = data.html;
+                if (isInitiativesPage) initiativesBody.innerHTML = data.html;
+                if (isPlanDetailsPage) goalsBody.innerHTML = data.html;
+            });
         });
     });
 
 });
-
 
 
 // ---------------------------

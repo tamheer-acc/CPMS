@@ -7,20 +7,24 @@
         <div class="bg-white shadow-lg rounded-2xl border-gray-900 p-8">
 
             <h1 class="text-xl font-semibold text-gray-700 text-center mb-8">
-                {% if object %}نموذج تعديل خطة{% else %}نموذج إنشاء خطة{% endif %}
+                {% if object %}
+                    نموذج تعديل الخطة {{ object.id_for_label}}
+                {%else%}
+                    نموذج إنشاء خطة جديدة
+                {%endif%}
             </h1>
 
-            <form method="post" data-edit="{% if object %}true{% else %}false{% endif %}"
-                class="space-y-6">
+            <form method="post" data-edit="{% if object %}true{% else %}false{% endif %}" class="space-y-6">
                 {% csrf_token %}
+
                 <!--Plan Name-->
                 <div>
                     <label for="{{ form.plan_name.id_for_label }}"
                         class="block mb-2 px-2 text-sm font-semibold text-gray-800">
-                        اسم الخطة <span class="text-red-500">*</span>
+                        {{ form.plan_name.label}} <span class="text-red-500">*</span>
                     </label>
                     <input type="text" name="{{ form.plan_name.name }}" value="{{ form.plan_name.value|default:'' }}"
-                        placeholder="مثال: الخطة الاستراتيجية 2026–2030" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm
+                        placeholder="مثال: الخطة الاستراتيجية لوزارة النقل 2023-2027" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm
                         rounded-xl shadow-sm block w-full p-2.5
                         focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-500
                         hover:border-gray-400 transition-all duration-200">
@@ -33,15 +37,14 @@
                 <div>
                     <label for="{{ form.vision.id_for_label }}"
                         class="block mb-2 px-2 text-sm font-semibold text-gray-800">
-                        الرؤية <span class="text-red-500">*</span>
+                        {{ form.vision.label}} <span class="text-red-500">*</span>
                     </label>
-                    <textarea name="{{ form.vision.name }}" id="{{ form.vision.id_for_label }}" rows="1"
-                        placeholder="ادخل الرؤية ..."
+                    <textarea name="{{ form.vision.name }}" id="{{ form.vision.id_for_label }}" rows="3"
+                        placeholder="مثال: الريادة في تطوير النقل البري والبحري والجوي في المملكة."
                         class="block p-2.5 w-full text-sm text-gray-900
                                bg-gray-50 rounded-xl shadow-sm border border-gray-300
                                focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-500
-                               hover:border-gray-400 transition-all duration-200 resize-none">
-                               {{ form.vision.value|default:'' }}</textarea>
+                               hover:border-gray-400 transition-all duration-200 resize-none">{{ form.vision.value|default:'' }}</textarea>
 
                     {% if form.vision.errors %}
                     <div class="flex items-center gap-1 text-red-600 text-xs mt-1"> ⚠ {{ form.vision.errors }}</div>
@@ -52,15 +55,14 @@
                 <div>
                     <label for="{{ form.mission.id_for_label }}"
                         class="block mb-2 px-2 text-sm font-semibold text-gray-800">
-                        الرسالة <span class="text-red-500">*</span>
+                        {{ form.mission.label}} <span class="text-red-500">*</span>
                     </label>
-                    <textarea name="{{ form.mission.name }}" id="{{ form.mission.id_for_label }}" rows="1"
-                        placeholder="ادخل الرسالة ..."
+                    <textarea name="{{ form.mission.name }}" id="{{ form.mission.id_for_label }}" rows="3"
+                        placeholder="مثال: تقديم خدمات نقل متكاملة وآمنة وفعالة تساهم في دعم الاقتصاد الوطني وراحة المواطنين."
                         class="block p-2.5 w-full text-sm text-gray-900
                                bg-gray-50 rounded-xl shadow-sm border border-gray-300
                                focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-500
-                               hover:border-gray-400 transition-all duration-200 resize-none">
-                               {{ form.mission.value|default:'' }}</textarea>
+                               hover:border-gray-400 transition-all duration-200 resize-none">{{ form.mission.value|default:'' }}</textarea>
 
                     {% if form.mission.errors %}
                     <div class="flex items-center gap-1 text-red-600 text-xs mt-1">⚠ {{ form.mission.errors }}</div>
@@ -70,34 +72,40 @@
                 <!-- Plan Satrt&End Date -->
                 <div>
                     <label class="block mb-2 px-2 text-sm font-semibold text-gray-800">
-                        مدة الخطة <span class="text-red-500">*</span>
+                        مدة تنفيذ الخطة <span class="text-red-500">*</span>
                     </label>
                     <div class="grid grid-cols-[1fr_auto_1fr] items-center gap-4">
                         <!--Satrt Date-->
                         <input type="date" name="{{ form.start_date.name }}"
-                            value="{% if form.start_date.value %}{{ form.start_date.value|date:'Y-m-d' }}{% endif %}"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm
+                            value="{% if form.start_date.value %}{{ form.start_date.value |date:'Y-m-d'}}{% endif %}" id="date"
+                            class="bg-gray-50 border border-gray-300 text-gray-800 text-sm
                                    rounded-xl shadow-sm block w-full p-2.5
                                    focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-500
                                    hover:border-gray-400 transition-all duration-200">
+                        {% if form.start_date.errors %}
+                        <div class="flex items-center gap-1 text-red-600 text-xs mt-1">⚠ {{ form.start_date.errors }}
+                        </div>
+                        {% endif %}
 
                         <span class="text-sm font-medium text-gray-600">إلى</span>
 
                         <!--End Date-->
                         <input type="date" name="{{ form.end_date.name }}"
-                            value="{% if form.end_date.value %}{{ form.end_date.value|date:'Y-m-d' }}{% endif %}" 
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm
+                            value="{% if form.end_date.value %}{{ form.end_date.value |date:'Y-m-d'}}{% endif %}" id="date" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm
                                    rounded-xl shadow-sm block w-full p-2.5
                                    focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-500
                                    hover:border-gray-400 transition-all duration-200">
+                        {% if form.end_date.errors %}
+                        <div class="flex items-center gap-1 text-red-600 text-xs mt-1">⚠ {{ form.end_date.errors }}
+                        </div>
+                        {% endif %}
                     </div>
                 </div>
 
                 <!--Buttons container-->
                 <div class="flex gap-4 mt-12">
                     <!-- Create/Update Button-->
-                    <button type="submit"
-                     class="px-6 py-2.5 text-sm font-medium rounded-lg
+                    <button type="submit" class="px-6 py-2.5 text-sm font-medium rounded-lg
                             text-white bg-blue-600 hover:bg-blue-700
                             shadow-md hover:shadow-lg transform hover:-translate-y-0.5
                             transition duration-200 focus:ring-4 focus:ring-blue-200">
@@ -105,8 +113,7 @@
                     </button>
 
                     <!-- Cancel Button-->
-                    <button type="button" onclick="window.history.back()"
-                     class="px-6 py-2.5 text-sm font-medium rounded-lg
+                    <button type="button" onclick="window.history.back()" class="px-6 py-2.5 text-sm font-medium rounded-lg
                             text-gray-800 bg-gray-200 hover:bg-gray-300
                             shadow-md hover:shadow-lg transform hover:-translate-y-0.5
                             transition duration-200 focus:ring-4 focus:ring-gray-200">
