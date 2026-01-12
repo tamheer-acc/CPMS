@@ -1,9 +1,4 @@
-from datetime import date
 from django.forms.models import model_to_dict
-from django.db.models import Count, Q, Prefetch
-from .models import StrategicGoal, Initiative, Log, UserInitiative
-
-
 from django.db.models import Count, Q, Case, When, Value, IntegerField
 from .models import StrategicGoal, Initiative, Log, UserInitiative
 from django.db.models import Prefetch
@@ -21,7 +16,6 @@ def get_changed_fields(old_data, new_data):
     return diff
 
 
-
 def create_log(user, action, instance=None, old_data=None):
     new_data = model_to_dict(instance) if instance and action != "DELETE" else None
     changed_fields = {}
@@ -37,6 +31,8 @@ def create_log(user, action, instance=None, old_data=None):
         )
 
 
+def generate_KPIs(initiative):
+    pass
 
 
 def get_plan_dashboard(plan, user):
@@ -117,35 +113,6 @@ def get_plan_dashboard(plan, user):
         'employees_progress': employees_progress
     }
 
-
-
-def generate_KPIs(initiative):
-    pass
-
-
-
-def calc_user_initiative_status(user_initiative):
-    """
-    Calculate the status of a user initiative
-    """
-
-    start_date = user_initiative.initiative.start_date
-    end_date = user_initiative.initiative.end_date
-    progress = user_initiative.progress
-    today = date.today()
-    total_days = max((end_date - start_date).days, 1)
-    days_left = 0 if end_date < today else (end_date - today).days
-    
-    if progress == 100:
-        return 'مكتمل'
-
-    if days_left <= 0.10*total_days: #if the user is in last 10% of the duration, then they're late
-        return 'متأخر'
-    
-    if progress > 0:
-        return 'قيد التنفيذ'
-    
-    return 'لم يبدأ بعد'
 def filter_queryset(queryset, request, search_fields=None, status_field=None, priority_field=None):
 
     search = request.GET.get('search', '').strip()

@@ -90,16 +90,16 @@
                         class="absolute right-0 z-10 hidden bg-neutral-primary-medium border border-default-medium rounded-base shadow-lg w-32 overflow-hidden">
                         <ul class="p-2 text-sm text-body font-medium">
                             <li>
-                                <button type="button" data-number="25"
-                                    class="page-filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">عدد الصفوف</button>
-                            </li>
-                            <li>
                                 <button type="button" data-number="5"
-                                    class="page-filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">5</button>
+                                    class="page-filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">عدد الصفوف</button>
                             </li>
                             <li>
                                 <button type="button" data-number="10"
                                     class="page-filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">10</button>
+                            </li>
+                            <li>
+                                <button type="button" data-number="25"
+                                    class="page-filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">25</button>
                             </li>
                             <li>
                                 <button type="button" data-number="50"
@@ -122,7 +122,7 @@
                     <th class="px-0 py-3 font-semibold text-right">وصف المبادرة</th>
                     <th class="px-0 py-3 font-semibold flex flex-row-reverse items-center justify-between text-body ">
                         <span>الأهمية</span>
-                        <a href="?{% if request.GET.sort == 'priority' %}{% else %}sort=priority{% endif %}&per_page={{ request.GET.per_page|default:25 }}&page=1">
+                        <a href="?{% if request.GET.sort == 'priority' %}{% else %}sort=priority{% endif %}&per_page={{ request.GET.per_page|default:5 }}&page=1">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="size-4">
                                 <path fill-rule="evenodd" d="M5.22 10.22a.75.75 0 0 1 1.06 0L8 11.94l1.72-1.72a.75.75 0 1 1 1.06 1.06l-2.25 2.25a.75.75 0 0 1-1.06 0l-2.25-2.25a.75.75 0 0 1 0-1.06ZM10.78 5.78a.75.75 0 0 1-1.06 0L8 4.06 6.28 5.78a.75.75 0 0 1-1.06-1.06l2.25-2.25a.75.75 0 0 1 1.06 0l2.25 2.25a.75.75 0 0 1 0 1.06Z" clip-rule="evenodd" />
                             </svg>
@@ -166,7 +166,7 @@
                 <!-- Previous button -->
                 <li>
                     {% if page_obj.has_previous %}
-                        <a href="?page={{ page_obj.previous_page_number }}&per_page={{ request.GET.per_page|default:25 }}&search={{ search }}&priority={{ priority }}"
+                        <a href="?page={{ page_obj.previous_page_number }}&per_page={{ request.GET.per_page|default:5 }}&search={{ search }}&priority={{ priority }}"
                         class="flex items-center justify-center text-body bg-neutral-secondary-medium border border-default-medium rounded-s-full text-sm px-3 h-9 hover:bg-gray-200 transition-colors duration-200 bg-gray-50">
                             ‹
                         </a>
@@ -194,7 +194,7 @@
                         </li>
                     {% else %}
                         <li>
-                            <a href="?page={{ num }}&per_page={{ request.GET.per_page|default:25 }}&search={{ search }}&priority={{ priority }}"
+                            <a href="?page={{ num }}&per_page={{ request.GET.per_page|default:5 }}&search={{ search }}&priority={{ priority }}"
                             class="flex items-center justify-center text-body bg-neutral-secondary-medium border border-default-medium font-medium text-sm w-9 h-9 hover:bg-gray-200 bg-gray-50">
                                 {{ num }}
                             </a>
@@ -205,7 +205,7 @@
                 <!-- Next button -->
                 <li>
                     {% if page_obj.has_next %}
-                        <a href="?page={{ page_obj.next_page_number }}&per_page={{ request.GET.per_page|default:25 }}&search={{ search }}&priority={{ priority }}"
+                        <a href="?page={{ page_obj.next_page_number }}&per_page={{ request.GET.per_page|default:5 }}&search={{ search }}&priority={{ priority }}"
                         class="flex items-center justify-center text-body bg-neutral-secondary-medium border border-default-medium rounded-e-full text-sm px-3 h-9 hover:bg-gray-200 transition-colors duration-200 bg-gray-50">
                             ›
                         </a>
