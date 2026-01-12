@@ -146,6 +146,9 @@ def calc_user_initiative_status(user_initiative):
         return 'قيد التنفيذ'
     
     return 'لم يبدأ بعد'
+
+
+
 def filter_queryset(queryset, request, search_fields=None, status_field=None, priority_field=None):
 
     search = request.GET.get('search', '').strip()
