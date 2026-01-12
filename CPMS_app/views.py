@@ -265,14 +265,14 @@ def dashboard_view(request):
 # ---------------------------
 #  Initiative Views
 # ---------------------------
-class AllInitiativeView(LoginRequiredMixin, InitiativePermissionMixin, ListView):
+class AllInitiativeView(LoginRequiredMixin, InitiativePermissionMixin, ListView): 
     '''
     List all initiatives
     - General Manager sees all initiatives
-    - Managers see their departments initiatives
+    - Managers see their departments initiatives 
     - Employee see the initiatives they are assigned to
     '''
-    model = Initiative
+    model = Initiative 
     template_name = 'initiatives_list.html'
     context_object_name = 'initiatives'
     allow_empty = True
@@ -280,44 +280,32 @@ class AllInitiativeView(LoginRequiredMixin, InitiativePermissionMixin, ListView)
     def get_paginate_by(self, queryset):
         return int(self.request.GET.get('per_page', 25))
 
-    # def get_queryset(self):
-    #     qs = self.get_initiative_queryset()
-
-    #     search = self.request.GET.get('search', '')
-    #     priority = self.request.GET.get('priority', '')
-    #     sort = self.request.GET.get('sort')
-
-    #     if search or priority:
-    #         if search:
-    #             qs = qs.filter(title__icontains=search)
-    #         if priority:
-    #             qs = qs.filter(priority=priority)
-
-    #     if sort == 'priority':
-    #         priority_order = Case(
-    #             When(priority='C', then=Value(1)),
-    #             When(priority='H', then=Value(2)),
-    #             When(priority='M', then=Value(3)),
-    #             When(priority='L', then=Value(4)),
-    #             default=Value(5),
-    #             output_field=IntegerField(),
-    #         )
-    #         qs = qs.order_by(priority_order)
-
-    #     return qs.distinct()
-
     def get_queryset(self):
         qs = self.get_initiative_queryset()
+        
 
-       #search & filter function
-        qs = filter_queryset(
-          queryset=qs,
-          request=self.request,
-          search_fields=['title'],
-          status_field='status',
-          priority_field='priority'
-    )
-        return qs
+        search = self.request.GET.get('search', '')
+        priority = self.request.GET.get('priority', '')
+        sort = self.request.GET.get('sort') 
+
+        if search or priority:
+            if search: 
+                qs = qs.filter(title__icontains=search)
+            if priority:
+                qs = qs.filter(priority=priority)
+
+        if sort == 'priority':
+            priority_order = Case(
+                When(priority='C', then=Value(1)),
+                When(priority='H', then=Value(2)),
+                When(priority='M', then=Value(3)),
+                When(priority='L', then=Value(4)),
+                default=Value(5),
+                output_field=IntegerField(),
+            )
+            qs = qs.order_by(priority_order)
+
+        return qs.distinct()
 
 
     def get_context_data(self, **kwargs):

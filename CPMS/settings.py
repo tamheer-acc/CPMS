@@ -80,8 +80,8 @@ DATABASES = {
         'NAME': 'CPMS',
         'USER': 'postgres',
         'PASSWORD': 'post123',
-         'HOST': 'localhost',
-         'PORT': '5432',
+        'HOST': 'localhost',
+        'PORT': '5432',
     }
 }
 

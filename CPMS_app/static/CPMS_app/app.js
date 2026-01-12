@@ -121,58 +121,60 @@ document.addEventListener("DOMContentLoaded", function() {
 
 
 
-// // ---------------------------
-// //      page number js     
-// // ---------------------------
-// document.addEventListener('DOMContentLoaded', function(){
-//     const pageDropdownButton = document.getElementById('page-dropdown-button'); //button that has the word عدد الصفوف
-//     const pageDropdownIcon = document.getElementById('page-dropdown-icon'); //icon to be rotated
-//     const pageDropdown = document.getElementById('page-dropdown'); //the div to be not hidden
-//     const pageFilterButtons = document.querySelectorAll(".page-filter-btn");// buttons to be clicked an reload
-//     const pageDropdownText = document.getElementById('page-dropdown-text');
-//     const currentUrl = new URL(window.location.href);
+// ---------------------------
+//  initiative page number js     
+// ---------------------------
+document.addEventListener('DOMContentLoaded', function(){
+    const pageDropdownButton = document.getElementById('initiative-page-dropdown-button'); //button that has the word عدد الصفوف
+    const pageDropdownIcon = document.getElementById('initiative-page-dropdown-icon'); //icon to be rotated
+    const pageDropdown = document.getElementById('initiative-page-dropdown'); //the div to be not hidden
+    const pageFilterButtons = document.querySelectorAll(".initiative-page-filter-btn");// buttons to be clicked an reload
+    const pageDropdownText = document.getElementById('initiative-page-dropdown-text');
+    const currentUrl = new URL(window.location.href);
 
 
 
-//     if (currentUrl.searchParams.get('per_page')){
-//         pageDropdownText.textContent = currentUrl.searchParams.get('per_page')
-//     }
-//     if (pageDropdownButton) {
-//         pageDropdownButton.addEventListener("click", e => {
-//             e.stopPropagation();
-//             pageDropdown.classList.toggle("hidden");
-//             pageDropdownIcon.style.transform = pageDropdown.classList.contains("hidden") ? "rotate(0deg)" : "rotate(180deg)";
-//         });
-//     }
+    if (currentUrl.searchParams.get('per_page')){
+        pageDropdownText.textContent = currentUrl.searchParams.get('per_page')
+    }
+    if (pageDropdownButton) {
+        pageDropdownButton.addEventListener("click", e => {
+            e.stopPropagation();
+            pageDropdown.classList.toggle("hidden");
+            pageDropdownIcon.style.transform = pageDropdown.classList.contains("hidden") ? "rotate(0deg)" : "rotate(180deg)";
+        });
+    }
 
-//     // Click outside to close
-//     document.addEventListener("click", () => {
-//         if (pageDropdown) {
-//             pageDropdown.classList.add("hidden");
-//             pageDropdownIcon.style.transform = "rotate(0deg)";
-//         }
-//     });
+    // Click outside to close
+    document.addEventListener("click", () => {
+        if (pageDropdown) {
+            pageDropdown.classList.add("hidden");
+            pageDropdownIcon.style.transform = "rotate(0deg)";
+        }
+    });
 
-//     if (pageDropdown) pageDropdown.addEventListener("click", e => e.stopPropagation());
+    if (pageDropdown) pageDropdown.addEventListener("click", e => e.stopPropagation());
 
 
-//     pageFilterButtons.forEach(btn => {
-//         btn.addEventListener("click", function() {
-//             const perPage = this.dataset.number;
+    pageFilterButtons.forEach(btn => {
+        btn.addEventListener("click", function() {
+            const perPage = this.dataset.number;
             
-//             if (pageDropdown) {
-//                 pageDropdown.classList.add("hidden");
-//                 pageDropdownIcon.style.transform = "rotate(0deg)";
-//             }
+            if (pageDropdown) {
+                pageDropdown.classList.add("hidden");
+                pageDropdownIcon.style.transform = "rotate(0deg)";
+            }
 
-//             const url = new URL(window.location.href);
-//             url.searchParams.set("per_page", perPage);
-//             url.searchParams.set("page", 1); // reset to first page
-//             window.location.href = url.toString();
-//         });
-//     });
+            const url = new URL(window.location.href);
+            url.searchParams.set("per_page", perPage);
+            url.searchParams.set("page", 1); // reset to first page
+            window.location.href = url.toString();
+        });
+    });
 
-// });
+});
+
+
 
 // ---------------------------
 //      page number js (AJAX)
@@ -180,10 +182,8 @@ document.addEventListener("DOMContentLoaded", function() {
 document.addEventListener('DOMContentLoaded', function () {
 
     const plansBody = document.getElementById("plansBody");
-    const initiativesBody = document.getElementById("initiativesBody");
     const goalsBody = document.getElementById("goalsBody");
     const isPlansPage = !!plansBody;
-    const isInitiativesPage = !!initiativesBody;
     const isPlanDetailsPage = !!goalsBody;
 
     const pageDropdownButton = document.getElementById('page-dropdown-button');
@@ -244,7 +244,6 @@ document.addEventListener('DOMContentLoaded', function () {
             .then(res => res.json())
             .then(data => {
                 if (isPlansPage) plansBody.innerHTML = data.html;
-                if (isInitiativesPage) initiativesBody.innerHTML = data.html;
                 if (isPlanDetailsPage) goalsBody.innerHTML = data.html;
             });
         });
