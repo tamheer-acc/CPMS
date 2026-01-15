@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>{% block title %}متابعة الأداء المؤسسي{% endblock %}</title>
     {% load static %}
 
     <!-- APP CSS -->
@@ -16,19 +16,53 @@
 
 </head>
 
-<body dir="rtl">
+<body class="flex bg-gray-50 min-h-screen">
+    
+    <!-- navbar -->
+    <aside class="w-64 bg-white shadow-md flex flex-col sticky top-0 h-screen">
+        <div class="p-6 flex items-center gap-3 border-b border-gray-200 bg-[#00685E] text-white">
+            <h1 class="text-xl font-normal text-white">متابعة الأداء المؤسسي</h1>
+        </div>
+        <ul class="flex-1 mt-6 space-y-2">
+            <li>
+                <a href="#"
+                    class="flex items-center gap-3 px-6 py-3 text-gray-700 hover:bg-blue-100 hover:text-blue-700 rounded-lg transition">
+                    <span>لوحة التحكم</span>
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'initiatives_list' %}"
+                    class="flex items-center gap-3 px-6 py-3 text-gray-700 hover:bg-blue-100 hover:text-blue-700 rounded-lg transition">
+                    <span>المبادرات</span>
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'goals_list' %}"
+                    class="flex items-center gap-3 px-6 py-3 text-gray-700 hover:bg-blue-100 hover:text-blue-700 rounded-lg transition">
+                    <span>الأهداف</span>
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'plans_list' %}"
+                    class="flex items-center gap-3 px-6 py-3 text-gray-700 hover:bg-blue-100 hover:text-blue-700 rounded-lg transition">
+                    <span>الخطط</span>
+                </a>
+            </li>
+        </ul>
+<!-- logout next -->
+        <div class="p-6 border-t border-gray-200">
+            <a href="{% url 'login' %}" class="flex items-center gap-3 text-gray-700 hover:text-red-600 transition">
+                <span>تسجيل الدخول</span>
+            </a>
+        </div>
+    </aside>
 
-    <nav>
-        <div id="logo">
-            <p>CPMS</p>
-        </div>
-        <div class="flex">
-            <a href="{% url 'initiatives_list' %}" class="nav-items">Initiatives</a>
-            <a href="{% url 'plans_list' %}" class="nav-items">Plans</a>
-            <a href="{% url 'goals_list' %}" class="nav-items">Goals</a>
-            <a href="{% url 'login' %}">Log In</a>
-        </div>
-    </nav>
+    <main class="flex-1 p-8">
+        {% block content %}
+        {% endblock %}
+    </main>
+
+</body>
 
     {% if messages %}
     <div id="django-messages" class="fixed top-5 right-5 space-y-3 z-50 w-96">
@@ -36,9 +70,9 @@
         {% for message in messages %}
 
         <div role="alert" class="toast-message rounded-lg p-4 shadow-md flex items-center gap-3 text-sm font-semibold
-     {% if 'delete' in message.tags %}bg-red-50 text-red-600 {% endif %}
-     {% if 'update' in message.tags %}bg-yellow-50 text-yellow-600{% endif %}
-     {% if 'create' in message.tags %}bg-green-50 text-green-600{% endif %}">
+        {% if 'delete' in message.tags %}bg-red-50 text-red-600 {% endif %}
+        {% if 'update' in message.tags %}bg-yellow-50 text-yellow-600{% endif %}
+        {% if 'create' in message.tags %}bg-green-50 text-green-600{% endif %}">
 
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0 stroke-current" fill="none"
                 viewBox="0 0 24 24">
@@ -81,58 +115,5 @@
         }, 3000);
     </script>
     {% endif %}
-
-
-    <!-- toastify like message
-    {% if messages %}
-        <div id="django-messages" class="fixed top-50 right-5 space-y-2 z-50">
-        {% for message in messages %}
-            <div class="message px-4 py-2 rounded shadow-md text-xl
-                        {% if message.tags == 'success' %}bg-green-100 text-green-800{% endif %}
-                        {% if message.tags == 'error' %}bg-red-100 text-red-800{% endif %}
-                        {% if message.tags == 'info' %}bg-blue-100 text-blue-800{% endif %}">
-                    
-                <span class="flex items-center gap-1">
-                    
-                    {{ message }}
-
-                    {% if message.tags == 'error' %}
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
-                    </svg>
-
-                    {% elif message.tags == 'success' %}
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                    </svg>
-                    {% endif %}
-
-                </span>
-
-            </div>
-        {% endfor %}
-        </div>
-
-
-        <script>
-        setTimeout(() => {
-            const container = document.getElementById("django-messages");
-            if(container) {
-            container.style.transition = "opacity 0.5s ease";
-            container.style.opacity = 0;
-            setTimeout(() => container.remove(), 500); // remove from DOM
-            }
-        }, 3000);
-        </script>
-    {% endif %} -->
-
-    <main>
-        {% block content %}
-        <!-- This is where the individual pages will be rendered -->
-        {% endblock %}
-
-    </main>
-
-</body>
 
 </html>

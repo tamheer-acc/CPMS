@@ -3,9 +3,9 @@
         <h1 id="kpi-modal-title" class="text-2xl font-bold mb-4">
             نموذج مؤشر قياس الأداء الرئيسي
         </h1>
-
+        
         <form id="kpiForm" method="post" {% if object %} data-is-update="true" {% endif %}
-            action="{% if is_update %}{% url 'kpi_update' initiative.id object.id %}{% else %}{% url 'kpi_create' initiative.id %}{% endif %}">
+            action="{% if is_update %}{% url 'edit_kpi' initiative.id object.id %}{% else %}{% url 'kpi_create' initiative.id %}{% endif %}">
             {% csrf_token %}
             <div class="mb-4">
                 {{ form.kpi.label_tag }}<br>

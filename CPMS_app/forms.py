@@ -1,6 +1,6 @@
 from django import forms
 from django.forms import ModelForm
-from .models import Initiative, KPI, StrategicPlan, StrategicGoal
+from .models import Initiative, KPI, StrategicPlan, StrategicGoal, UserInitiative
 
 # ============== Base Form =================
 # Base form with shared clean and save logic
@@ -253,4 +253,34 @@ class InitiativeForm(BaseForm):
                 'placeholder': 'مثال: تطوير، إدارة ',
                 'class': 'w-full bg-gray-50 border border-gray-300 rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-500 hover:border-gray-400'
             }),
+        }
+
+
+
+# ===== UserInitiativeForm Form =====
+class UserInitiativeForm(BaseForm):
+    class Meta:
+        model = UserInitiative
+        fields = ['progress']
+
+        error_messages = {
+            'progress': {
+                'required': 'يرجى إدخال مستوى التقدم'
+            }
+        }
+
+        labels = {
+            'progress': 'مستوى التقدم',
+        }
+
+        widgets = {
+            'progress': forms.TextInput(attrs={
+                'placeholder': 'مثال: 75%',
+                'class': (
+                    'progress-input block w-full p-2.5 text-sm text-gray-900 '
+                    'bg-gray-50 border border-gray-300 rounded-xl shadow-sm '
+                    'focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-500 '
+                    'hover:border-gray-400 transition-all duration-200'
+                )
+            })
         }

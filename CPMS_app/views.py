@@ -21,7 +21,7 @@ from .models import ( Role, Department, User, StrategicPlan, StrategicGoal,
                         Initiative, UserInitiative, KPI, Note, Log, STATUS)
 from .services import generate_KPIs,  create_log, get_plan_dashboard, calc_user_initiative_status
 from .services import generate_KPIs,  create_log, get_plan_dashboard, filter_queryset, get_page_numbers, paginate_queryset
-from .forms import InitiativeForm, KPIForm, StrategicGoalForm, StrategicPlanForm
+from .forms import InitiativeForm, KPIForm, StrategicGoalForm, StrategicPlanForm, UserInitiativeForm
 
 
 
@@ -339,11 +339,20 @@ class InitiativeDetailsView(LoginRequiredMixin, InitiativePermissionMixin, Detai
     template_name = "initiative_detail.html"
     context_object_name = "initiative"
     def get_context_data(self, **kwargs):
+
         context = super().get_context_data(**kwargs) 
         user = self.request.user 
         initiative = self.get_object() 
-        avg_progress = UserInitiative.objects.filter( initiative = initiative, user__role__role_name='E').aggregate ( avg = Avg('progress')) ['avg']
 
+        #  Average 
+        avg_progress = UserInitiative.objects.filter( initiative = initiative, user__role__role_name='E').aggregate ( avg = Avg('progress')) ['avg']
+        avg_progress = avg_progress or 0
+        avg_by_two = avg_progress/2
+        
+        #manager
+        manager = User.objects.filter(role__role_name__in = ['CM', 'M'], userinitiative__initiative=initiative).distinct()         
+
+        # Employeess
         employees = User.objects.filter(role__role_name='E', department=user.department, userinitiative__initiative=initiative).distinct()         
         employee_progress = []
         for emp in employees:
@@ -352,36 +361,36 @@ class InitiativeDetailsView(LoginRequiredMixin, InitiativePermissionMixin, Detai
                 status = calc_user_initiative_status(ui)
                 employee_progress.append([ emp, ui.progress, status, 'bg-red-500' if status == 'متأخر' else 'bg-teal-500'])
             else:
-                employee_progress.append([emp, 0, 'NS','gray'])
+                employee_progress.append([emp, 0, 'NS','bg-gray-500'])
+            
+        assigned_employee_ids = set( UserInitiative.objects.filter(initiative=initiative, user__role__role_name = 'E').values_list('user_id', flat=True) ) 
+        assigned_employees= User.objects.filter(id__in=assigned_employee_ids)
+        unassigned_employees = User.objects.filter(role__role_name='E', department=user.department).exclude(id__in=assigned_employee_ids)
+        # latency
+        todays_date = timezone.now().date()
+        is_initiative_late = todays_date >= initiative.end_date and avg_progress != 100
+        
+        context['avg'] = round(avg_progress or 0)
+        context['avg_by_two'] = round(avg_by_two or 0)
+        context['employee_progress'] = employee_progress
+        context['employees'] = employees 
+        context['manager'] = manager.first()
+        context['is_initiative_late'] = is_initiative_late
+        context['assigned_employees'] = assigned_employees 
+
+        if user.role.role_name == 'E':
+            try:
+                user_initiative = UserInitiative.objects.get(user=user, initiative=initiative)
+                context['form'] = UserInitiativeForm(instance=user_initiative)
+            except UserInitiative.DoesNotExist:
+                context['form'] = UserInitiativeForm()
 
         if user.role.role_name in ['M', 'CM'] and initiative.strategic_goal.department == user.department: 
-
-            context['employee_progress'] = employee_progress
-            assigned_employee_ids = set( UserInitiative.objects.filter(initiative=initiative).values_list('user_id', flat=True) ) 
-            context['employees'] = employees 
-            context['assigned_employee_ids'] = assigned_employee_ids 
-        context = super().get_context_data(**kwargs)
-        user = self.request.user
-        initiative = self.get_object()
-
-        if user.role.role_name in ['M', 'CM'] and initiative.strategic_goal.department == user.department:
-            employees = User.objects.filter(role__role_name='E', department=user.department)
-            assigned_employee_ids = set(
-                                        UserInitiative.objects.filter(initiative=initiative)
-                                        .values_list('user_id', flat=True) )
-
-            context['employees'] = employees
-            context['assigned_employee_ids'] = assigned_employee_ids
             context['form'] = KPIForm()
-            context ['avg'] = round(avg_progress or 0)
-
-        else:
-            context['employee_progress'] = employee_progress
-            context['employees'] = [] 
-            context['assigned_employee_ids'] = set() 
-            context ['avg'] = round(avg_progress or 0)
-
-
+            context['unassigned_employees'] = unassigned_employees 
+        elif user.role.role_name == 'GM':
+            context['unassigned_employees'] = unassigned_employees 
+            
         return context
 
 
@@ -507,7 +516,7 @@ def assign_employee_to_initiative(request, pk):
         raise PermissionDenied("ليست لديك صلاحية لرؤية هذه الصفحة")
 
     assigned_employee_ids = set(
-        UserInitiative.objects.filter(initiative=initiative).values_list('user_id', flat=True)
+        UserInitiative.objects.filter(initiative=initiative, user__role__role_name='E').values_list('user_id', flat=True)
     )
 
     if request.method == "POST": #Post request: receives a list of employees
@@ -528,6 +537,31 @@ def assign_employee_to_initiative(request, pk):
         'employees': employees,
         'assigned_employee_ids': assigned_employee_ids,
     })
+
+
+def add_progress(request, initiative_id):
+    user = request.user
+    initiative = get_object_or_404(Initiative, id=initiative_id)
+    user_initiative = get_object_or_404(UserInitiative, initiative=initiative, user=user)
+    
+    if request.method == 'POST':
+        form = UserInitiativeForm(request.POST, instance=user_initiative)
+        if form.is_valid():
+            form.save()
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'success': True})
+            return redirect('initiative_detail', pk=initiative_id)
+    else:
+        form = UserInitiativeForm(instance=user_initiative)
+
+    return render(request, 'partials/update_initiative_modal.html', {
+        'form': form,
+        'object': user_initiative,
+        'initiative': initiative,
+        'user': user,
+        'is_update': True,
+    })
+
 
 
 
@@ -596,26 +630,23 @@ class DeleteKPIView(RoleRequiredMixin, DeleteView, LogMixin):
 
 
 
-class UpdateKPIView(RoleRequiredMixin, UpdateView, LogMixin):
-    '''
-    - Allows users to update an existing KPI
-    - Lets users edit fields like kpi name, unit, target, and actual values
-    - Redirects to the KPI detail after successful update
-    '''
-    model = KPI
-    fields = ['kpi', 'unit', 'target_value','actual_value']
-    template_name = 'kpi_form.html'
-    allowed_roles = ['M', 'CM']
+def edit_kpi_view(request, initiative_id, kpi_id):
+    kpi = get_object_or_404(KPI, id=kpi_id, initiative_id=initiative_id)
+    
+    if request.method == 'POST':
+        form = KPIForm(request.POST, instance=kpi)
+        if form.is_valid():
+            form.save()
+            return redirect('initiative_detail', pk=initiative_id)
+    else:
+        form = KPIForm(instance=kpi)
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['initiative'] = self.object.initiative
-        context['is_update'] = True
-        return context
-
-    def get_success_url(self):
-        initiative_id = self.kwargs.get('initiative_id')
-        return reverse('initiative_detail', kwargs={'pk': initiative_id})
+    return render(request, 'partials/kpi_modal.html', {
+        'form': form,
+        'object': kpi,
+        'initiative': kpi.initiative,
+        'is_update': True,
+    })
 
 
 

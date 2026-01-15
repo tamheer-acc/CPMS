@@ -6,10 +6,10 @@ from .views import (
     AllPlansView, PlanDetailsview, CreatePlanView, UpdatePlanView, DeletePlanView, 
     AllGoalsView, GoalDetailsview, CreateGoalView, UpdateGoalView, DeleteGoalView, 
     AllInitiativeView, InitiativeDetailsView, CreateInitiativeView, UpdateInitiativeView,
-    DeleteInitiativeView, AllKPIsView, KPIDetailsView, create_kpi_view, UpdateKPIView,
+    DeleteInitiativeView, AllKPIsView, KPIDetailsView, create_kpi_view, edit_kpi_view,
     DeleteKPIView, AllDepartmentsView, AllNotesView, NoteDetailsview, CreateNoteView,
     UpdateNoteView, DeleteNoteView,  AllLogsView,
-    assign_employee_to_initiative,
+    assign_employee_to_initiative, add_progress,
     dashboard_view
 )
 
@@ -66,13 +66,16 @@ urlpatterns = [
     path('goals/<int:goal_id>/initiatives/<int:pk>/delete/',DeleteInitiativeView.as_view(), name='goal_initiative_delete'),
     path('goals/<int:goal_id>/initiatives/<int:pk>/assign/',assign_employee_to_initiative, name = 'goal_initiative_assign'),
 
+    # UserInitiatives
+    path('initiatives/<int:initiative_id>/add_progress/',add_progress,name='add_progress'),
+
     #KPIs under a specific initiative
     path('initiatives/<int:initiative_id>/kpis/',AllKPIsView.as_view(), name='kpis_list'),
     path('initiatives/<int:initiative_id>/kpis/<int:pk>/',KPIDetailsView.as_view(), name='kpi_detail'),
     path('initiatives/<int:initiative_id>/kpis/add/',create_kpi_view, name='kpi_create'),
-    path('initiatives/<int:initiative_id>/kpis/<int:pk>/update/',UpdateKPIView.as_view(), name='kpi_update'),
     path('initiatives/<int:initiative_id>/kpis/<int:pk>/delete/',DeleteKPIView.as_view(), name='kpi_delete'),
-    
+    path('initiatives/<int:initiative_id>/kpis/<int:kpi_id>/edit/', edit_kpi_view, name='edit_kpi'),
+
     #Logs
     path('logs/',AllLogsView.as_view(), name='logs_list'),  
 

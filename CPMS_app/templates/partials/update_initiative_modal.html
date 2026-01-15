@@ -1,0 +1,28 @@
+<div id="user-initiative-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" dir="rtl">
+    <div class="bg-white rounded-xl shadow-xl w-3/4 max-w-2xl p-8 overflow-auto">
+        <h1 id="kpi-modal-title" class="text-2xl font-bold mb-4">
+            تحديث التقدم
+        </h1>
+        
+        <form id="userInitiativeForm" method="post">
+            {% csrf_token %}
+            <div class="mb-4">
+                {{ form.progress.label_tag }}<br>
+                {{ form.progress }}
+                {% if form.progress.errors %}
+                    <div class="text-red-500">{{ form.progress.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div class="flex justify-end gap-4 mt-6">
+                <button id="cancel-btn-ui" type="button" onclick="closeProgressModal()" class="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transform hover:-translate-y-0.5 transition duration-200">
+                    إلغاء
+                </button>
+
+                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transform hover:-translate-y-0.5 transition duration-200">
+                    حفظ
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
