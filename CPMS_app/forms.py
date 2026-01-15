@@ -10,7 +10,8 @@ class BaseForm(forms.ModelForm):
         start = cleaned_data.get('start_date')
         end = cleaned_data.get('end_date')
         if start and end and end <= start:
-            raise forms.ValidationError("تاريخ النهاية يجب أن يكون بعد تاريخ البداية")
+            self.add_error('end_date', "تاريخ النهاية يجب أن يكون بعد تاريخ البداية")
+
         return cleaned_data
 
     def save(self, user=None, plan_id=None, commit=True):

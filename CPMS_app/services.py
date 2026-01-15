@@ -1,9 +1,5 @@
 from datetime import date
 from django.forms.models import model_to_dict
-from django.db.models import Count, Q, Prefetch
-from .models import StrategicGoal, Initiative, Log, UserInitiative
-
-
 from django.db.models import Count, Q, Case, When, Value, IntegerField
 from .models import StrategicGoal, Initiative, Log, UserInitiative
 from django.db.models import Prefetch
@@ -21,7 +17,6 @@ def get_changed_fields(old_data, new_data):
     return diff
 
 
-
 def create_log(user, action, instance=None, old_data=None):
     new_data = model_to_dict(instance) if instance and action != "DELETE" else None
     changed_fields = {}
@@ -37,6 +32,8 @@ def create_log(user, action, instance=None, old_data=None):
         )
 
 
+def generate_KPIs(initiative):
+    pass
 
 
 def get_plan_dashboard(plan, user):
