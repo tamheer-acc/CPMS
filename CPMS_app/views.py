@@ -785,7 +785,6 @@ class AllPlansView(LoginRequiredMixin, RoleRequiredMixin, ListView):
           context = super().get_context_data(**kwargs)
           page_obj = context.get('page_obj')
           paginator = context.get('paginator')
-          #
           context['page_numbers'] = get_page_numbers(page_obj, paginator)
           return context
 
