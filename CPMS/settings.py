@@ -11,15 +11,27 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 from pathlib import Path
+import os
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+STATIC_URL = '/static/'
+
+# Where Django looks for static files during development
+STATICFILES_DIRS = [
+    BASE_DIR / 'CPMS_app' / 'static',   # THIS points exactly to CPMS_app/static
+]
+
+# Where collectstatic gathers everything for production
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+
+
 AUTH_USER_MODEL = 'CPMS_app.User'
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
-
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-%p#d)q!z#pr!d_sri31y0mx^xk%+kxa*swk0j_+5)^1m!c0ki2'
 
@@ -117,9 +129,5 @@ USE_I18N = True
 USE_TZ = True
 
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/6.0/howto/static-files/
-
-STATIC_URL = 'static/'
-
 LOGIN_REDIRECT_URL = 'dashboard'
+

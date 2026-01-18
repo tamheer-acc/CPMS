@@ -1,6 +1,8 @@
 from django.contrib import admin
 from django.urls import path, include
 from django.contrib.auth import views as auth_views
+from django.conf import settings
+from django.conf.urls.static import static
 
 
 
@@ -12,6 +14,12 @@ urlpatterns = [
 handler403 = 'CPMS_app.views.access_denied_view'
 handler404 = 'CPMS_app.views.page_not_found_view'
 
+
+if not settings.DEBUG:
+    urlpatterns += static(
+        settings.STATIC_URL,
+        document_root=settings.STATIC_ROOT
+    )
 
 # all of these are imported!
 # accounts/login/ [name='login']
