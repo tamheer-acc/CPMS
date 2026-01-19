@@ -38,7 +38,7 @@
 
             <div class="flex items-center justify-between mt-8 mx-2">
                 <!-- Title -->
-                <h1 class="text-xl font-semibold text-gray-700 md:text-center">
+                <h1 class="text-lg font-medium text-gray-600 md:text-center">
                     {{ plan.plan_name }}
                 </h1>
                 <div class="flex items-center gap-2 text-xs font-medium">
@@ -136,16 +136,19 @@
             </div>
             <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
 
+                <!-- بطاقة عدد الأهداف -->
                 <div class="bg-white p-4 rounded-lg shadow text-center">
                     <h3 class="font-semibold mb-2">عدد الأهداف</h3>
-                    <p class="text-2xl font-bold">{{ goals_count }}</p>
+                    <p class="text-2xl font-bold">{{ goals_total }}</p>
                 </div>
 
+                <!-- بطاقة عدد المبادرات -->
                 <div class="bg-white p-4 rounded-lg shadow text-center">
                     <h3 class="font-semibold mb-2">عدد المبادرات</h3>
                     <p class="text-2xl font-bold">{{ initiatives_count }}</p>
                 </div>
 
+                <!-- أهم 3 أهداف -->
                 <div class="bg-white p-4 rounded-lg shadow">
                     <button class="w-full text-left font-semibold flex justify-between items-center"
                         onclick="this.nextElementSibling.classList.toggle('hidden')">
@@ -159,6 +162,7 @@
                     </ol>
                 </div>
 
+                <!-- أهم 3 مبادرات -->
                 <div class="bg-white p-4 rounded-lg shadow">
                     <button class="w-full text-left font-semibold flex justify-between items-center"
                         onclick="this.nextElementSibling.classList.toggle('hidden')">
@@ -172,9 +176,65 @@
                     </ol>
                 </div>
 
+                <!-- Donut chart -->
+                <div class="bg-white p-4 rounded-lg shadow col-span-1 sm:col-span-2 lg:col-span-2">
+                    <h3 class="font-semibold mb-3 text-center">حالات الأهداف والمبادرات</h3>
+                    <div class="w-full h-64 mx-auto">
+                        <canvas id="goalsInitiativesDonut"></canvas>
+                    </div>
+                </div>
+
             </div>
 
-            <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Bar chart-->
+            <div class="mt-8 bg-white p-4 rounded-lg shadow">
+                <h3 class="font-semibold mb-4 text-center">top 5 based on completed goals</h3>
+                <div class="w-full h-72">
+                    <canvas id="progressBarChart"></canvas>
+                </div>
+            </div>
+
+            <!-- JSON data -->
+            <script id="progress-data" type="application/json">
+             {% if user.role.role_name == 'GM' %}
+                 {{ departments_progress|safe }}
+             {% elif user.role.role_name == 'M' or user.role.role_name == 'CM' %}
+                 {{ employees_progress|safe }}
+             {% endif %}
+            </script>
+            <div class="mt-8 bg-white p-4 rounded-lg shadow">
+                <h3 class="font-semibold mb-4 text-center">الأهداف المتأخرة (آخر 12 شهر)</h3>
+                <div class="w-full h-72">
+                    <canvas id="delayedGoalsLineChart"></canvas>
+                </div>
+            </div>
+
+            <script id="delayed-data" type="application/json">
+                 {{ delayed_goals_monthly|safe }}
+            </script>
+
+            {% if user.role.role_name == 'GM' %}
+            <div class="relative w-60 h-60 ml-10">
+                <svg class="w-full h-full rotate-180" viewBox="0 0 36 36">
+                    <circle cx="18" cy="18" r="16" fill="none" class="stroke-current text-green-100" stroke-width="3"
+                        stroke-dasharray="50 100" stroke-linecap="round"></circle>
+
+                    <circle id="plan-gauge" cx="18" cy="18" r="16" fill="none" data-value="{{ plan_avg }}"
+                        class="stroke-current text-green-600 transition-all duration-1000 ease-out" stroke-width="1"
+                        stroke-dasharray="0 100" stroke-linecap="round"></circle>
+                </svg>
+
+                <div class="absolute inset-0 flex flex-col items-center justify-start text-center pt-16">
+                    <span class="text-2xl font-bold text-green-600">
+                        {{ plan_avg }}%
+                    </span>
+                    <span class="text-xs text-green-600">تقدم الخطة</span>
+                </div>
+            </div>
+            {% endif %}
+
+
+            <!-- <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
 
                 <div class="bg-white p-4 rounded-lg shadow">
                     <label class="flex items-center justify-between cursor-pointer font-semibold"
@@ -204,9 +264,9 @@
                     </ul>
                 </div>
 
-            </div>
+            </div> -->
 
-
+            <!-- #################################################################################################### -->
             <div class="flex items-center gap-3 bg-[#00675B]/20 px-4 py-2 rounded-md">
                 <svg class="text-[#00675B]" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
                     viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -412,4 +472,96 @@
             </div>
         </div>
 </section>
+
+<script>
+    // ====== DONUT ======
+    const donutCtx = document.getElementById('goalsInitiativesDonut');
+    new Chart(donutCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['لم تبدأ', 'قيد التنفيذ', 'مكتملة', 'متأخرة'],
+            datasets: [
+                {
+                    label: 'الأهداف',
+                    data: {{ goals_status }},
+        backgroundColor: ['#9CA3AF', '#3B82F6', '#10B981', '#EF4444'],
+        borderWidth: 0,
+        weight: 2
+    },
+        {
+            label: 'المبادرات',
+            data: {{ initiatives_status }},
+        backgroundColor: ['#CBD5E1', '#93C5FD', '#86EFAC', '#FCA5A5'],
+        borderWidth: 0,
+        weight: 1
+        }
+      ]
+    },
+        options: {
+        cutout: '55%',
+        plugins: {
+            legend: { position: 'bottom' }
+        }
+    }
+  });
+
+
+    // ====== BAR ======
+    const progressData = JSON.parse(document.getElementById('progress-data').textContent);
+
+    const barLabels = progressData.map(x => x.department__department_name || x.userinitiative__user__username);
+    const barData = progressData.map(x => x.completed_goals || x.completed_initiatives);
+
+    new Chart(document.getElementById("progressBarChart"), {
+        type: 'bar',
+        data: {
+            labels: barLabels,
+            datasets: [{
+                label: "الأهداف/المبادرات المكتملة",
+                data: barData,
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: { y: { beginAtZero: true } }
+        }
+    });
+
+
+    // ====== LINE ======
+    const delayedData = JSON.parse(document.getElementById('delayed-data').textContent);
+
+    const lineLabels = delayedData.map(d => new Date(d.month).toLocaleDateString('ar-SA', {
+        month: 'short',
+        year: 'numeric'
+    }));
+
+    const lineData = delayedData.map(d => d.count);
+
+    new Chart(document.getElementById("delayedGoalsLineChart"), {
+        type: 'line',
+        data: {
+            labels: lineLabels,
+            datasets: [{
+                label: "الأهداف المتأخرة",
+                data: lineData,
+                fill: false,
+                tension: 0.4,
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: { y: { beginAtZero: true } }
+        }
+    });
+    
+    const planGauge = document.getElementById('plan-gauge');
+    const value = planGauge.dataset.value;
+    planGauge.setAttribute('stroke-dasharray', `${value} 100`);
+
+</script>
+
+
 {% endblock %}

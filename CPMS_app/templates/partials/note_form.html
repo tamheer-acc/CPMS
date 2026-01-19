@@ -48,7 +48,7 @@
                 {% if user.role.role_name == 'GM' %}
                 <!-- GM send type -->
                 <select id="send-type" class="select select-sm select-bordered px-4 w-64">
-                    <option disabled selected value=" ">اختر نوع الإرسال</option>
+                    <option disabled>اختر نوع الإرسال</option>
                     <option value="manager">مدير إدارة</option>
                     <option value="goal">هدف</option>
                 </select>
@@ -64,25 +64,72 @@
                 {% endif %}
 
                 <!-- Receiver -->
-                <div id="receiver-field" class="hidden flex gap-4 items-center shrink-0">
+                <!-- <div id="receiver-field" class="hidden flex gap-4 items-center shrink-0">
                     <span class="text-sm font-medium text-gray-600 whitespace-nowrap">{{form.receiver.label}}<span
                             class="text-red-500"> *</span></span>
                     {{ form.receiver }}
+                </div> -->
+                <div id="receiver-field" class="hidden flex gap-4 items-center shrink-0">
+                    <label class="text-sm font-medium text-gray-600 whitespace-nowrap">
+                        إلى <span class="text-red-500">*</span>
+                    </label>
+
+                    <select name="receiver" class="select select-sm select-bordered px-4 w-64">
+                        <option disabled selected>اختر المستلم</option>
+                        {% for user in form.fields.receiver.queryset %}
+                        <option value="{{ user.id }}">
+                            {{ user }}
+                        </option>
+                        {% endfor %}
+                    </select>
                 </div>
 
+
                 <!-- Initiative -->
-                <div id="initiative-field" class="hidden flex gap-4 items-center shrink-0">
+                <!-- <div id="initiative-field" class="hidden flex gap-4 items-center shrink-0">
                     <span
                         class="{% if user.role.role_name == 'E' %} hidden {% else %} text-sm font-medium text-gray-600 whitespace-nowrap {% endif %}">{{form.initiative.label}}<span
                             class="text-red-500"> *</span></span>
                     {{ form.initiative }}
+                </div> -->
+
+                <div id="initiative-field" class="hidden flex gap-4 items-center shrink-0">
+                    <label
+                        class="{% if user.role.role_name == 'E' %} hidden {% else %} text-sm font-medium text-gray-600 whitespace-nowrap {% endif %}">{{form.initiative.label}}
+                        <span class="text-red-500">*</span>
+                    </label>
+
+                    <select name="initiative" class="select select-sm select-bordered px-4 w-64">
+                        <option disabled selected>اختر المبادرة</option>
+                        {% for initiative in form.fields.initiative.queryset %}
+                        <option value="{{ initiative.id }}">
+                            {{ initiative }}
+                        </option>
+                        {% endfor %}
+                    </select>
                 </div>
 
+
                 <!-- Goal -->
-                <div id="goal-field" class="hidden flex gap-4 items-center shrink-0">
+                <!-- <div id="goal-field" class="hidden flex gap-4 items-center shrink-0">
                     <span class="text-sm font-medium text-gray-600 whitespace-nowrap">{{form.strategic_goal.label}}<span
                             class="text-red-500"> *</span></span>
                     {{ form.strategic_goal }}
+                </div> -->
+
+                <div id="goal-field" class="hidden flex gap-4 items-center shrink-0">
+                    <label class="text-sm font-medium text-gray-600 whitespace-nowrap">{{form.strategic_goal.label}}
+                        <span class="text-red-500">*</span>
+                    </label>
+
+                    <select name="strategic_goal" class="select select-sm select-bordered px-4 w-64">
+                        <option disabled selected>اختر الهدف</option>
+                        {% for goal in form.fields.strategic_goal.queryset %}
+                        <option value="{{ strategic_goal.id }}">
+                            {{ goal }}
+                        </option>
+                        {% endfor %}
+                    </select>
                 </div>
 
 
@@ -130,26 +177,3 @@
         </button>
     </div>
 </form>
-
-
-<script>
-    const sendType = document.getElementById("send-type");
-
-    if (sendType) {
-        sendType.addEventListener("change", function () {
-            document.getElementById("receiver-field")?.classList.add("hidden");
-            document.getElementById("initiative-field")?.classList.add("hidden");
-            document.getElementById("goal-field")?.classList.add("hidden");
-
-            if (this.value === "manager" || this.value === "employee") {
-                document.getElementById("receiver-field")?.classList.remove("hidden");
-            }
-            if (this.value === "initiative") {
-                document.getElementById("initiative-field")?.classList.remove("hidden");
-            }
-            if (this.value === "goal") {
-                document.getElementById("goal-field")?.classList.remove("hidden");
-            }
-        });
-    }
-</script>

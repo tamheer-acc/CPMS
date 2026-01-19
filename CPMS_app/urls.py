@@ -18,7 +18,7 @@ urlpatterns = [
 
 
     #Dashboard
-    path('#', dashboard_view, name='dashboard'),
+    path('', dashboard_view, name='dashboard'),
     #Departments
     path('departments/',AllDepartmentsView.as_view(), name='departments_list'), 
 

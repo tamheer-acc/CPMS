@@ -271,6 +271,10 @@ function closeDeleteModal() {
     document.getElementById('deleteModal').classList.add('hidden');
 }
 
+// ---------------------------
+// assign reciver for note
+// ---------------------------
+
 
 
 // ---------------------------

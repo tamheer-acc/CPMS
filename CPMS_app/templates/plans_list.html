@@ -17,12 +17,11 @@
         <div class="p-4 flex items-center justify-between gap-4">
 
             <!-- Container for Search and Filter -->
-            <div class="flex items-center gap-2">
-
+            <div class="flex items-center gap-2 {% if request.user.role.role_name != 'CM' %}flex-1{% endif %}">
+                
                 <!-- Search Input -->
-                <div class="relative">
+                <div class="relative {% if request.user.role.role_name != 'CM' %}w-full{% else %}w-80{% endif %}">
                     <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
-                        <!-- Search icon -->
                         <svg class="w-4 h-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none"
                             viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -30,7 +29,7 @@
                         </svg>
                     </div>
                     <input type="text" id="search"
-                        class="block w-80 ps-9 pe-3 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                        class="block w-full ps-9 pe-3 py-2 border rounded-xl focus:ring-blue-500 focus:border-blue-500"
                         placeholder="البحث عن خطة ...">
                 </div>
 
@@ -89,10 +88,11 @@
                 </a>
 
                 {% if active_plan_exists %}
-                <div class="absolute top-1/2 left-full -translate-y-1/2 ml-2
+                <div
+                    class="absolute top-1/2 left-full -translate-y-1/2 ml-2
                 hidden group-hover:block whitespace-nowrap rounded-md bg-gray-300/90 px-3 py-1 text-xs text-gray-600 shadow-lg z-10">
 
-                    لا يمكنك إنشاء خطة جديدة, نظرًا لوجود خطة نشطة حاليًا.
+                    لا يمكنك إنشاء خطة جديدة، نظرًا لوجود خطة نشطة حاليًا.
                     <!-- السهم -->
                     <span class="absolute top-1/2 -translate-y-1/2 left-0 -translate-x-full
                      w-0 h-0 border-y-8 border-y-transparent border-r-8 border-r-gray-300/90"></span>
@@ -100,7 +100,7 @@
                 {% endif %}
 
             </div>
-           
+
             {% endif %}
 
         </div>

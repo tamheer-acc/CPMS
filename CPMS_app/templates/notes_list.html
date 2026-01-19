@@ -20,7 +20,7 @@
                             shadow-md hover:shadow-lg transform hover:-translate-y-0.5
                             transition duration-200 focus:ring-4 focus:ring-blue-200"> -->
         <a href="{% url 'note_create_modal' %}" hx-get="{% url 'note_create_modal' %}" hx-target="#note-form-container"
-            hx-swap="innerHTML" onclick="document.getElementById('note-modal-toggle').checked = true;" class="flex items-center justify-center gap-3 bg-[#00A399] text-white py-2 rounded-lg mb-6 font-semibold hover:bg-[#018077]
+            hx-swap="innerHTML" class="flex items-center justify-center gap-3 bg-[#00A399] text-white py-2 rounded-lg mb-6 font-semibold hover:bg-[#018077]
                             shadow-md hover:shadow-lg transform hover:-translate-y-0.5
                             transition duration-200 focus:ring-4 focus:ring-[#018077]/30">
             <!-- chat plus icon -->
@@ -292,6 +292,51 @@
             icon.setAttribute("stroke", "currentColor");
         }
     });
+    
+   function initNoteForm() {
+    const sendType = document.getElementById("send-type");
+    if (!sendType) return;
+
+    const receiver = document.getElementById("receiver-field");
+    const initiative = document.getElementById("initiative-field");
+    const goal = document.getElementById("goal-field");
+
+    function hideAll() {
+        receiver?.classList.add("hidden");
+        initiative?.classList.add("hidden");
+        goal?.classList.add("hidden");
+    }
+
+    hideAll();
+
+    sendType.addEventListener("change", function () {
+        hideAll();
+
+        if (this.value === "manager" || this.value === "employee") {
+            receiver?.classList.remove("hidden");
+        }
+
+        if (this.value === "initiative") {
+            initiative?.classList.remove("hidden");
+        }
+
+        if (this.value === "goal") {
+            goal?.classList.remove("hidden");
+        }
+    });
+
+    // مهم جدًا: لو فيه قيمة مختارة
+    sendType.dispatchEvent(new Event("change"));
+}
+
+/* مع HTMX */
+document.body.addEventListener("htmx:afterSwap", function (e) {
+    if (e.target.id === "note-form-container") {
+        document.getElementById('note-modal-toggle').checked = true;
+        initNoteForm()
+    }
+});
+
 
 </script>
 {% endwith %}
