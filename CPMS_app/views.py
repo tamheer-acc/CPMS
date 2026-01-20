@@ -1205,36 +1205,42 @@ class AllNotesView(LoginRequiredMixin, ListView):
     def get_queryset(self):
         user = self.request.user
         role = user.role.role_name
-        note_box = self.request.GET.get('box', 'all-notes')
-        filter_val = self.request.GET.get("filter")
+        current_box = self.request.GET.get('box', 'all-notes')
+        current_filter = self.request.GET.get('filter', '')
     
         if role == 'GM':
             qs = Note.objects.filter(sender=user)
         elif role in ['M','CM']:
-            qs = Note.objects.filter( Q(sender=user) | Q(receiver=user) | Q(receiver__department=user.department),parent_note__isnull=True)
+            qs = Note.objects.filter( Q(sender=user) | Q(receiver=user)|Q(strategic_goal__department=user.department)|Q(initiative__userinitiative__user=user),parent_note__isnull=True)
         elif role == 'E':
          qs = Note.objects.filter( Q(sender=user) | Q(receiver=user) | Q(initiative__userinitiative__user=user),parent_note__isnull=True).distinct()
 
-
-        if note_box == 'received-notes':
+         
+        if current_box == 'received-notes':
              qs = qs.filter(Q(receiver=user) | Q(initiative__userinitiative__user=user) |Q(strategic_goal__department=user.department))
-        if note_box == 'sent-notes':
+             if current_filter == "read":
+                qs = qs.filter(note_status='R')
+             if current_filter == "unread":
+                 qs = qs.filter(note_status='U')
+
+        if current_box == 'sent-notes':
              qs = qs.filter(Q(sender=user))
-        if note_box == 'starred-notes':
-            qs = qs.filter(is_starred=True)
-        if filter_val == "read":
-            qs = qs.filter(note_status='R')
-        if filter_val == "starred":
-            qs = qs.filter(is_starred=True)
-        if filter_val == "unread":
-            qs = qs.filter(note_status='U')
-        if filter_val == "unstarred":
-            qs = qs.filter(is_starred=False)
-        if filter_val == "goal":
-            qs = qs.filter(strategic_goal__department=user.department)
-        if filter_val == "initiative":
-            qs = qs.filter(initiative__userinitiative__user=user)
             
+        if current_box == 'starred-notes':
+            qs = qs.filter(is_starred=True)
+
+        # Filters
+        if current_filter == "starred":
+            qs = qs.filter(is_starred=True)
+        if current_filter == "unstarred":
+            qs = qs.filter(is_starred=False)
+            
+        if current_filter == "goal":
+            qs = qs.filter(strategic_goal__isnull=False)
+            if role in ['M', 'CM']:
+                qs = qs.filter(strategic_goal__department=user.department)
+        if current_filter == "initiative":
+            qs = qs.filter(initiative__userinitiative__user=user)
 
         queryset = filter_queryset(
           queryset=qs,
@@ -1249,14 +1255,56 @@ class AllNotesView(LoginRequiredMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         user = self.request.user
-
+        
+        # unread count
         context['unread_count'] = Note.objects.filter(receiver=user, note_status='U').count()
 
-      
+        # mark unread notes
         notes = context.get('notes', [])
         for note in notes:
             note.unread = note.receiver == user and note.note_status == 'U'
+
         context['notes'] = notes
+
+        # messages for box, filter, and search fields
+        current_box = self.request.GET.get('box', 'all-notes')
+        current_filter = self.request.GET.get('filter','all')
+        search = self.request.GET.get('search','')
+        
+        context['current_box'] = current_box
+        context['current_filter'] = current_filter
+        context['search'] = search
+
+        empty_message = "لا توجد ملاحظات لعرضها"
+        if not self.object_list.exists():
+        
+         # search
+         if search:
+          empty_message = "لا توجد نتائج مطابقة لبحثك"
+
+         # filters
+         elif current_filter == 'read':
+            empty_message = "لا توجد ملاحظات مقروءة"
+         elif current_filter == 'unread':
+            empty_message = "لا توجد ملاحظات غير مقروءة"
+         elif current_filter == 'initiative':
+            empty_message = "لا توجد ملاحظات مرتبطة بمبادرات"
+         elif current_filter == 'goal':
+            empty_message = "لا توجد ملاحظات مرتبطة بأهداف"
+         elif current_filter == 'starred':
+            empty_message = "لا توجد ملاحظات مميزة بنجمة"
+         elif current_filter == 'unstarred':
+            empty_message = "لا توجد ملاحظات غير مميزة بنجمة"
+
+         # note box
+         elif current_box == 'sent-notes':
+            empty_message = "لم ترسل أي ملاحظات بعد"
+         elif current_box == 'received-notes':
+            empty_message = "لا توجد ملاحظات واردة"
+         elif current_box == 'starred-notes':
+            empty_message = "لا توجد ملاحظات مميزة بنجمة"
+    
+        context['empty_message'] = empty_message
 
         return context
     
@@ -1469,33 +1517,21 @@ class CreateNoteView(LoginRequiredMixin, LogMixin, CreateView):
         form.fields['initiative'].required = False
         form.fields['strategic_goal'].required = False
 
-        form.fields['receiver'].widget = forms.HiddenInput()
-        form.fields['initiative'].widget = forms.HiddenInput()
-        form.fields['strategic_goal'].widget = forms.HiddenInput()
-
         if role == 'GM':
-            form.fields['receiver'].widget = forms.Select()
             form.fields['receiver'].queryset = User.objects.filter(role__role_name__in=['M', 'CM'])
-            form.fields['strategic_goal'].widget = forms.Select()
             form.fields['strategic_goal'].queryset = StrategicGoal.objects.all()
 
         elif role in ['M', 'CM']:
-            form.fields['receiver'].widget = forms.Select()
             form.fields['receiver'].queryset = User.objects.filter(department=user.department, role__role_name='E')
-
-            form.fields['initiative'].widget = forms.Select()
-            form.fields['initiative'].queryset = Initiative.objects.filter(
-                userinitiative__user__department=user.department
-            ).distinct()
+            form.fields['initiative'].queryset = Initiative.objects.filter(userinitiative__user__department=user.department).distinct()
 
         elif role == 'E':
-            form.fields['initiative'].widget = forms.Select()
             form.fields['initiative'].queryset = Initiative.objects.filter(userinitiative__user=user).distinct()
 
-        if self.request.GET.get('goal_id'):
-            form.fields['strategic_goal'].widget = forms.HiddenInput()
-            form.fields['receiver'].widget = forms.HiddenInput()
-            form.fields['initiative'].widget = forms.HiddenInput()
+        # if self.request.GET.get('goal_id'):
+        #     form.fields['strategic_goal'].widget = forms.HiddenInput()
+        #     form.fields['receiver'].widget = forms.HiddenInput()
+        #     form.fields['initiative'].widget = forms.HiddenInput()
 
         return form
     

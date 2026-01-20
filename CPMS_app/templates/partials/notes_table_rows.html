@@ -1,72 +1,68 @@
-{% for note in notes %}
-<tr class="note-row group cursor-pointer hover:bg-gray-50" data-id="{{ note.id }}">
-    <!-- Sender -->
-    <td class="p-2 w-1/4 max-w-[150px]">
-        <div class="flex items-center gap-4 truncate">
-            {% include "partials/star_icon.html" with note=note %}
-            <span
-                class="truncate {% if note.receiver == request.user and note.note_status == 'U' %}font-semibold{% else %}font-normal{% endif %} text-gray-800">
-                {{ note.sender.get_full_name }}
-            </span>
-        </div>
-    </td>
+{% if notes %}
+    {% for note in notes %}
+    <tr class="note-row text-sm group cursor-pointer hover:bg-gray-50" data-id="{{ note.id }}">
+        <!-- Sender -->
+        <td class="p-2 w-1/4 max-w-[150px]">
+            <div class="flex items-center gap-4 truncate">
+                {% include "partials/star_icon.html" with note=note %}
+                <span
+                    class="truncate {% if note.receiver == request.user and note.note_status == 'U' %}font-semibold{% else %}font-normal{% endif %} text-gray-800">
+                    {{ note.sender.get_full_name }}
+                </span>
+            </div>
+        </td>
 
-    <!-- Title + Content -->
-    <td class="p-2 w-2/3 max-w-[150px]">
-        <div class="flex items-center gap-3">
-            <span class="truncate {% if note.unread %}font-semibold{% else %}font-normal{% endif %} text-gray-800">
-                {{ note.title }} -
-            </span>
-            <span  class="truncate max-w-[50px] text-gray-500 {% if note.unread %}font-semibold{% else %}font-normal{% endif %}">
-                {{ note.content|truncatechars:50 }}
-            </span>
-        </div>
-    </td>
+        <!-- Title + Content -->
+        <td class="p-2 w-2/3 max-w-[150px]">
+            <div class="flex items-center gap-3">
+                <span class="truncate {% if note.unread %}font-semibold{% else %}font-normal{% endif %} text-gray-800">
+                    {{ note.title }} -
+                </span>
+                <span
+                    class="truncate max-w-[50px] text-gray-500 {% if note.unread %}font-semibold{% else %}font-normal{% endif %}">
+                    {{ note.content|truncatechars:50 }}
+                </span>
+            </div>
+        </td>
 
-    <!-- Send Date -->
-    <td class="text-sm text-gray-600 font-normal {% if note.unread %}font-semibold{% else %}font-normal{% endif %} w-[80px] truncate">
-        {{ note.created_at|date:"Y/m/d" }}
-    </td>
+        <!-- Send Date -->
+        <td
+            class="text-xs text-gray-600 font-normal {% if note.unread %}font-semibold{% else %}font-normal{% endif %} w-[80px] truncate">
+            {{ note.created_at|date:"Y/m/d" }}
+        </td>
 
-    <!-- Unread Badge -->
-    <td class="px-3 py-2 text-center">
-        {% if note.unread %}
-        <!-- <span class="inline-flex items-center bg-blue-100 border border-blue-300 text-blue-700
+        <!-- Unread Badge -->
+        <td class="px-3 py-2 text-center">
+            {% if note.unread %}
+            <!-- <span class="inline-flex items-center bg-blue-100 border border-blue-300 text-blue-700
                   text-[10px] font-medium px-2.5 rounded">
             <span class="w-1.5 h-1.5 me-1 bg-blue-600 rounded-full"></span>
             جديدة!
         </span> -->
-         <span class="inline-flex items-center text-blue-700
+            <span class="inline-flex items-center text-blue-700
                   text-[10px] font-medium">
-            <span class="w-1.5 h-1.5 me-1 bg-blue-600 rounded-full"></span>
-           
-        </span>
-        {% endif %}
-    </td>
-</tr>
+                <span class="w-1.5 h-1.5 me-1 bg-blue-600 rounded-full"></span>
 
-{% empty %}
-<tr>
-    <td colspan="4" class="p-10 h-[50vh]">
-        <div class="flex flex-col items-center justify-center gap-4 text-gray-400">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="w-20 h-20 text-gray-300">
-                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                <path
-                    d="M8 4h10a2 2 0 0 1 2 2v10m-.593 3.422a2 2 0 0 1 -1.407 .578h-12a2 2 0 0 1 -2 -2v-12c0 -.554 .225 -1.056 .59 -1.418" />
-                <path d="M4 13h3l3 3h4l.987 -.987m2.013 -2.013h3" />
-                <path d="M3 3l18 18" />
-            </svg>
-            {% if current_box == 'sent-notes' %}
-            <span class="text-sm font-semibold">لم ترسل أي ملاحظات بعد</span>
-            {% elif current_box == 'received-notes' %}
-            <span class="text-sm font-semibold">لا توجد ملاحظات واردة</span>
-            {% elif current_box == 'starred-notes' %}
-            <span class="text-sm font-semibold">لا توجد ملاحظات مميزة</span>
-            {% else %}
-            <span class="text-sm font-semibold">لا توجد ملاحظات لعرضها</span>
+            </span>
             {% endif %}
-        </div>
-    </td>
-</tr>
-{% endfor %}
+        </td>
+    </tr>
+    {% endfor %}
+    {% else %}
+    <tr>
+        <td colspan="4" class="p-10 h-[50vh]">
+            <div class="flex flex-col items-center justify-center gap-4 text-gray-400">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="w-20 h-20 text-gray-300">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                    <path
+                        d="M8 4h10a2 2 0 0 1 2 2v10m-.593 3.422a2 2 0 0 1 -1.407 .578h-12a2 2 0 0 1 -2 -2v-12c0 -.554 .225 -1.056 .59 -1.418" />
+                    <path d="M4 13h3l3 3h4l.987 -.987m2.013 -2.013h3" />
+                    <path d="M3 3l18 18" />
+                </svg>
+               
+                <span class="text-sm font-semibold">{{ empty_message }}</span>
+            </div>
+        </td>
+    </tr>
+    {% endif %}
