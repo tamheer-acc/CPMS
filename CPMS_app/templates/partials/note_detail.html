@@ -1,0 +1,186 @@
+<div class="max-w-3xl mx-auto h-full flex flex-col overflow-hidden">
+
+  <!-- Breadcrumbs -->
+  <div class="text-gray-500 text-sm mt-2 mb-4">
+    <a href="/dashboard" class="hover:text-gray-700">لوحة التحكم</a> / 
+    <a href="/notes"  class="hover:text-gray-700">الملاحظات</a> / 
+    <span class="text-gray-800 font-semibold">تفاصيل الملاحظة</span>
+  </div>
+
+  <div class="h-px bg-gray-100 w-1/2 mt-2 mb-4"></div>
+
+  <!-- Note Card -->
+  <div class="bg-white p-4 rounded-lg shadow w-full space-y-2 flex flex-col overflow-hidden">
+
+    <!-- Meta (Header) -->
+    <div class="space-y-2">
+
+      <!-- Title + Date -->
+      <div class="flex justify-between items-center">
+        <h2 class="font-semibold text-lg text-gray-800">
+          {{ note.title }}
+        </h2>
+        <span class="text-xs text-gray-400 whitespace-nowrap">
+          {{ note.created_at|date:"Y/m/d، g:i a" }}
+        </span>
+      </div>
+
+      <!-- From / To -->
+      <div class="flex justify-between text-sm text-gray-600">
+        <div>
+          <span class="text-gray-500">من:</span>
+          {% if note.sender == request.user %}
+          انت
+          {% else %}
+          {{ note.sender.get_full_name }}
+          {% endif %}
+        </div>
+
+        <div>
+          <span class="text-gray-500">إلى:</span>
+          {% if note.initiative %}
+          {{ note.initiative.title }}
+          {% if note.strategic_goal %}
+          {{ note.strategic_goal.goal_title }}
+          {% else %}
+          {% if note.receiver == request.user %}
+          انت
+          {% else %}
+          {{ note.receiver.get_full_name }}
+          {% endif %}
+          {% endif %}
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Divider -->
+    <hr class="border-t border-gray-200" />
+
+    <!-- Content -->
+    <div class="text-gray-800 leading-relaxed px-1 pt-2">
+      {{ note.content }}
+    </div>
+
+    {% if can_reply %}
+    {% if grouped_replies %}
+
+    <!-- Divider -->
+    <div class="flex items-center justify-center gap-3 my-4 pt-2">
+      <span class="h-px w-1/3 bg-gray-200"></span>
+      <span class="text-xs text-gray-500 font-semibold">الردود</span>
+      <span class="h-px w-1/3 bg-gray-200"></span>
+    </div>
+
+
+    <div class="flex-1 overflow-y-auto pr-2 chat-scroll">
+
+      {% for group in grouped_replies %}
+      <div class="text-center text-xs text-gray-400 mb-2">
+        {{ group.date|date:"Y/m/d" }}
+      </div>
+
+      {% for reply in group.notes %}
+      <div class="chat {% if reply.sender == request.user %}chat-end{% else %}chat-start{% endif %}">
+        <div class="chat-header text-xs font-semibold text-gray-500 mb-1">
+          {{ reply.sender.get_full_name }}
+        </div>
+
+        <div class="chat-bubble relative break-words  max-w-[75%]
+                     {% if reply.sender == request.user %}
+                       bg-[#698274]/40 text-gray-800
+                     {% else %}
+                       bg-gray-100 text-gray-800
+                     {% endif %}">
+          {{ reply.content }}
+
+          <time class="block mt-1 text-[10px] text-gray-500 text-left">
+            {{ reply.created_at|date:"g:i a" }}
+          </time>
+        </div>
+
+        <div class="chat-footer text-xs text-gray-400 mt-1">
+
+          {% if request.user == reply.sender %}
+
+          {% if note.receiver %}
+
+          {% if is_read_by_receiver %}
+          مقروءة
+          {% else %}
+          تم الإرسال
+          {% endif %}
+
+          {% endif %}
+
+          {% endif %}
+
+        </div>
+
+      </div>
+      {% endfor %}
+
+      {% endfor %}
+
+    </div>
+    {% else %}
+    <!-- Divider -->
+    <div class="w-1/2 h-px bg-gray-200 mx-auto mt-4 mb-4"></div>
+    <p class="text-gray-400 text-center py-4">لا يوجد ردود حتى الآن</p>
+    {% endif %}
+    {% endif %}
+
+    <div class="absolute bottom-16 left-0 right-0 h-6
+            bg-gradient-to-t from-white to-transparent pointer-events-none">
+    </div>
+
+    <!-- Reply Box -->
+
+    {% if can_reply %}
+    <form method="post" action="{% url 'note_detail' note.pk %}" class="flex items-center gap-2 px-2 sticky bottom-0">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="reply" />
+
+      <textarea name="reply_content" rows="1" placeholder="اكتب ردك هنا..."
+        class="w-full resize-none rounded-full border border-gray-200 px-4 py-2 text-sm focus:outline-none focus:ring-0  break-words whitespace-pre-wrap"></textarea>
+
+      <button type="submit"
+        class="bg-[#00A399] text-white rounded-full px-4 py-2 text-sm  hover:bg-[#018077] text-white  transition-colors">
+        إرسال
+      </button>
+    </form>
+    {% endif %}
+
+
+  </div>
+</div>
+
+<style>
+  /* container */
+  .chat-scroll {
+    scrollbar-width: none;
+  }
+
+  .chat-scroll::-webkit-scrollbar {
+    width: 2.5px;
+  }
+
+  .chat-scroll::-webkit-scrollbar-thumb {
+    background-color: transparent;
+    border-radius: 9999px;
+    transition: background-color 0.25s ease;
+  }
+
+  .chat-scroll:hover {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(4, 104, 98, 0.45) transparent;
+  }
+
+  .chat-scroll:hover::-webkit-scrollbar-thumb {
+    background-color: rgba(4, 104, 98, 0.45);
+  }
+
+  .chat-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+</style>

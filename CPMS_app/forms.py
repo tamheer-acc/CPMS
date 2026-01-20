@@ -1,6 +1,7 @@
 from django import forms
 from django.forms import ModelForm
 from .models import Initiative, KPI, StrategicPlan, StrategicGoal, UserInitiative
+from .models import Department, Initiative, KPI, Note, StrategicPlan, StrategicGoal, User
 
 # ============== Base Form =================
 # Base form with shared clean and save logic
@@ -14,7 +15,7 @@ class BaseForm(forms.ModelForm):
 
         return cleaned_data
 
-    def save(self, user=None, plan_id=None, commit=True):
+    def save(self, user=None, sender=None, plan_id=None, commit=True):
         obj = super().save(commit=False)
 
         if user and hasattr(obj, 'created_by'):
@@ -26,10 +27,12 @@ class BaseForm(forms.ModelForm):
         if plan_id and hasattr(obj, 'strategicplan_id'):
             obj.strategicplan_id = plan_id
 
+        if sender:
+            obj.sender = sender
+
         if commit:
             obj.save()
         return obj
-
 
 
 # ===== Strategic Plan Form =====
@@ -109,6 +112,59 @@ class StrategicGoalForm(BaseForm):
             'goal_status': forms.Select(attrs={'class':'rounded-xl border px-12 py-2 text-sm text-gray-900 bg-gray-50 hover:border-gray-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-500'}),
             'goal_priority': forms.Select(attrs={'class':'rounded-xl border px-12 py-2 text-sm text-gray-900 bg-gray-50 hover:border-gray-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-500'}),
         }
+
+
+# ===== Note Form =====
+class NoteForm(BaseForm):
+    class Meta:
+        model = Note
+        fields = ['title', 'content', 'receiver', 'initiative','strategic_goal']
+        widgets = {
+            'title': forms.TextInput(attrs={'type':'text', 'class':'input font-normal text-sm px-2 w-full', 'placeholder': 'اكتب عنوان الملاحظة...'}),
+            'content': forms.Textarea(attrs={'class': 'border rounded-lg font-normal text-m px-2 py-1 w-full hover:border-gray-400 resize-none', 'rows':6}),
+            'receiver': forms.Select(attrs={'class': 'select select-sm select-bordered px-4 w-64'}),
+            'initiative': forms.Select(attrs={'class': 'select select-sm select-bordered px-4 w-64'}),
+            'strategic_goal': forms.Select(attrs={'class': 'select select-sm select-bordered px-4 w-64'})
+        }
+
+        labels = {
+            'title': 'العنوان:',
+            'content': 'محتوى الملاحظة',
+            'receiver': 'اسم المستلم:',
+            'initiative': 'عنوان المبادرة:',
+            'strategic_goal': 'عنوان الهدف:',
+        }
+
+        error_messages = {
+            'title': {
+                'required': 'يرجى إدخال العنوان ',
+                'max_length': 'العنوان طويل جدًا',
+            },
+            'content': {
+                'required': 'يرجى كتابة محتوى الملاحظة',
+                'max_length': 'المحتوى طويل جداً، الرجاء اختصاره'
+            }
+        }
+
+
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+
+        self.fields['initiative'].empty_label = "اختر المبادرة"
+        self.fields['strategic_goal'].empty_label = "اختر الهدف الاستراتيجي"
+
+        if user:
+            role = user.role.role_name
+
+            if role == 'GM':
+                self.fields['receiver'].label = 'اسم المدير:'
+                self.fields['receiver'].empty_label = "اختر اسم المدير"
+            elif role in ['M', 'CM']:
+                self.fields['receiver'].label = 'اسم الموظف:'
+                self.fields['receiver'].empty_label = "اختر اسم الموظف"
+           
+
 
 
 # ===== KPI Form =====

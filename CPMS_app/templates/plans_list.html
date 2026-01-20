@@ -1,21 +1,27 @@
 {% extends 'base.html' %}
 {% load static %}
+{% block breadcrumb %}
+<li class="flex items-center">
+    <span class="mx-2">/</span>
+    <span class="text-gray-800 font-semibold">الخطط</span>
+</li>
+{% endblock %}
+
 {% block content %}
 {% include 'partials/confirm_delete.html' %}
 
-<div class="max-w-5xl mx-auto px-6 mt-10 mb-10" dir="rtl">
+<div class="max-w-6xl mx-auto px-6 mt-10 mb-10" dir="rtl">
     <div class="bg-white shadow-sm rounded-lg border border-gray-200 max-h-[500px] ">
 
         <!-- Container for Search, Filter, and Add Button -->
         <div class="p-4 flex items-center justify-between gap-4">
 
             <!-- Container for Search and Filter -->
-            <div class="flex items-center gap-2">
-
+            <div class="flex items-center gap-2 {% if request.user.role.role_name != 'CM' %}flex-1{% endif %}">
+                
                 <!-- Search Input -->
-                <div class="relative">
-                    <div class="absolute inset-y-0 end-0 flex items-center pe-3 pointer-events-none">
-                        <!-- Search icon -->
+                <div class="relative {% if request.user.role.role_name != 'CM' %}w-full{% else %}w-80{% endif %}">
+                    <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
                         <svg class="w-4 h-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none"
                             viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -23,14 +29,15 @@
                         </svg>
                     </div>
                     <input type="text" id="search"
-                        class="block w-80 pe-9 ps-3 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="ابحث عن خطة...">
+                        class="block w-full ps-9 pe-3 py-2 border rounded-xl focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="البحث عن خطة ...">
                 </div>
 
                 <!-- Filter Button -->
                 <div class="relative">
                     <button id="dropdownDefaultButton"
-                        class="flex flex-row-reverse items-center justify-between text-body bg-neutral-secondary-medium border rounded text-gray-500 hover:text-gray-800 hover:bg-neutral-tertiary-medium shadow-xs font-medium leading-5 rounded-base text-sm px-3 py-2 focus:outline-none gap-2 "
+                        class="flex flex-row-reverse items-center justify-between text-body bg-neutral-secondary-medium border rounded
+                         text-gray-500 hover:text-gray-800 hover:bg-neutral-tertiary-medium shadow-xs font-medium leading-5 rounded-lg text-sm px-3 py-2 focus:outline-none gap-2 "
                         type="button">
                         <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                             stroke="currentColor">
@@ -46,7 +53,7 @@
 
                     <!-- Dropdown Menu -->
                     <div id="dropdown"
-                        class="absolute right-0 z-10 hidden bg-neutral-primary-medium border border-default-medium rounded-base shadow-lg w-32 overflow-hidden">
+                        class="absolute right-0 z-10 hidden bg-white border border-default-medium rounded-lg shadow-lg w-32 overflow-hidden">
                         <ul class="p-2 text-sm text-body font-medium">
                             <li>
                                 <button type="button" data-status=""
@@ -66,55 +73,34 @@
                 </div>
             </div>
 
-            <!-- Add Plan Button -->
+            <!-- Add Plan Button chanege style -->
             {% if request.user.role.role_name == 'CM' %}
-            <div>
-                <a href="{% url 'plan_create' %}"
-                    class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-semibold">
+            <div class="relative inline-block group">
+
+                <a href="{% if not active_plan_exists %}{% url 'plan_create' %}{% else %}#{% endif %}"
+                    onclick="{% if active_plan_exists %}return false;{% endif %}" class="bg-[#00A399] text-white px-4 py-2 rounded-md text-sm font-semibold
+              {% if active_plan_exists %}
+                  opacity-70 cursor-not-allowed
+              {% else %}
+                  hover:bg-[#018077]
+              {% endif %}">
                     إضافة خطة
                 </a>
-            </div>
-            {% else %}
-            <!-- dropdown page number -->
-            <div class="relative">
-                <button id="page-dropdown-button"
-                    class="flex flex-row-reverse items-center justify-between text-body bg-neutral-secondary-medium border rounded text-gray-500 hover:text-gray-800 hover:bg-neutral-tertiary-medium shadow-xs font-medium leading-5 rounded-base text-sm px-3 py-2 focus:outline-none gap-2 "
-                    type="button">
-                    <span id="page-dropdown-text" class="ml-1">عدد الصفوف</span>
-                    <svg id="page-dropdown-icon" class="w-4 h-4 transition-transform duration-200"
-                        xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 9-7 7-7-7" />
-                    </svg>
-                </button>
 
-                <!-- Dropdown Menu -->
-                <div id="page-dropdown"
-                    class="absolute right-0 z-10 hidden bg-neutral-primary-medium border border-default-medium rounded-base shadow-lg w-32 overflow-hidden">
-                    <ul class="p-2 text-sm text-body font-medium">
-                        <li>
-                            <button type="button" data-number="5"
-                                class="page-filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">عدد
-                                الصفوف</button>
-                        </li>
-                        <li>
-                            <button type="button" data-number="10"
-                                class="page-filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">10</button>
-                        </li>
-                        <li>
-                            <button type="button" data-number="25"
-                                class="page-filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">25</button>
-                        </li>
-                        <li>
-                            <button type="button" data-number="50"
-                                class="page-filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">50</button>
-                        </li>
-                        <li>
-                            <button type="button" data-number="100"
-                                class="page-filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">100</button>
-                        </li>
-                    </ul>
+                {% if active_plan_exists %}
+                <div
+                    class="absolute top-1/2 left-full -translate-y-1/2 ml-2
+                hidden group-hover:block whitespace-nowrap rounded-md bg-gray-300/90 px-3 py-1 text-xs text-gray-600 shadow-lg z-10">
+
+                    لا يمكنك إنشاء خطة جديدة، نظرًا لوجود خطة نشطة حاليًا.
+                    <!-- السهم -->
+                    <span class="absolute top-1/2 -translate-y-1/2 left-0 -translate-x-full
+                     w-0 h-0 border-y-8 border-y-transparent border-r-8 border-r-gray-300/90"></span>
                 </div>
+                {% endif %}
+
             </div>
+
             {% endif %}
 
         </div>
@@ -153,7 +139,8 @@
                 <!-- Previous Button -->
                 <li>
                     {% if page_obj.has_previous %}
-                    <a href="?page={{ page_obj.previous_page_number }}&per_page={{ request.GET.per_page|default:5 }}&search={{ search }}&status={{ status }}" class="flex items-center justify-center text-body bg-neutral-secondary-medium border border-default-medium rounded-s-full text-sm px-3 h-9
+                    <a href="?page={{ page_obj.previous_page_number }}&per_page={{ request.GET.per_page|default:5 }}&search={{ search }}&status={{ status }}"
+                        class="flex items-center justify-center text-body bg-neutral-secondary-medium border border-default-medium rounded-s-full text-sm px-3 h-9
                               hover:bg-gray-200 transition-colors duration-200 bg-gray-50">
                         ‹
                     </a>
@@ -176,14 +163,15 @@
                 </li>
                 {% elif num == page_obj.number %}
                 <li>
-                    <span aria-current="page" class="flex items-center justify-center text-blue-100 bg-blue-300 bg-neutral-secondary-medium border border-default-medium font-medium text-sm w-9 h-9
+                    <span aria-current="page" class="flex items-center justify-center  text-[#00675B] bg-[#00675B]/20 bg-neutral-secondary-medium border border-default-medium font-medium text-sm w-9 h-9
                                       hover:bg-gray-200 hover:text-gray-400 duration-200">
                         {{ num }}
                     </span>
                 </li>
                 {% else %}
                 <li>
-                    <a href="?page={{ num }}&per_page={{ request.GET.per_page|default:5 }}&search={{ search }}&status={{ status }}" class="flex items-center justify-center text-body bg-neutral-secondary-medium border border-default-medium font-medium text-sm w-9 h-9
+                    <a href="?page={{ num }}&per_page={{ request.GET.per_page|default:5 }}&search={{ search }}&status={{ status }}"
+                        class="flex items-center justify-center text-body bg-neutral-secondary-medium border border-default-medium font-medium text-sm w-9 h-9
                                       hover:bg-gray-200 transition-colors duration-200 bg-gray-50">
                         {{ num }}
                     </a>
@@ -194,7 +182,8 @@
                 <!-- Next Button -->
                 <li>
                     {% if page_obj.has_next %}
-                    <a href="?page={{ page_obj.next_page_number }}&per_page={{ request.GET.per_page|default:5 }}&search={{ search }}&status={{ status }}" class="flex items-center justify-center text-body bg-neutral-secondary-medium border border-default-medium rounded-e-full text-sm px-3 h-9
+                    <a href="?page={{ page_obj.next_page_number }}&per_page={{ request.GET.per_page|default:5 }}&search={{ search }}&status={{ status }}"
+                        class="flex items-center justify-center text-body bg-neutral-secondary-medium border border-default-medium rounded-e-full text-sm px-3 h-9
                               hover:bg-gray-200 transition-colors duration-200 bg-gray-50">
                         ›
                     </a>
@@ -212,4 +201,21 @@
 
     </div>
 </div>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const addPlanBtn = document.getElementById("add-plan-btn");
+
+        if (addPlanBtn) {
+            addPlanBtn.addEventListener("click", function (e) {
+                const disabled = addPlanBtn.dataset.disabled === "true";
+
+                if (disabled) {
+                    e.preventDefault(); // يمنع الانتقال للصفحة
+                    alert("غير مسموح. يوجد خطة نشطة بالفعل.");
+                }
+            });
+        }
+    });
+
+</script>
 {% endblock %}

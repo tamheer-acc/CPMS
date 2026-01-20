@@ -1,9 +1,13 @@
-from datetime import date
+from datetime import date, timedelta
+import json
 from django.forms.models import model_to_dict
 from django.db.models import Count, Q, Case, When, Value, IntegerField
 from .models import StrategicGoal, Initiative, Log, UserInitiative
 from django.db.models import Prefetch
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.db.models.functions import TruncMonth
+from django.utils import timezone
+
 
 def get_changed_fields(old_data, new_data):
     '''
@@ -35,6 +39,57 @@ def create_log(user, action, instance=None, old_data=None):
 def generate_KPIs(initiative):
     pass
 
+# def build_donut_data(not_started, in_progress, completed, delayed, total):
+#     total = total or 1
+#     data = [
+#         ('لم تبدأ', '#9CA3AF', round(not_started / total * 100)),
+#         ('جارية', '#3B82F6', round(in_progress / total * 100)),
+#         ('مكتملة', '#10B981', round(completed / total * 100)),
+#         ('متأخرة', '#EF4444', round(delayed / total * 100)),
+#     ]
+
+#     result = []
+#     offset = 0
+#     for label, color, value in data:
+#         result.append({
+#             'label': label,
+#             'color': color,
+#             'value': value,
+#             'offset': offset
+#         })
+#         offset += value
+
+#     return result
+
+def goal_progress_from_status(status):
+    return {
+        'C': 100,
+        'IP': 50,
+        'NS': 0,
+        'D': 20
+    }.get(status, 0)
+
+
+def get_delayed_goals_monthly(goals_qs, role, user):
+    today = timezone.now().date()
+    twelve_months_ago = today - timedelta(days=365)
+
+    # إذا المدير العام -> كل الأهداف
+    if role == 'GM':
+        qs = goals_qs
+    else:
+        # مدير إدارة -> أهداف قسمه فقط
+        qs = goals_qs.filter(department=user.department)
+
+    delayed = (
+        qs.filter(goal_status='D', end_date__gte=twelve_months_ago)
+          .annotate(month=TruncMonth('end_date'))
+          .values('month')
+          .annotate(count=Count('id'))
+          .order_by('month')
+    )
+
+    return list(delayed)
 
 def get_plan_dashboard(plan, user):
     role = user.role.role_name
@@ -57,14 +112,14 @@ def get_plan_dashboard(plan, user):
         employees_progress = (
             initiatives_qs.values('userinitiative__user__username')
                           .annotate(completed_initiatives=Count('id', filter=Q(userinitiative__status='C')))
-                          .order_by('-completed_initiatives')
+                          .order_by('-completed_initiatives')[:5]
         )
     elif role == 'GM':
         departments_progress = (
             goals.values('department__department_name')
                  .annotate(total_goals=Count('id'),
                            completed_goals=Count('id', filter=Q(goal_status='C')))
-                 .order_by('-completed_goals')
+                 .order_by('-completed_goals')[:5]
         )
 
     # -----------------------------
@@ -86,39 +141,69 @@ def get_plan_dashboard(plan, user):
     top_3_initiative = sorted(initiatives_qs, key=lambda g: priority_map.get(g.priority, 99))[:3]
 
     # ----------------------------
+    goals_total = goals.count()
+
+    goals_status = [
+     goals_not_started,
+     goals_in_progress,
+     goals_completed,
+     goals_delayed
+    ]
+
+    initiatives_total = initiatives_qs.count()
+
+    initiatives_status = [
+    initiatives_not_started,
+    initiatives_in_progress,
+    initiatives_completed,
+    initiatives_delayed
+    ]
+    
+    departments_progress_json = json.dumps(list(departments_progress)) if departments_progress else "[]"
+    employees_progress_json = json.dumps(list(employees_progress)) if employees_progress else "[]"
+    
+    delayed_goals_monthly = get_delayed_goals_monthly(goals, role, user)
+    if goals_total == 0:
+        plan_avg = 0
+    else:
+        sum_progress = sum(
+            goal_progress_from_status(g.goal_status) for g in goals
+        )
+        plan_avg = sum_progress / goals_total
+
 
     return {
         'goals': goals,
-        'goals_count': goals.count(),
-        'initiatives_count': initiatives_qs.count(),
+        'goals_total': goals_total,
+        'initiatives_count':initiatives_total,
+        'goals_status': goals_status,
+        'initiatives_status': initiatives_status,
+        'delayed_goals_monthly': delayed_goals_monthly,
+        'plan_avg': round(plan_avg),
+        'plan_avg_by_two': round(plan_avg / 2),
 
         'can_edit': can_edit,
 
-        # goals status
-        'goals_not_started': goals_not_started,
-        'goals_in_progress': goals_in_progress,
-        'goals_completed': goals_completed,
-        'goals_delayed': goals_delayed,
+        # # goals status
+        # 'goals_not_started': goals_not_started,
+        # 'goals_in_progress': goals_in_progress,
+        # 'goals_completed': goals_completed,
+        # 'goals_delayed': goals_delayed,
 
-        # initiatives status
-        'initiatives_not_started': initiatives_not_started,
-        'initiatives_in_progress': initiatives_in_progress,
-        'initiatives_completed': initiatives_completed,
-        'initiatives_delayed': initiatives_delayed,
+        # # initiatives status
+        # 'initiatives_not_started': initiatives_not_started,
+        # 'initiatives_in_progress': initiatives_in_progress,
+        # 'initiatives_completed': initiatives_completed,
+        # 'initiatives_delayed': initiatives_delayed,
 
         # top 3 goals and initiatives based on priority
         'top_3_goals': top_3_goals,
         'top_3_initiative': top_3_initiative,
     
-        'departments_progress': departments_progress,
-        'employees_progress': employees_progress
+        'departments_progress': departments_progress_json,
+        'employees_progress': employees_progress_json
+
     }
-
-
-
-def generate_KPIs(initiative):
-    pass
-
 
 
 def calc_user_initiative_status(user_initiative):

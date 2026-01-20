@@ -15,7 +15,7 @@
     {% endif %}
   </td>
 
-  <td class="px-6 py-4 text-center flex justify-center gap-3">
+  <td class="px-6 py-4 text-center flex justify-between gap-3">
 
     <!-- View Button -->
     <a href="{% url 'plan_detail' plan.id %}" class="text-blue-600 hover:text-blue-800 p-1">
@@ -28,8 +28,10 @@
     </a>
 
     <!-- Update Button -->
-    {% if plan.is_active and user.role.role_name == 'CM' %}
-    <a href="{% url 'plan_update' plan.id %}" class="text-yellow-600 hover:text-yellow-800 p-1">
+    {% if user.role.role_name == 'CM' %}
+    <a href="{% if plan.is_active %}{% url 'plan_update' plan.id %}{% else %}#{% endif %}"
+      class="{% if plan.is_active %}text-yellow-600 hover:text-yellow-800{% else %}text-gray-400 cursor-not-allowed{% endif %} p-1"
+      {% if not plan.is_active %}onclick="return false;" {% endif %}>
       <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2"
         stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
         <path stroke="none" d="M0 0h24v24H0z" fill="none" />
@@ -38,12 +40,13 @@
         <path d="M16 5l3 3" />
       </svg>
     </a>
+
     {% endif %}
 
     {% if user.role.role_name == 'CM' %}
     <!-- Delete Button -->
     <button class="text-red-600 hover:text-red-800 p-1"
-      onclick="openDeleteModal(`{% url 'plan_delete' plan.id %}`, `هل تريد حذف هذه الخطة؟`)"><!--ممكن اغير الكلام-->
+      onclick="openDeleteModal(`{% url 'plan_delete' plan.id %}`, ` هل أنت متأكد أنك تريد حذف هذه الخطة؟`)"><!--ممكن اغير الكلام-->
       <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2"
         stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
         <path stroke="none" d="M0 0h24v24H0z" fill="none" />

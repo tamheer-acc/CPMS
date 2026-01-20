@@ -47,6 +47,7 @@ urlpatterns = [
     path('notes/', AllNotesView.as_view(), name='notes_list'),
     path('notes/<int:pk>/detail/', NoteDetailsview.as_view(), name='note_detail'),
     path('notes/create/', CreateNoteView.as_view(), name='note_create'),
+    path('notes/create-modal/', CreateNoteView.as_view(template_name="partials/note_form.html"), name='note_create_modal'),  
     path('notes/<int:pk>/update/', UpdateNoteView.as_view(), name='note_update'),
     path('notes/<int:pk>/delete/', DeleteNoteView.as_view(), name='note_delete'),
 

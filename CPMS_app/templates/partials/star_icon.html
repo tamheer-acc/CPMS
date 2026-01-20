@@ -1,0 +1,26 @@
+<button
+    hx-post="{% url 'note_detail' note.id %}"
+    hx-vals='{"action":"toggle_star"}'
+    hx-target="this"
+    hx-swap="outerHTML"
+    hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+    class="star-btn w-8 h-8 flex items-center justify-center rounded-full transition hover:bg-gray-200"
+    title="{% if note.is_starred %}مميزة بنجمة{% else %}غير مميزة بنجمة{% endif %}">
+    <svg xmlns="http://www.w3.org/2000/svg"
+         viewBox="0 0 24 24"
+         class="w-4 h-4 transition
+                {% if note.is_starred %}
+                    text-yellow-400
+                {% else %}
+                    text-gray-400
+                {% endif %}"
+         fill="{% if note.is_starred %}currentColor{% else %}none{% endif %}"
+         stroke="currentColor"
+         stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round"
+              d="M12 17.75l-6.172 3.245l1.179 -6.873l-5 -4.867
+                 l6.9 -1l3.086 -6.253l3.086 6.253
+                 l6.9 1l-5 4.867l1.179 6.873z"/>
+    </svg>
+</button>
+

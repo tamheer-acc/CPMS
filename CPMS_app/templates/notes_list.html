@@ -1,0 +1,343 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %} الملاحظات {% endblock %}
+{% block breadcrumb %}
+<li class="flex items-center">
+    <span class="mx-2">/</span>
+    <span class="text-gray-800 font-semibold">الملاحظات</span>
+</li>
+{% endblock %}
+{% block content %}
+{% with current_box=request.GET.box|default:'all-notes' %}
+
+<div class="flex h-[85vh] bg-white rounded-lg shadow">
+
+    <!-- Sidebar -->
+    <aside class="group w-16 hover:w-64 transition-all duration-300 border-r bg-gray-50 p-3 mt-2">
+
+        <!-- <a href="{% url 'note_create_modal' %}" hx-get="{% url 'note_create_modal' %}" hx-target="#note-form-container"
+            hx-swap="innerHTML" onclick="document.getElementById('note-modal-toggle').checked = true;" class="flex items-center justify-center gap-3 bg-blue-500 text-white py-2 rounded-lg mb-6 font-semibold hover:bg-blue-600
+                            shadow-md hover:shadow-lg transform hover:-translate-y-0.5
+                            transition duration-200 focus:ring-4 focus:ring-blue-200"> -->
+        <a href="{% url 'note_create_modal' %}" hx-get="{% url 'note_create_modal' %}" hx-target="#note-form-container"
+            hx-swap="innerHTML" class="flex items-center justify-center gap-3 bg-[#00A399] text-white py-2 rounded-lg mb-6 font-semibold hover:bg-[#018077]
+                            shadow-md hover:shadow-lg transform hover:-translate-y-0.5
+                            transition duration-200 focus:ring-4 focus:ring-[#018077]/30">
+            <!-- chat plus icon -->
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-tabler icons-tabler-outline icon-tabler-message-plus">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path d="M8 9h8" />
+                <path d="M8 13h6" />
+                <path d="M12.01 18.594l-4.01 2.406v-3h-2a3 3 0 0 1 -3 -3v-8a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v5.5" />
+                <path d="M16 19h6" />
+                <path d="M19 16v6" />
+            </svg>
+            <span class="hidden group-hover:inline whitespace-nowrap">
+                إنشاء ملاحظة
+            </span>
+        </a>
+
+        <ul class="space-y-1 text-sm">
+
+            <li>
+                <a href="{% url 'notes_list' %}?box=all-notes" class="mailbox-btn w-full flex items-center gap-3 px-3 py-2 rounded-full hover:bg-gray-100
+                    {% if current_box == 'all-notes' %} bg-[#00A399]/10 text-[#00A399]/100 {% endif %}">
+                    <!-- menu icon -->
+                    <svg class=" w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                    <span class="hidden group-hover:inline whitespace-nowrap">
+                        الكل
+                    </span>
+                </a>
+            </li>
+
+            {% if request.user.role.role_name != 'GM' %}
+            <li>
+                <a href="{% url 'notes_list' %}?box=received-notes" class="mailbox-btn relative w-full flex items-center gap-3 px-3 py-2 rounded-full hover:bg-gray-100
+                         {% if current_box == 'received-notes' %} bg-[#00A399]/10 text-[#00A399]/100{% endif %}">
+
+                    <!-- inbox icon -->
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class="icon icon-tabler icons-tabler-outline icon-tabler-inbox">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                        <path d="M4 6a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2l0 -12" />
+                        <path d="M4 13h3l3 3h4l3 -3h3" />
+                    </svg>
+
+
+                    <!-- RED DOT -->
+                    <span id="unread-dot" class="{% if unread_count == 0 %}hidden{% endif %} absolute top-[10px] right-[10px] w-2 h-2
+                    bg-red-500 rounded-full group-hover:hidden">
+                    </span>
+
+                    <span class="hidden group-hover:inline whitespace-nowrap">
+                        الملاحظات الواردة
+                    </span>
+
+                    <span id="unread-badge" class="hidden group-hover:inline whitespace-nowrap
+                    ml-2 text-xs font-semibold text-red-500 bg-red-100 px-2 py-1 rounded-full">
+                        {{ unread_count }}
+                    </span>
+                </a>
+            </li>
+            {% endif %}
+
+            <!-- bg-blue-100 text-blue-800 -->
+            <li>
+                <a href="{% url 'notes_list' %}?box=sent-notes" class="mailbox-btn w-full flex items-center gap-3 px-3 py-2 rounded-full hover:bg-gray-100
+                         {% if current_box == 'sent-notes' %}bg-[#00A399]/10 text-[#00A399]/100 {% endif %}">
+                    <!-- send icon -->
+                    <svg class=" w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M22 2L11 13" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M22 2L15 22l-4-9-9-4 20-7z" />
+                    </svg>
+                    <span class="hidden group-hover:inline whitespace-nowrap">
+                        الملاحظات المرسلة
+                    </span>
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'notes_list' %}?box=starred-notes" class="mailbox-btn w-full flex items-center gap-3 px-3 py-2 rounded-full hover:bg-gray-100
+                         {% if current_box == 'starred-notes' %} bg-[#00A399]/10 text-[#00A399]/100{% endif %}">
+                    <!-- star icon -->
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class="icon icon-tabler icons-tabler-outline icon-tabler-star">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                        <path
+                            d="M12 17.75l-6.172 3.245l1.179 -6.873l-5 -4.867l6.9 -1l3.086 -6.253l3.086 6.253l6.9 1l-5 4.867l1.179 6.873l-6.158 -3.245" />
+                    </svg>
+                    <span class="hidden group-hover:inline whitespace-nowrap">
+                        الملاحظات المميزة بنجمة
+                    </span>
+                </a>
+            </li>
+
+        </ul>
+    </aside>
+
+
+    <!-- Messages Table -->
+    <section id="messages-section" class="flex-1 w-32 border-r border-l flex flex-col transition-all duration-300">
+        <!-- Top Bar -->
+        <div class="p-3 border-b flex items-center justify-between mt-2">
+            <div class="relative w-full">
+                <!-- Search -->
+                <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
+                    <svg class="w-4 h-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M21 21l-4.35-4.35M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0z" />
+                    </svg>
+                </div>
+
+                <input type="text" id="search" name="search" class="block w-full ps-9 pe-3 py-2 text-sm
+                       border rounded-xl  hover:border-gray-400 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="البحث عن ملاحظة ..." hx-get="{% url 'notes_list' %}"
+                    hx-trigger="keyup changed delay:400ms" hx-target="#notes-list" hx-push-url="true" />
+            </div>
+
+            <div class="relative">
+                <button id="dropdownDefaultButton"
+                    class="flex flex-row-reverse items-center justify-between text-body bg-neutral-secondary-medium text-gray-500 hover:text-gray-800 hover:bg-neutral-tertiary-medium shadow-xs font-medium leading-5 rounded-base text-sm px-3 py-2 focus:outline-none gap-2 "
+                    type="button">
+                    <svg id="dropdownIconfilter" class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-width="2"
+                            d="M18.796 4H5.204a1 1 0 0 0-.753 1.659l5.302 6.058a1 1 0 0 1 .247.659v4.874a.5.5 0 0 0 .2.4l3 2.25a.5.5 0 0 0 .8-.4v-7.124a1 1 0 0 1 .247-.659l5.302-6.059c.566-.646.106-1.658-.753-1.658Z" />
+                    </svg>
+                </button>
+
+                <div id="dropdown"
+                    class="absolute left-0  hidden bg-white border border-default-medium rounded-lg shadow-lg w-36 overflow-hidden">
+                    <ul class="p-2 text-sm text-body font-medium space-y-1">
+                        <li>
+                            <button type="button" data-filter="read"
+                                class="filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100"
+                                hx-get="{% url 'notes_list' %}?filter=all-notes" hx-target="#notes-list"
+                                hx-swap="innerHTML">الكل</button>
+                        </li>
+
+                        <li>
+                            <button type="button" data-filter="read"
+                                class="filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100"
+                                hx-get="{% url 'notes_list' %}?filter=read" hx-target="#notes-list"
+                                hx-swap="innerHTML">مقروءة</button>
+                        </li>
+                        <li>
+                            <button type="button" data-filter="unread"
+                                class="filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100"
+                                hx-get="{% url 'notes_list' %}?filter=unread" hx-target="#notes-list"
+                                hx-swap="innerHTML">
+                                غير مقروءة
+                            </button>
+
+                        </li>
+
+                        <li>
+                            <button type="button" data-filter="starred"
+                                class="filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100"
+                                hx-get="{% url 'notes_list' %}?filter=starred" hx-target="#notes-list"
+                                hx-swap="innerHTML">مميزة
+                                بنجمة</button>
+                        </li>
+                        <li>
+                            <button type="button" data-filter="unstarred"
+                                class="filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100"
+                                hx-get="{% url 'notes_list' %}?filter=unstarred" hx-target="#notes-list"
+                                hx-swap="innerHTML">غير مميزة
+                                بنجمة</button>
+                        </li>
+
+
+                        <li>
+                            <button type="button" data-filter="goal"
+                                class="filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100"
+                                hx-get="{% url 'notes_list' %}?filter=goal" hx-target="#notes-list"
+                                hx-swap="innerHTML">حسب الهدف
+                            </button>
+                        </li>
+
+                        <li>
+                            <button type="button" data-filter="initiative"
+                                class="filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100"
+                                hx-get="{% url 'notes_list' %}?filter=initiative" hx-target="#notes-list"
+                                hx-swap="innerHTML">حسب المبادرة
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Notes List -->
+        <div class="overflow-y-auto flex-1 overflow-hidden" id="notes-list">
+            <table class="w-full text-sm">
+                <tbody>
+                    {% include "partials/notes_table_rows.html" %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+
+    <!-- maybe delete this-->
+
+    <!-- RIGHT: Message Preview -->
+    <section id="note-preview" class="hidden relative w-[60%] flex flex-col
+         p-4 bg-white border-l transition-all duration-300 overflow-hidden">
+    </section>
+
+</div>
+
+<!-- Hidden checkbox controlling modal (DaisyUI) -->
+<input type="checkbox" id="note-modal-toggle" class="modal-toggle">
+
+<div class="modal">
+    <div class="modal-box w-full max-w-3xl relative p-0 ">
+
+        <!-- Container where Note Form will load -->
+        <div id="note-form-container" class="p-0.5">
+
+        </div>
+    </div>
+</div>
+
+<script>
+    document.querySelectorAll('.note-row').forEach(row => {
+        row.addEventListener('click', (e) => {
+            if (e.target.closest('.star-btn')) return;
+            fetch(`/notes/${row.dataset.id}/detail/`)
+                .then(res => res.text())
+                .then(html => {
+                    document.getElementById('note-preview').innerHTML = html;
+                    openPreview();
+                });
+        });
+    });
+
+    function openPreview() {
+        const messages = document.getElementById('messages-section');
+        const preview = document.getElementById('note-preview');
+
+        preview.classList.remove('hidden');
+        messages.classList.remove('flex-1');
+        messages.classList.add('w-[40%]');
+    }
+
+    function closePreview() {
+        const messages = document.getElementById('messages-section');
+        const preview = document.getElementById('note-preview');
+
+        preview.classList.add('hidden');
+        messages.classList.remove('w-[40%]');
+        messages.classList.add('flex-1');
+    }
+
+    const btn = document.getElementById("dropdownDefaultButton");
+    const icon = document.getElementById("dropdownIconfilter");
+
+    btn.addEventListener("click", () => {
+        // إذا كان fill حالياً none نغيره إلى currentColor
+        if (icon.getAttribute("fill") === "none") {
+            icon.setAttribute("fill", "#00A399");
+            icon.setAttribute("stroke", "#00A399");
+        } else {
+            icon.setAttribute("fill", "none");
+            icon.setAttribute("stroke", "currentColor");
+        }
+    });
+    
+   function initNoteForm() {
+    const sendType = document.getElementById("send-type");
+    if (!sendType) return;
+
+    const receiver = document.getElementById("receiver-field");
+    const initiative = document.getElementById("initiative-field");
+    const goal = document.getElementById("goal-field");
+
+    function hideAll() {
+        receiver?.classList.add("hidden");
+        initiative?.classList.add("hidden");
+        goal?.classList.add("hidden");
+    }
+
+    hideAll();
+
+    sendType.addEventListener("change", function () {
+        hideAll();
+
+        if (this.value === "manager" || this.value === "employee") {
+            receiver?.classList.remove("hidden");
+        }
+
+        if (this.value === "initiative") {
+            initiative?.classList.remove("hidden");
+        }
+
+        if (this.value === "goal") {
+            goal?.classList.remove("hidden");
+        }
+    });
+
+    // مهم جدًا: لو فيه قيمة مختارة
+    sendType.dispatchEvent(new Event("change"));
+}
+
+/* مع HTMX */
+document.body.addEventListener("htmx:afterSwap", function (e) {
+    if (e.target.id === "note-form-container") {
+        document.getElementById('note-modal-toggle').checked = true;
+        initNoteForm()
+    }
+});
+
+
+</script>
+{% endwith %}
+{% endblock %}
