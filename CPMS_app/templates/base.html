@@ -7,14 +7,7 @@
     <title>{% block title %}متابعة الأداء المؤسسي{% endblock %}</title>
     {% load static %}
 
-        <!-- APP CSS -->
-        <link rel="stylesheet" href="{% static 'CPMS_app/style.css' %}">
-        <!-- Tailwind CSS -->
-        <script src="https://cdn.tailwindcss.com"></script>
-        <!-- CHART JS -->
-        <script defer src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.5.0/chart.min.js"></script>
-        <!-- APP JS -->
-        <script defer src="{% static 'CPMS_app/app.js' %}"></script>
+
     <!-- APP CSS -->
     <link rel="stylesheet" href="{% static 'CPMS_app/style.css' %}">
     <!-- Tailwind CSS -->
@@ -28,52 +21,8 @@
     <!-- Chart JS -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-
-    <body class="flex bg-gray-50 min-h-screen">
-        
-        <!-- navbar -->
-        <aside class="w-64 bg-white shadow-md flex flex-col sticky top-0 h-screen">
-            <div class="p-6 flex items-center gap-3 border-b border-gray-200 bg-[#00685E] text-white">
-                <h1 class="text-xl font-normal text-white">متابعة الأداء المؤسسي</h1>
-            </div>
-            <ul class="flex-1 mt-6 space-y-2">
-                <li>
-                    <a href="{% url 'dashboard' %}"
-                        class="flex items-center gap-3 px-6 py-3 text-gray-700 hover:bg-green-100 hover:text-green-700 rounded-lg transition">
-                        <span>لوحة التحكم</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="{% url 'initiatives_list' %}"
-                        class="flex items-center gap-3 px-6 py-3 text-gray-700 hover:bg-green-100 hover:text-green-700 rounded-lg transition">
-                        <span>المبادرات</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="{% url 'goals_list' %}"
-                        class="flex items-center gap-3 px-6 py-3 text-gray-700 hover:bg-green-100 hover:text-green-700 rounded-lg transition">
-                        <span>الأهداف</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="{% url 'plans_list' %}"
-                        class="flex items-center gap-3 px-6 py-3 text-gray-700 hover:bg-green-100 hover:text-green-700 rounded-lg transition">
-                        <span>الخطط</span>
-                    </a>
-                </li>
-            </ul>
-            <!-- logout next -->
-            <div class="p-6 border-t border-gray-200">
-                <form method="post" action="{% url 'logout' %}">
-                    {% csrf_token %}
-                    <button type="submit" class="flex items-center gap-3 text-gray-700 hover:text-red-600 transition">
-                        تسجيل الخروج
-                    </button>
-                </form>
-            </div>
-        </aside>
-
 </head>
+
 
 <body class="flex bg-gray-50 min-h-screen">
 
@@ -84,7 +33,7 @@
         </div>
         <ul class="flex-1 mt-6 space-y-2">
             <li>
-                <a href="#"
+                <a href="{% url 'dashboard' %}"
                     class="flex items-center gap-3 px-6 py-3 text-gray-700 hover:bg-green-100 hover:text-green-700 rounded-lg transition">
                     <span>لوحة التحكم</span>
                 </a>

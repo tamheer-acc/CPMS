@@ -1428,18 +1428,22 @@ class NoteDetailsview(LoginRequiredMixin, DetailView):
         </span> """)
 
     # Reply
-     if action == "reply" and self.can_reply(note, user):
+     if action == "reply" and self.can_reply(note, user) and request.headers.get("HX-Request"):
         content = request.POST.get("reply_content", "").strip()
         if content:
-         
-         reply = Note(
+           reply = Note.objects.create(
             content=content,
             sender=user,
             parent_note=note,
             initiative=note.initiative
         )
-        reply.save()
-        return redirect('note_detail', pk=note.pk)
+
+        return render(request, "partials/note_chat_message.html", {
+            "reply": reply
+        })
+    
+     return HttpResponse(status=204)
+
 
     # #  Edit Reply
     #  if action == "edit_reply":
@@ -1454,8 +1458,7 @@ class NoteDetailsview(LoginRequiredMixin, DetailView):
     #     return redirect('note_detail', pk=note.pk)
 
     # Fallback
-     return redirect('note_detail', pk=note.pk)
-
+    
 
 
 # class CreateNoteView(LoginRequiredMixin, LogMixin, CreateView):

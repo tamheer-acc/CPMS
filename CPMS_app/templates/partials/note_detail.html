@@ -54,7 +54,7 @@
     <!-- Divider -->
     <hr class="border-t border-gray-200" />
 
-    <div class="flex-1 min-h-0 overflow-auto chat-scroll">
+    <div id="replies-container" class="flex-1 min-h-0 overflow-auto chat-scroll">
 
       <!-- Content -->
       <div class="text-gray-800 leading-relaxed px-1 pt-2 break-all whitespace-wrap">
@@ -69,54 +69,17 @@
         <span class="h-px w-1/3 bg-gray-200"></span>
       </div>
       {% if grouped_replies %}
-
-      {% for group in grouped_replies %}
-      <div class="text-center text-xs text-gray-400 mb-2">
-        {{ group.date|date:"Y/m/d" }}
-      </div>
-
-      {% for reply in group.notes %}
-      <div class="chat {% if reply.sender == request.user %}chat-end{% else %}chat-start{% endif %}">
-        <div class="chat-header text-xs font-semibold text-gray-500 mb-1">
-          {{ reply.sender.get_full_name }}
+        {% for group in grouped_replies %}
+        <div class="text-center text-xs text-gray-400 mb-2">
+          {{ group.date|date:"Y/m/d" }}
         </div>
 
-        <div class="chat-bubble relative break-words max-w-[75%]
-                     {% if reply.sender == request.user %}
-                       bg-[#698274]/40 text-gray-800
-                     {% else %}
-                       bg-gray-100 text-gray-800
-                     {% endif %}">
-          {{ reply.content }}
+        {% for reply in group.notes %}
+        {% include "partials/note_chat_message.html" %}
+        {% endfor %}
 
-          <time class="block mt-1 text-[10px] text-gray-500 text-left">
-            {{ reply.created_at|date:"g:i a" }}
-          </time>
-        </div>
-
-        <div class="chat-footer text-xs text-gray-400 mt-1">
-
-          {% if request.user == reply.sender %}
-
-          {% if note.receiver %}
-
-          {% if is_read_by_receiver %}
-          مقروءة
-          {% else %}
-          تم الإرسال
-          {% endif %}
-
-          {% endif %}
-
-          {% endif %}
-
-        </div>
-
-      </div>
-      {% endfor %}
-
-      {% endfor %}
-
+        {% endfor %}
+    
       {% else %}
       <!-- Divider -->
       <p class="text-gray-400 text-center py-4">لا يوجد ردود حتى الآن</p>
@@ -130,7 +93,8 @@
 
     <!-- Reply Box -->
     {% if can_reply %}
-    <form method="post" action="{% url 'note_detail' note.pk %}" class="flex items-center gap-2 px-2 sticky bottom-0">
+    <form hx-post="{% url 'note_detail' note.pk %}" hx-target="#replies-container"  hx-swap="beforeend"
+    class="flex items-center gap-2 px-2 sticky bottom-0">
       {% csrf_token %}
       <input type="hidden" name="action" value="reply" />
 
@@ -147,8 +111,36 @@
 
   </div>
 </div>
+<script>
+  function scrollToBottom() {
+    const container = document.getElementById("replies-container");
+    if (!container) return;
+
+    container.scrollTo({
+      top: container.scrollHeight,
+      behavior: "smooth"
+    });
+  }
+
+  // Scroll فقط بعد إضافة رد جديد
+  document.body.addEventListener("htmx:afterSwap", function (evt) {
+    // إذا الهدف كان replies-container
+    if (evt.detail.target.id === "replies-container") {
+      scrollToBottom();
+    }
+    if (evt.target && evt.target.id === "replies-container") {
+      const textarea = document.querySelector("textarea[name='reply_content']");
+      if (textarea) textarea.value = "";
+    }
+
+  });
+
+
+
+</script>
 
 <style>
+
   /* container */
   .chat-scroll {
     scrollbar-width: none;

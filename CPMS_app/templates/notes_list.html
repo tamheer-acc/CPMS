@@ -136,8 +136,9 @@
                 <input type="text" id="search" name="search" class="block w-full ps-9 pe-3 py-2 text-sm
                        border rounded-xl  hover:border-gray-400 focus:ring-blue-500 focus:border-blue-500"
                     placeholder="البحث عن ملاحظة ..." hx-get="{% url 'notes_list' %}"
-                    hx-trigger="keyup changed delay:400ms" hx-target="#notes-tbody" hx-include="[name=box],[name=filter]"
-                    hx-push-url="true" hx-include="[name='box'], [name='filter']" />
+                    hx-trigger="keyup changed delay:400ms" hx-target="#notes-tbody"
+                    hx-include="[name=box],[name=filter]" hx-push-url="true"
+                    hx-include="[name='box'], [name='filter']" />
             </div>
 
             <div class="relative">
@@ -208,7 +209,7 @@
                                 hx-target="#notes-tbody" hx-swap="innerHTML" hx-push-url="true">حسب المبادرة
                             </button>
                         </li>
-                         {% endif %}
+                        {% endif %}
                     </ul>
                 </div>
             </div>
@@ -258,19 +259,18 @@
 </div>
 
 <script>
-    document.addEventListener('click', function (e) {
+    document.body.addEventListener('click', function (e) {
         const row = e.target.closest('.note-row');
         if (!row) return;
 
-        // تجاهل زر النجمة
         if (e.target.closest('.star-btn')) return;
 
-        fetch(`/notes/${row.dataset.id}/detail/`)
-            .then(res => res.text())
-            .then(html => {
-                document.querySelector('#note-preview > div').innerHTML = html;
-                openPreview();
-            });
+        htmx.ajax('GET', `/notes/${row.dataset.id}/detail/`, {
+            target: "#note-preview > div",
+            swap: "innerHTML"
+        });
+
+        openPreview();
     });
 
 
