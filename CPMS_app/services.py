@@ -1,7 +1,8 @@
 from datetime import date, timedelta
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 import json
 from django.forms.models import model_to_dict
-from django.db.models import Count, Q, Case, When, Value, IntegerField
+from django.db.models import Count, Q, Case, When, Value, IntegerField, Avg, Prefetch
 from .models import StrategicGoal, Initiative, Log, UserInitiative
 from django.db.models import Prefetch
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
@@ -219,15 +220,15 @@ def calc_user_initiative_status(user_initiative):
     days_left = 0 if end_date < today else (end_date - today).days
     
     if progress == 100:
-        return 'مكتمل'
+        return 'C'
 
     if days_left <= 0.10*total_days: #if the user is in last 10% of the duration, then they're late
-        return 'متأخر'
+        return 'D'
     
     if progress > 0:
-        return 'قيد التنفيذ'
+        return 'IP'
     
-    return 'لم يبدأ بعد'
+    return 'NS'
 
 
 
@@ -312,3 +313,89 @@ def get_page_numbers(page_obj, paginator, max_surrounding=1):
 
     return page_numbers
 
+
+#  Dashboaed Helper Functions <3
+def avg_calculator( data , field=None ):
+    '''
+    Docstring for avg_calculator
+        calculates the average, ususally used for user initatives record but can be used for others
+    :param data: data should be a queryset result
+    :param field: field can be none if the average calculated is progress, other than that mst be specified
+    '''
+    # Book.objects.aggregate(Avg("price", default=0))
+    # Book.objects << data 
+    if field:
+        key = f"{field}__avg"
+        avrage = date.aggregate(Avg( field, default=0 ))[key]
+    else:
+        avrage  = data.aggregate(Avg('progress', default=0))['progress__avg']
+    return round( avrage )
+
+
+
+def order( data , key=None , reverse=False ): 
+    '''
+    Docstring for order
+        order an iterable  
+    :param data: to be sorted list 
+    :param key: how to sort
+    :param reverse: reversed or not, boolean
+    :return: returns a sorted list
+    :rtype: list
+    '''
+    return sorted( data , key=key , reverse=reverse )
+
+
+
+def status_count( data ):
+    '''
+    Docstring for status_count
+        calculates how many status occured 
+    :param data: user initiatives objectS
+    '''
+    count  = { 'NS':0 , 'IP':0 , 'D':0 , 'C':0 }
+    
+    for user_initiative in data:
+        status = calc_user_initiative_status(user_initiative)
+        count[status] += 1
+        
+    return count 
+
+
+
+def calc_delayed( data ):
+    '''
+    Docstring for calc_delayed
+        categorize initiatives into overdue , late ( next 7 days ), and on time
+
+    :param data: set of initiative, with end_date attribute 
+    :return: 3 lists, overdue, late, and on_time
+    '''
+    overdue = []
+    late = []
+    on_time =[]
+    
+    today = date.today()
+    next_week = today + timedelta(days=7)
+    
+    for initiative in data:
+        if initiative.end_date < today:
+            overdue.append(initiative) 
+
+        elif initiative.end_date <= next_week:
+            late.append(initiative)
+            
+        else:
+            on_time.append(initiative)
+            
+    return overdue, late
+
+
+
+def kpi_progress( list_of_kpis ):
+    # check logs for start 
+    for kpi in list_of_kpis:
+        logs = Log.objects.filter(table_name = 'KPI', record_id = kpi.pk).first
+        if logs:
+            # start_value = 
+            pass

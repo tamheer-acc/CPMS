@@ -246,35 +246,62 @@ def dashboard_view(request):
     '''
 
     user = request.user
-
-    # Initiatives
+    
+    # GENERAL MANAGER #
     if user.role.role_name == 'GM':
-        initiatives = Initiative.objects.all()
-    elif user.role.role_name in ['M', 'CM']:
-        initiatives = Initiative.objects.filter(userinitiative__user=user)
-    else:
-        initiatives = Initiative.objects.filter(userinitiative__user=user)
 
-    # KPIs assigned to user's initiatives
-    kpis = KPI.objects.filter(initiative__userinitiative__user=user)
+        plans = StrategicPlan.objects.all()  #  plans
+        goals = StrategicGoal.objects.all()  #  goals
+        initiatives = Initiative.objects.all()  #  initiative
+        kpis = KPI.objects.all()  #  KPIs
+
+    
+    
+    # MANAGERS #
+    elif user.role.role_name in ['M', 'CM']:
+        
+        plans = StrategicPlan.objects.all()  #  plans
+        goals = StrategicGoal.objects.filter(department = user.department)  #  goals
+        initiatives = Initiative.objects.filter(userinitiative__user=user)  #  initiative
+        kpis = KPI.objects.filter(initiative__userinitiative__user=user)  #  KPIs
+
+    
+    
+    # EMPLOYEES #
+    else: #employee
+        userinitiatives = UserInitiative.objects.filter(user = user)
+        # if userinitiatives:
+        #     for user in userinitiatives:
+        #         pass
+        # num_of_userinitiatives = len(userinitiatives)
+        
+        plans = StrategicPlan.objects.filter(is_active = True)  #  plans
+        goals = StrategicGoal.objects.all().prefetch_related('initiative_set__userinitiative_set')  #  goals
+        initiatives = Initiative.objects.filter(userinitiative__user=user)  #  initiative
+        kpis = KPI.objects.filter(initiative__userinitiative__user=user)  #  KPIs
+
 
     # Notes
     notes = Note.objects.filter(sender=user)
 
-    # Departments (optional)
-    departments = Department.objects.all() if user.role.role_name in ['GM', 'CM', 'M'] else None
-    department = user.department
+    # Departments 
+    departments = Department.objects.all()
+    department = user.department if user.role.role_name != 'GM' else None
 
-    # Strategic Plans
-    plans = StrategicPlan.objects.all() if user.role.role_name in ['GM', 'CM', 'M'] else None
+    chart_labels = ['Done', 'In Progress', 'Pending']
+    chart_data = [40, 35, 25]
+
 
     context = {
+        'plans': plans,
+        'goals': goals,
         'initiatives': initiatives,
         'kpis': kpis,
         'notes': notes,
         'departments': departments,
         'department': department,
-        'plans': plans,
+        'chart_labels': chart_labels,
+        'chart_data': chart_data,
     }
 
     return render(request, 'dashboard.html', context)
@@ -350,7 +377,7 @@ class AllInitiativeView(LoginRequiredMixin, InitiativePermissionMixin, ListView)
 
 
 
-class InitiativeDetailsView(LoginRequiredMixin, InitiativePermissionMixin, DetailView):
+class InitiativeDetailsView(LoginRequiredMixin, LogMixin, InitiativePermissionMixin, DetailView):
     '''
     - Shows details of a single initiative
     '''
@@ -372,12 +399,12 @@ class InitiativeDetailsView(LoginRequiredMixin, InitiativePermissionMixin, Detai
         manager = User.objects.filter(role__role_name__in = ['CM', 'M'], userinitiative__initiative=initiative).distinct()         
 
         # Employeess
-        employees = User.objects.filter(role__role_name='E', department=user.department, userinitiative__initiative=initiative).distinct()         
+        employees = User.objects.filter(role__role_name ='E', userinitiative__initiative=initiative)
         employee_progress = []
         for emp in employees:
             ui = UserInitiative.objects.filter(user=emp, initiative=initiative).first()
             if ui:
-                status = calc_user_initiative_status(ui)
+                status = dict(STATUS)[calc_user_initiative_status(ui)]
                 employee_progress.append([ emp, ui.progress, status, 'bg-red-500' if status == 'متأخر' else 'bg-teal-500'])
             else:
                 employee_progress.append([emp, 0, 'NS','bg-gray-500'])
@@ -403,8 +430,7 @@ class InitiativeDetailsView(LoginRequiredMixin, InitiativePermissionMixin, Detai
                 context['form'] = UserInitiativeForm(instance=user_initiative)
             except UserInitiative.DoesNotExist:
                 context['form'] = UserInitiativeForm()
-
-        if user.role.role_name in ['M', 'CM'] and initiative.strategic_goal.department == user.department: 
+        elif user.role.role_name in ['M', 'CM'] and initiative.strategic_goal.department == user.department: 
             context['form'] = KPIForm()
             context['unassigned_employees'] = unassigned_employees 
         elif user.role.role_name == 'GM':
@@ -414,7 +440,7 @@ class InitiativeDetailsView(LoginRequiredMixin, InitiativePermissionMixin, Detai
 
 
 
-class CreateInitiativeView(LoginRequiredMixin, RoleRequiredMixin, InitiativePermissionMixin, CreateView, LogMixin):
+class CreateInitiativeView(LoginRequiredMixin,LogMixin, RoleRequiredMixin, InitiativePermissionMixin, CreateView):
     '''
     - Allows Managers to create a new initiative
     - Sets the strategic goal based on the goal_id in the URL
@@ -473,7 +499,7 @@ class CreateInitiativeView(LoginRequiredMixin, RoleRequiredMixin, InitiativePerm
 
 
 
-class UpdateInitiativeView(LoginRequiredMixin, RoleRequiredMixin, InitiativePermissionMixin, UpdateView, LogMixin):  #managers only
+class UpdateInitiativeView(LoginRequiredMixin,LogMixin, RoleRequiredMixin, InitiativePermissionMixin, UpdateView):  #managers only
     '''
     - Allows updating an existing initiative
     - Only the initiative fields are editable (title, description, dates, priority, category)
@@ -509,7 +535,7 @@ class UpdateInitiativeView(LoginRequiredMixin, RoleRequiredMixin, InitiativePerm
 
 
 
-class DeleteInitiativeView(LoginRequiredMixin, RoleRequiredMixin, InitiativePermissionMixin, DeleteView, LogMixin):#managers only
+class DeleteInitiativeView(LoginRequiredMixin,LogMixin, RoleRequiredMixin, InitiativePermissionMixin, DeleteView):#managers only
     '''
     - Allows deletion of an initiative
     - All related UserInitiative entries are automatically deleted (on_delete=CASCADE)
@@ -593,7 +619,7 @@ def assign_employee_to_initiative(request, pk):
     })
 
 
-
+@log_action()
 def add_progress(request, initiative_id):
     user = request.user
     initiative = get_object_or_404(Initiative, id=initiative_id)
@@ -696,6 +722,7 @@ class DeleteKPIView(RoleRequiredMixin, DeleteView, LogMixin):
 
 
 
+@log_action()
 def edit_kpi_view(request, initiative_id, kpi_id):
     kpi = get_object_or_404(KPI, id=kpi_id, initiative_id=initiative_id)
     
