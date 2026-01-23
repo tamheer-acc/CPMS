@@ -1,5 +1,6 @@
 from django import forms
 from django.forms import ModelForm
+from django.core.exceptions import ValidationError
 from .models import Initiative, KPI, StrategicPlan, StrategicGoal, UserInitiative
 from .models import Department, Initiative, KPI, Note, StrategicPlan, StrategicGoal, User
 
@@ -330,14 +331,33 @@ class UserInitiativeForm(BaseForm):
             'progress': 'مستوى التقدم',
         }
 
+
         widgets = {
-            'progress': forms.TextInput(attrs={
-                'placeholder': 'مثال: 75%',
-                'class': (
-                    'progress-input block w-full p-2.5 text-sm text-gray-900 '
-                    'bg-gray-50 border border-gray-300 rounded-xl shadow-sm '
-                    'focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-500 '
-                    'hover:border-gray-400 transition-all duration-200'
-                )
-            })
-        }
+        'progress': forms.NumberInput(attrs={
+            'placeholder': 'مثال: 75',
+            'min': 0,
+            'max': 100,
+            'step': 1,
+            'class': (
+                'progress-input block w-full p-2.5 text-sm text-gray-900 '
+                'bg-gray-50 border border-gray-300 rounded-xl shadow-sm '
+                'focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-500 '
+                'hover:border-gray-400 transition-all duration-200'
+            )
+        })
+    }
+
+    def clean_progress(self):
+        progress = self.cleaned_data['progress']
+        try:
+            progress = float(progress)
+        except ValueError:
+            raise ValidationError("القيمة يجب أن تكون رقم")
+
+        if progress < 0:
+            progress = 0
+        elif progress > 100:
+            progress = 100
+
+        return progress
+
