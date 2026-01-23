@@ -1,4 +1,4 @@
-<form method="post" action="{% url 'note_create' %}" data-edit="{% if object %}true{% else %}false{% endif %}">
+<form method="post" action="{% url 'note_create' %}?goal_id={{ request.GET.goal_id }}&initiative_id={{ request.GET.initiative_id }}&next={{ request.GET.next }}">
     {% csrf_token %}
 
     <!-- Header -->
@@ -44,11 +44,20 @@
                         {{ selected_goal.goal_title }}
                     </span>
                 </div>
+
+                {% elif request.GET.initiative_id %}
+                <!-- إذا جينا من initiative -->
+                <div class="flex gap-4 items-center shrink-0">
+                    <span class="font-semibold text-gray-800">
+                        {{ selected_initiative.title }}
+                    </span>
+                </div>
+
                 {% else %}
                 {% if user.role.role_name == 'GM' %}
                 <!-- GM send type -->
                 <select id="send-type" class="select select-sm select-bordered px-4 w-64">
-                    <option disabled>اختر نوع الإرسال</option>
+                    <option disabled selected>اختر نوع الإرسال</option>
                     <option value="manager">مدير إدارة</option>
                     <option value="goal">هدف</option>
                 </select>
@@ -60,8 +69,20 @@
                     <option value="employee">موظف</option>
                     <option value="initiative">مبادرة</option>
                 </select>
+
+                {% elif user.role.role_name == 'E' %}
+                <select name="initiative" class="select select-sm select-bordered px-4 w-64">
+                    <option disabled selected>اختر المبادرة</option>
+                    {% for initiative in form.fields.initiative.queryset %}
+                    <option value="{{ initiative.id }}">
+                        {{ initiative }}
+                    </option>
+                    {% endfor %}
+                </select>
                 {% endif %}
                 {% endif %}
+
+
 
                 <!-- Receiver -->
                 <!-- <div id="receiver-field" class="hidden flex gap-4 items-center shrink-0">
@@ -71,7 +92,7 @@
                 </div> -->
                 <div id="receiver-field" class="hidden flex gap-4 items-center shrink-0">
                     <label class="text-sm font-medium text-gray-600 whitespace-nowrap">
-                        إلى <span class="text-red-500">*</span>
+                        {{ form.receiver.label }} <span class="text-red-500">*</span>
                     </label>
 
                     <select name="receiver" class="select select-sm select-bordered px-4 w-64">
@@ -125,7 +146,7 @@
                     <select name="strategic_goal" class="select select-sm select-bordered px-4 w-64">
                         <option disabled selected>اختر الهدف</option>
                         {% for goal in form.fields.strategic_goal.queryset %}
-                        <option value="{{ strategic_goal.id }}">
+                        <option value="{{ goal.id }}">
                             {{ goal }}
                         </option>
                         {% endfor %}

@@ -1,3 +1,4 @@
+from datetime import timezone
 from django import forms
 from django.forms import ModelForm
 from .models import Initiative, KPI, StrategicPlan, StrategicGoal, UserInitiative
@@ -29,7 +30,7 @@ class BaseForm(forms.ModelForm):
 
         if sender:
             obj.sender = sender
-
+            
         if commit:
             obj.save()
         return obj
@@ -121,10 +122,7 @@ class NoteForm(BaseForm):
         fields = ['title', 'content', 'receiver', 'initiative','strategic_goal']
         widgets = {
             'title': forms.TextInput(attrs={'type':'text', 'class':'input font-normal text-sm px-2 w-full', 'placeholder': 'اكتب عنوان الملاحظة...'}),
-            'content': forms.Textarea(attrs={'class': 'border rounded-lg font-normal text-m px-2 py-1 w-full hover:border-gray-400 resize-none', 'rows':6}),
-            'receiver': forms.Select(attrs={'class': 'select select-sm select-bordered px-4 w-64'}),
-            'initiative': forms.Select(attrs={'class': 'select select-sm select-bordered px-4 w-64'}),
-            'strategic_goal': forms.Select(attrs={'class': 'select select-sm select-bordered px-4 w-64'})
+            'content': forms.Textarea(attrs={'class': 'border rounded-lg font-normal text-m px-2 py-1 w-full hover:border-gray-400 resize-none', 'rows':6})
         }
 
         labels = {

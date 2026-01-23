@@ -95,7 +95,7 @@ class StrategicPlan (models.Model):
         verbose_name = "StrategicPlan"
         verbose_name_plural = "StrategicPlans"
         ordering = ['-start_date'] 
-       
+
 
     def __str__(self):
         return self.plan_name
@@ -166,6 +166,7 @@ class KPI(models.Model): # 1 : M relationshp with Initiative (Many Side)
     unit = models.CharField(max_length=20)
     target_value = models.DecimalField(max_digits=18, decimal_places=2)
     actual_value = models.DecimalField(max_digits=18, decimal_places=2,null=True, blank=True)
+    start_value = models.DecimalField(max_digits=18, decimal_places=2,null=True, blank=True)
     initiative = models.ForeignKey(Initiative, on_delete=models.CASCADE)
     def __str__(self):
         return self.kpi
@@ -181,12 +182,9 @@ class Note (models.Model):
     sender = models.ForeignKey(User, on_delete=models.CASCADE,  related_name="sent_notes")
     receiver = models.ForeignKey(User, null=True, on_delete=models.CASCADE,  related_name="received_notes")
     initiative = models.ForeignKey(Initiative, null=True, blank=True, on_delete=models.CASCADE, related_name="notes")
-   # department = models.ForeignKey(Department,null=True, blank=True, on_delete=models.SET_NULL, related_name="notes")
     strategic_goal = models.ForeignKey(StrategicGoal, null=True, blank=True, on_delete=models.CASCADE, related_name="notes")
-    note_status = models.CharField(max_length=1, choices=NOTE_STATUS, default=UNREAD, help_text="حالة الملاحظة")
     parent_note = models.ForeignKey('self', null=True, blank=True, on_delete=models.CASCADE, related_name='replies')
     created_at =  models.DateTimeField(auto_now_add=True, null=True)
-    updated_at = models.DateTimeField(auto_now=True, null=True)
     read_by = models.ManyToManyField(User, related_name='read_notes', null=True, blank=True)
     is_starred = models.BooleanField(default=False)
 
