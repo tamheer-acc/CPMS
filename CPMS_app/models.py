@@ -182,12 +182,9 @@ class Note (models.Model):
     sender = models.ForeignKey(User, on_delete=models.CASCADE,  related_name="sent_notes")
     receiver = models.ForeignKey(User, null=True, on_delete=models.CASCADE,  related_name="received_notes")
     initiative = models.ForeignKey(Initiative, null=True, blank=True, on_delete=models.CASCADE, related_name="notes")
-    # department = models.ForeignKey(Department,null=True, blank=True, on_delete=models.SET_NULL, related_name="notes")
     strategic_goal = models.ForeignKey(StrategicGoal, null=True, blank=True, on_delete=models.CASCADE, related_name="notes")
-    note_status = models.CharField(max_length=1, choices=NOTE_STATUS, default=UNREAD, help_text="حالة الملاحظة")
     parent_note = models.ForeignKey('self', null=True, blank=True, on_delete=models.CASCADE, related_name='replies')
     created_at =  models.DateTimeField(auto_now_add=True, null=True)
-    updated_at = models.DateTimeField(auto_now=True, null=True)
     read_by = models.ManyToManyField(User, related_name='read_notes', null=True, blank=True)
     is_starred = models.BooleanField(default=False)
 

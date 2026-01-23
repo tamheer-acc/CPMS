@@ -2,12 +2,12 @@
 {% block content %}
 
 <div class="p-6 space-y-8">
-
+    
 {{ donut_chart_labels|json_script:"donut-chart-labels" }}   
 {{ donut_chart_data|json_script:"donut-chart-data" }}   
 
 {{ bar_chart_labels|json_script:"bar-chart-labels" }} 
-{{ bar_chart_data|json_script:"bar-chart-data" }} 
+    {{ bar_chart_data|json_script:"bar-chart-data" }} 
 
 {{ bar_chart2_labels|json_script:"bar-chart2-labels" }} 
 {{ bar_chart2_data|json_script:"bar-chart2-data" }} 
@@ -237,8 +237,7 @@
                     <!-- Progress -->
                     <div class="flex items-center gap-2">
                         <div class="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
-                            <div class="h-full bg-green-500"
-                                style="width: {{ initiative.progress }}%">
+                            <div class="h-full bg-green-500" style="width: {{ initiative.progress }}%">
                             </div>
                         </div>
                         <span class="text-xs text-gray-600">
@@ -254,103 +253,103 @@
 
         </div>
         {% endfor %}
-    <!-- ================= INITIATIVES ================= -->
-    <div class="bg-white rounded-lg shadow p-5">
-        <h2 class="text-lg font-semibold text-gray-800 mb-4">المبادرات</h2>
+        <!-- ================= INITIATIVES ================= -->
+        <div class="bg-white rounded-lg shadow p-5">
+            <h2 class="text-lg font-semibold text-gray-800 mb-4">المبادرات</h2>
 
-        {% if initiatives %}
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {% for initiative in initiatives %}
-            <a href="{% url 'initiative_detail' initiative.id %}"
-                class="block p-4 border rounded-lg hover:bg-gray-50 transition">
+            {% if initiatives %}
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {% for initiative in initiatives %}
+                <a href="{% url 'initiative_detail' initiative.id %}"
+                    class="block p-4 border rounded-lg hover:bg-gray-50 transition">
 
-                <h3 class="font-medium text-gray-800 truncate">
-                    {{ initiative.title }}
-                </h3>
+                    <h3 class="font-medium text-gray-800 truncate">
+                        {{ initiative.title }}
+                    </h3>
 
-                <p class="text-xs text-gray-500 mt-1">
-                    {{ initiative.strategic_goal }}
-                </p>
-            </a>
-            {% endfor %}
-        </div>
-        {% else %}
-        <p class="text-sm text-gray-500">لا توجد مبادرات</p>
-        {% endif %}
-    </div>
-
-    <!-- ================= KPIs ================= -->
-    <div class="bg-white rounded-lg shadow p-5">
-        <h2 class="text-lg font-semibold text-gray-800 mb-4">المؤشرات</h2>
-
-        {% if kpis %}
-        <div class="space-y-3">
-            {% for kpi in kpis %}
-            <div class="flex justify-between items-center border p-3 rounded-lg">
-                <div>
-                    <p class="text-sm font-medium text-gray-800">{{ kpi.kpi }}</p>
-                    <p class="text-xs text-gray-500">
-                        {{ kpi.actual_value }} / {{ kpi.target_value|default:"—" }}
+                    <p class="text-xs text-gray-500 mt-1">
+                        {{ initiative.strategic_goal }}
                     </p>
-                </div>
+                </a>
+                {% endfor %}
             </div>
-            {% endfor %}
+            {% else %}
+            <p class="text-sm text-gray-500">لا توجد مبادرات</p>
+            {% endif %}
         </div>
-        {% else %}
-        <p class="text-sm text-gray-500">لا توجد مؤشرات</p>
-        {% endif %}
-    </div>
 
-    <!-- ================= NOTES ================= -->
-    <div class="bg-white rounded-lg shadow p-5">
-        <h2 class="text-lg font-semibold text-gray-800 mb-4">ملاحظاتي</h2>
+        <!-- ================= KPIs ================= -->
+        <div class="bg-white rounded-lg shadow p-5">
+            <h2 class="text-lg font-semibold text-gray-800 mb-4">المؤشرات</h2>
 
-        {% if notes %}
-        <ul class="space-y-3">
-            {% for note in notes %}
-            <li class="border p-3 rounded-lg">
-                <p class="text-sm text-gray-800">{{ note.content }}</p>
-                <p class="text-xs text-gray-400 mt-1">
-                    {{ note.created_at|date:"Y-m-d" }}
-                </p>
-            </li>
-            {% endfor %}
-        </ul>
-        {% else %}
-        <p class="text-sm text-gray-500">لا توجد ملاحظات</p>
-        {% endif %}
-    </div>
-
-    <!-- ================= ADMIN / MANAGER SECTIONS ================= -->
-    {% if departments %}
-    <div class="bg-white rounded-lg shadow p-5">
-        <h2 class="text-lg font-semibold text-gray-800 mb-4">الإدارات</h2>
-
-        <div class="flex flex-wrap gap-3">
-            {% for dept in departments %}
-            <span class="px-4 py-2 bg-gray-100 rounded-full text-sm text-gray-700">
-                {{ dept.department_name }}
-            </span>
-            {% endfor %}
+            {% if kpis %}
+            <div class="space-y-3">
+                {% for kpi in kpis %}
+                <div class="flex justify-between items-center border p-3 rounded-lg">
+                    <div>
+                        <p class="text-sm font-medium text-gray-800">{{ kpi.kpi }}</p>
+                        <p class="text-xs text-gray-500">
+                            {{ kpi.actual_value }} / {{ kpi.target_value|default:"—" }}
+                        </p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-sm text-gray-500">لا توجد مؤشرات</p>
+            {% endif %}
         </div>
-    </div>
-    {% endif %}
 
-    {% if plans %}
-    <div class="bg-white rounded-lg shadow p-5">
-        <h2 class="text-lg font-semibold text-gray-800 mb-4">الخطط الاستراتيجية</h2>
+        <!-- ================= NOTES ================= -->
+        <div class="bg-white rounded-lg shadow p-5">
+            <h2 class="text-lg font-semibold text-gray-800 mb-4">ملاحظاتي</h2>
 
-        <ul class="space-y-2">
-            {% for plan in plans %}
-            {% if plan.is_active %}
-            <li class="border p-3 rounded-lg text-sm text-gray-700">
-                {{ plan.plan_name }}
-            </li>
-            {%endif%}
-            {% endfor %}
-        </ul>
-    </div>
-    {% endif %}
+            {% if notes %}
+            <ul class="space-y-3">
+                {% for note in notes %}
+                <li class="border p-3 rounded-lg">
+                    <p class="text-sm text-gray-800">{{ note.content }}</p>
+                    <p class="text-xs text-gray-400 mt-1">
+                        {{ note.created_at|date:"Y-m-d" }}
+                    </p>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p class="text-sm text-gray-500">لا توجد ملاحظات</p>
+            {% endif %}
+        </div>
+
+        <!-- ================= ADMIN / MANAGER SECTIONS ================= -->
+        {% if departments %}
+        <div class="bg-white rounded-lg shadow p-5">
+            <h2 class="text-lg font-semibold text-gray-800 mb-4">الإدارات</h2>
+
+            <div class="flex flex-wrap gap-3">
+                {% for dept in departments %}
+                <span class="px-4 py-2 bg-gray-100 rounded-full text-sm text-gray-700">
+                    {{ dept.department_name }}
+                </span>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% if plans %}
+        <div class="bg-white rounded-lg shadow p-5">
+            <h2 class="text-lg font-semibold text-gray-800 mb-4">الخطط الاستراتيجية</h2>
+
+            <ul class="space-y-2">
+                {% for plan in plans %}
+                {% if plan.is_active %}
+                <li class="border p-3 rounded-lg text-sm text-gray-700">
+                    {{ plan.plan_name }}
+                </li>
+                {%endif%}
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
 
 </div>
 {% endblock %}

@@ -10,7 +10,7 @@
 
     <!-- Description -->
     <td class="px-4 py-3 max-w-[300px] text-sm text-gray-600">
-        <div class="line-clamp-2" title="{{ goal.description }}">
+        <div class="line-clamp-2  overflow-hidden max-h-[1.5em] group-hover:max-h-[1000px] transition-all duration-300 ease-in-out" title="{{ goal.description }}">
             {{ goal.description|default:"—" }}
         </div>
     </td>

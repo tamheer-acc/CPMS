@@ -61,6 +61,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'CPMS_app.middleware.CurrentUserMiddleware',
 ]
 
 ROOT_URLCONF = 'CPMS.urls'
@@ -90,10 +91,10 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'CPMS',
-        # 'USER': 'postgres',
-        # 'PASSWORD': 'post123',
-        # 'HOST': 'localhost',
-        # 'PORT': '5432',
+        'USER': 'postgres',
+        'PASSWORD': 'post123',
+        'HOST': 'localhost',
+        'PORT': '5432',
     }
 }
 
@@ -122,7 +123,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'ar'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Riyadh'
 
 USE_I18N = True
 
