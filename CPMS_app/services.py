@@ -77,6 +77,8 @@ def get_unread_notes_count(user):
     )
 
 
+
+
 def create_log(user, action, instance=None, old_data=None, table_name=None, record_id=None):
     # get new_data
     new_data = model_to_dict(instance) if instance and action != "DELETE" else None
@@ -107,6 +109,8 @@ def create_log(user, action, instance=None, old_data=None, table_name=None, reco
         old_value=old_value,
         new_value=new_value
     )
+
+
 
 
 
@@ -144,6 +148,7 @@ def goal_progress_from_status(status):
     }.get(status, 0)
 
 
+
 def get_delayed_goals_monthly(goals_qs, role, user):
     today = timezone.now().date()
     twelve_months_ago = today - timedelta(days=365)
@@ -164,6 +169,8 @@ def get_delayed_goals_monthly(goals_qs, role, user):
     )
 
     return list(delayed)
+
+
 
 def get_plan_dashboard(plan, user):
     role = user.role.role_name
@@ -280,6 +287,7 @@ def get_plan_dashboard(plan, user):
     }
 
 
+
 def calc_user_initiative_status(user_initiative):
     """
     Calculate the status of a user initiative
@@ -347,6 +355,7 @@ def filter_queryset(queryset, request, search_fields=None, status_field=None, pr
     return queryset.distinct()
 
 
+
 def paginate_queryset(queryset, request, per_page):
     """
     Returns paginated objects for a given QuerySet.
@@ -362,6 +371,7 @@ def paginate_queryset(queryset, request, per_page):
         page_obj = paginator.page(paginator.num_pages)
     
     return page_obj.object_list, page_obj, paginator
+
 
 
 def get_page_numbers(page_obj, paginator, max_surrounding=1):
@@ -399,10 +409,12 @@ def avg_calculator( data , field=None ):
     # Book.objects << data 
     if field:
         key = f"{field}__avg"
-        avrage = date.aggregate(Avg( field, default=0 ))[key]
+        avrage = data.aggregate(Avg( field, default=0 ))[key]
     else:
         avrage  = data.aggregate(Avg('progress', default=0))['progress__avg']
-    return round( avrage )
+    if avrage is None:
+        return 0
+    return round( avrage or 0 )
 
 
 
@@ -465,10 +477,59 @@ def calc_delayed( data ):
 
 
 
-def kpi_progress( list_of_kpis ):
-    # check logs for start 
+def kpi_filter( list_of_kpis ):
+    achieved = []
+    in_progress = []
+    not_started = [] 
+    
+    if not list_of_kpis:
+        return [],[],[]
+    
     for kpi in list_of_kpis:
-        logs = Log.objects.filter(table_name = 'KPI', record_id = kpi.pk).first
-        if logs:
-            # start_value = 
-            pass
+        if kpi.start_value:
+            
+            # just created, not modified
+            if kpi.start_value == kpi.actual_value:
+                not_started.append(kpi.kpi)
+                continue
+            
+            # the target is to reduce
+            if kpi.start_value > kpi.target_value: 
+                if kpi.actual_value <= kpi.target_value:
+                    achieved.append(kpi.kpi)
+                else:
+                    in_progress.append(kpi.kpi)
+                    
+            # the target is to increase
+            else: 
+                if kpi.actual_value >= kpi.target_value:
+                    achieved.append(kpi.kpi)
+                else:
+                    in_progress.append(kpi.kpi)
+        else:
+            not_started.append(kpi.kpi)
+        
+    return achieved, in_progress, not_started
+
+
+
+def weight_initiative(initiative):
+    user_initiatives = UserInitiative.objects.filter(initiative=initiative)
+    if not user_initiatives.exists():
+        return 0  # no progress 
+    
+    total_weight = 0
+    for ui in user_initiatives:
+        status = calc_user_initiative_status(ui)
+        if status == 'C':  
+            weight = 1
+        elif status == 'IP':  
+            weight = 0.5
+        elif status == 'D':  
+            weight = 0.2
+        else:  # NS
+            weight = 0
+        total_weight += weight
+
+    weighted_score = (total_weight / user_initiatives.count()) * 100
+    return round(weighted_score, 2)

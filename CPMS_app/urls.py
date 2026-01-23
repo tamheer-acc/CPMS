@@ -1,7 +1,6 @@
 from django.contrib import admin
 from django.urls import path, include
 from django.contrib.auth import views as auth_views
-from django.views.generic import TemplateView
 from .views import (
     AllPlansView, PlanDetailsview, CreatePlanView, UpdatePlanView, DeletePlanView, 
     AllGoalsView, GoalDetailsview, CreateGoalView, UpdateGoalView, DeleteGoalView, 
@@ -10,7 +9,7 @@ from .views import (
     DeleteKPIView, AllDepartmentsView, AllNotesView, NoteDetailsview, CreateNoteView,
     UpdateNoteView, DeleteNoteView,  AllLogsView,
     assign_employee_to_initiative, add_progress,
-    dashboard_view
+    DashboardView
 )
 
 
@@ -18,7 +17,7 @@ urlpatterns = [
 
 
     #Dashboard
-    path('', dashboard_view, name='dashboard'),
+    path('', DashboardView.as_view(), name='dashboard'),
     #Departments
     path('departments/',AllDepartmentsView.as_view(), name='departments_list'), 
 

@@ -2,8 +2,17 @@
 {% block content %}
 
 <div class="p-6 space-y-8">
-    {{ chart_labels|json_script:"chart-labels" }}
-    {{ chart_data|json_script:"chart-data" }}
+    
+{{ donut_chart_labels|json_script:"donut-chart-labels" }}   
+{{ donut_chart_data|json_script:"donut-chart-data" }}   
+
+{{ bar_chart_labels|json_script:"bar-chart-labels" }} 
+    {{ bar_chart_data|json_script:"bar-chart-data" }} 
+
+{{ bar_chart2_labels|json_script:"bar-chart2-labels" }} 
+{{ bar_chart2_data|json_script:"bar-chart2-data" }} 
+
+{{ stacked_bar_chart_data|json_script:"stacked-bar-chart-data"}}
 
     <!-- ================= HEADER ================= -->
     <div class="flex justify-between items-center">
@@ -21,29 +30,182 @@
         {% endif %}
     </div>
     <!-- ================= STATS ================= -->
+    <!-- row 2 -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div class="bg-white p-4 rounded-lg shadow">
-            <p class="text-sm text-gray-500">عدد المبادرات</p>
-            <p class="text-2xl font-bold text-gray-800">{{ initiatives|length }}</p>
+            {% if user.role.role_name == 'E' %}
+                <p class="text-sm text-gray-500"> المبادرات</p>
+                <p class="text-2xl font-bold text-gray-800">{{ initiatives|length }}</p>
+            {% else %}
+                <p class="text-sm text-gray-500">الأهداف</p>
+                <p class="text-2xl font-bold text-gray-800">{{ goals|length }}</p>
+            {% endif %}
         </div>
 
         <div class="bg-white p-4 rounded-lg shadow">
-            <p class="text-sm text-gray-500">عدد المؤشرات</p>
-            <p class="text-2xl font-bold text-gray-800">{{ kpis|length }}</p>
+            {% if user.role.role_name == 'E' %}
+                <p class="text-sm text-gray-500"> المؤشرات</p>
+                <p class="text-2xl font-bold text-gray-800">{{ kpis|length }}</p>
+            {% else %}
+                <p class="text-sm text-gray-500"> المبادرات</p>
+                <p class="text-2xl font-bold text-gray-800">{{ initiatives|length }}</p>
+            {% endif %}
         </div>
 
         <div class="bg-white p-4 rounded-lg shadow">
-            <p class="text-sm text-gray-500">ملاحظاتي</p>
+            <p class="text-sm text-gray-500">الملاحظات المرسلة</p>
             <p class="text-2xl font-bold text-gray-800">{{ notes|length }}</p>
         </div>
+    </div>
 
-        <div class="flex justify-between items-center">
-            <h1 class="text-2xl font-bold text-gray-800">test chart</h1>
-            <canvas id="myChart" width="400" height="400"></canvas>
-            <!-- <canvas id="donutChart" width="400" height="400"></canvas> -->
+    <!-- ================= CHARTS ================= -->
+    <!-- row 3-->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+        <div class="bg-white p-4 rounded-lg shadow md:col-span-2 flex flex-col justify-center"> 
+            <!-- chart 1 Bar: E,M,CM,GM-->
+            <h3 class="font-semibold mb-3 text-center">{% if user.role.role_name == 'E' %}متوسط الإنجاز في المبادرات{% else %} مدى اكتمال الأهداف {% endif %}</h3>
+            <div class="flex items-center justify-center h-64">
+                {% if bar_chart_data %}
+                    <canvas id="barChart" class="w-full h-64"></canvas>
+                {% else %}
+                    <div class="flex flex-col justify-center items-center h-full gap-2 mb-5">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" 
+                        class=" icon icon-tabler icons-tabler-outline icon-tabler-chart-bar-off w-24 h-24 stroke-gray-300 hover:stroke-gray-400 transition-transform duration-300 hover:scale-110 "><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 13a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -6" /><path d="M12 8h2a1 1 0 0 1 1 1v2m0 4v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1v-10" /><path d="M15 11v-6a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v12m-1 3h-4a1 1 0 0 1 -1 -1v-4" /><path d="M4 20h14" /><path d="M3 3l18 18" /></svg>
+                        <p class="text-sm text-gray-600">لا توجد بيانات</p>
+                    </div>
+                {% endif %}
+            </div>
         </div>
 
+
+        <div class="bg-white p-4 rounded-lg shadow md:col-span-1">
+            <!-- chart 2 Donut: E,M,CM  -->
+            <h3 class="font-semibold mb-3 text-center" id="donut-chart-title"> {% if user.role.role_name == 'E' %}حالة المبادرات{% else %} الحالة الإجمالية للمبادرات {% endif %}</h3>
+            <div class="flex items-center justify-center h-64">
+
+                {% if donut_chart_data %}
+                    <canvas id="donutChart" ></canvas>
+                {% else %}
+                    <div class="flex flex-col justify-center items-center h-full gap-2 mb-5">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" 
+                        class=" icon icon-tabler icons-tabler-outline icon-tabler-chart-bar-off w-24 h-24 stroke-gray-300 hover:stroke-gray-400 transition-transform duration-300 hover:scale-110 "><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 13a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -6" /><path d="M12 8h2a1 1 0 0 1 1 1v2m0 4v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1v-10" /><path d="M15 11v-6a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v12m-1 3h-4a1 1 0 0 1 -1 -1v-4" /><path d="M4 20h14" /><path d="M3 3l18 18" /></svg>
+                        <p class="text-sm text-gray-600">لا توجد بيانات</p>
+                    </div>
+                {% endif %}
+            </div>
+            <div class="flex items-center justify-center mt-3">
+                {% if user.role.role_name != 'E' %} <!-- select initiative , only for managers and general manager -->
+                    <form method="get" class="mb-4">
+                        <select name="initiative" onchange="this.form.submit()" class="border p-1 rounded text-center text-xs">
+                            <option class="text-center" value="">كل المبادرات</option>
+                            {% for initiative in initiatives %}
+                                <option value="{{ initiative.id }}" {% if request.GET.initiative == initiative.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ initiative.title }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
     </div>
+
+    <!-- chart 3 Bar: M,CM -->
+    {% if user.role.role_name == 'M' or user.role.role_name == 'CM' %}
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-white p-4 rounded-lg shadow md:col-span-3">
+            <h3 class="font-semibold mb-3 text-center">توزيع العمل</h3>
+            <div class="flex items-center justify-center h-64 w-full overflow-x-auto">
+                {% if bar_chart2_data %}
+                    <canvas id="barChart2" class="w-full h-full"></canvas>
+                {% else %}
+                    <div class="flex flex-col justify-center items-center h-full gap-2 mb-5">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" 
+                        class=" icon icon-tabler icons-tabler-outline icon-tabler-chart-bar-off w-24 h-24 stroke-gray-300 hover:stroke-gray-400 transition-transform duration-300 hover:scale-110 "><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 13a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -6" /><path d="M12 8h2a1 1 0 0 1 1 1v2m0 4v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1v-10" /><path d="M15 11v-6a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v12m-1 3h-4a1 1 0 0 1 -1 -1v-4" /><path d="M4 20h14" /><path d="M3 3l18 18" /></svg>
+                        <p class="text-sm text-gray-600">لا توجد بيانات</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+        {% endif %}
+
+    <!-- chart 4 Stacked Bar: M,CM -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-white p-4 rounded-lg shadow md:col-span-3">
+            <h3 class="font-semibold mb-3 text-center">مؤشرات الأداء الرئيسية</h3>
+            <div class="flex items-center justify-center h-64 w-full overflow-x-auto">
+                {% if stacked_bar_chart_data %}
+                    <canvas id="stackedBarChart" class="w-full h-full"></canvas>
+                {% else %}
+                    <div class="flex flex-col justify-center items-center h-full gap-2 mb-5">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" 
+                        class=" icon icon-tabler icons-tabler-outline icon-tabler-chart-bar-off w-24 h-24 stroke-gray-300 hover:stroke-gray-400 transition-transform duration-300 hover:scale-110 "><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 13a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -6" /><path d="M12 8h2a1 1 0 0 1 1 1v2m0 4v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1v-10" /><path d="M15 11v-6a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v12m-1 3h-4a1 1 0 0 1 -1 -1v-4" /><path d="M4 20h14" /><path d="M3 3l18 18" /></svg>
+                        <p class="text-sm text-gray-600">لا توجد بيانات</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        <!-- GENERAL MANAGER DEPARTMENTS ORDERD LIST -->
+        {% if user.role.role_name == 'GM' %}
+            <div class="bg-white p-4 rounded-lg shadow md:col-span-1">
+                <h3 class="font-semibold mb-4 text-center text-lg">ترتيب أداء الأقسام</h3>
+                {% if departments_performance_dict %}
+                    <ol class="space-y-2 list-decimal list-outside">
+                        {% for department, average in departments_performance_dict.items %}
+                            {% if forloop.counter == 1 %}
+                                <li class="flex justify-between items-center {% if average > 0 %} bg-yellow-100 border-yellow-400 hadow-md border-l-4{% endif %} p-3 rounded-lg s ">
+                                    <span class="font-bold"> قسم {{ department }}</span>
+                                    <span class="font-mono">{{ average }}%</span>
+                                </li>
+                            {% elif forloop.counter == 2 %}
+                                <li class="flex justify-between items-center {% if average > 0 %} bg-gray-100 border-gray-400 shadow-md border-l-4 {% endif %} p-3 rounded-lg ">
+                                    <span class="font-bold"> قسم {{ department }}</span>
+                                    <span class="font-mono">{{ average }}%</span>
+                                </li>
+                            {% elif forloop.counter == 3 %}
+                                <li class="flex justify-between items-center {% if average > 0 %} bg-orange-100 border-orange-400 shadow-md border-l-4 {% endif %} p-3 rounded-lg  ">
+                                    <span class="font-bold"> قسم {{ department }}</span>
+                                    <span class="font-mono">{{ average }}%</span>
+                                </li>
+                            {% else %}
+                                <li class="flex justify-between items-center p-2 rounded-lg hover:bg-gray-50 transition">
+                                    <span>قسم {{ department }}</span>
+                                    <span class="font-mono">{{ average }}%</span>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                    </ol>
+                {% else %}                    
+                <div class="flex flex-col justify-center items-center h-full gap-2 mb-5">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" 
+                        class=" icon icon-tabler icons-tabler-outline icon-tabler-chart-bar-off w-24 h-24 stroke-gray-300 hover:stroke-gray-400 transition-transform duration-300 hover:scale-110 "><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 13a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -6" /><path d="M12 8h2a1 1 0 0 1 1 1v2m0 4v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1v-10" /><path d="M15 11v-6a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v12m-1 3h-4a1 1 0 0 1 -1 -1v-4" /><path d="M4 20h14" /><path d="M3 3l18 18" /></svg>
+                        <p class="text-sm text-gray-600">لا توجد بيانات</p>
+                    </div>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+
+    {% if user.role.role_name == 'E'%}
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-white p-4 rounded-lg shadow">
+            <p class="text-sm text-gray-500">متوسط نسبة الإنجاز</p>
+            <p class="text-2xl font-bold text-gray-800">{{ avrage_progress }}%</p>
+        </div>
+
+        <div class="bg-white p-4 rounded-lg shadow">
+            <p class="text-sm text-gray-500">المبادرات الموشكة على الانتهاء</p>
+            <p class="text-2xl font-bold text-gray-800">{{ late|length }}</p>
+        </div>
+
+        <div class="bg-white p-4 rounded-lg shadow">
+            <p class="text-sm text-gray-500">المبادرات المنتهية</p>
+            <p class="text-2xl font-bold text-gray-800">{{ overdue|length }}</p>
+        </div>
+    </div>
+    {% endif %}
 
 
     <!-- goals -->
@@ -189,6 +351,5 @@
         </div>
         {% endif %}
 
-    </div>
-
-    {% endblock %}
+</div>
+{% endblock %}

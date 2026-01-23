@@ -1,8 +1,6 @@
 // ---------------------------
 //          popoup js       
 // ---------------------------
-
-
 function openWindow(url){
     const params = "scrollbars=no,resizable=no,status=no,location=no,toolbar=no,menubar=no,width=400,height=300,left=100,top=100";
 
@@ -14,9 +12,11 @@ function openWindow(url){
 }
 
 
+
 function openPopup(id){
     document.getElementById(id).classList.remove('hidden');
 }
+
 
 
 function closePopup(id){
@@ -177,7 +177,7 @@ document.addEventListener('DOMContentLoaded', function(){
 
 
 // ---------------------------
-//      page number js (AJAX)
+//    page number js (AJAX)
 // ---------------------------
 document.addEventListener('DOMContentLoaded', function () {
 
@@ -252,10 +252,10 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 
+
 // ---------------------------
 //     confirm delete js     
 // ---------------------------
-
 function openDeleteModal(deleteUrl, message) {
     const modal = document.getElementById('deleteModal');
     const form  = document.getElementById('deleteModalForm');
@@ -271,6 +271,8 @@ function closeDeleteModal() {
     document.getElementById('deleteModal').classList.add('hidden');
 }
 
+
+
 // ---------------------------
 // assign reciver for note
 // ---------------------------
@@ -280,7 +282,6 @@ function closeDeleteModal() {
 // ---------------------------
 //    assign employees js     
 // ---------------------------
-
 const toAdd = new Map();    
 const toRemove = new Map(); 
 
@@ -474,7 +475,6 @@ if (cancelBtnKpi){
 
 
 
-
 // ---------------------------
 //     circle animation js     
 // ---------------------------
@@ -505,7 +505,6 @@ window.addEventListener('load', () => {
 // ---------------------------
 //     add progress  js     
 // ---------------------------
-
 function addProgress(button) {
     const form = document.getElementById('userInitiativeForm');
     const progressInput = form.querySelector('.progress-input');
@@ -531,7 +530,6 @@ function closeProgressModal() {
 // ---------------------------
 //   message and navbar  js     
 // ---------------------------
-
 document.addEventListener("DOMContentLoaded", () => {
     setTimeout(() => {
         const container = document.getElementById("django-messages");
@@ -543,288 +541,159 @@ document.addEventListener("DOMContentLoaded", () => {
 
     
     // sidebar (navbar)
-    const btn = document.getElementById('toggle-nav');
-    const sidebar = document.getElementById('sidebar');
+    // const btn = document.getElementById('toggle-nav');
+    // const sidebar = document.getElementById('sidebar');
 
-    btn.addEventListener('click', () => {
-        sidebar.classList.toggle('-translate-x-full');
-        sidebar.classList.toggle('hidden'); // optional
-    });
+    // btn.addEventListener('click', () => {
+    //     sidebar.classList.toggle('-translate-x-full');
+    //     sidebar.classList.toggle('hidden'); // optional
+    // });
 
 });
 
 
-document.addEventListener('DOMContentLoaded', function () {
-    const chartEl = document.getElementById('myChart');
-    if (!chartEl) return;
 
-    const ctx = chartEl.getContext('2d');
+// ---------------------------
+//          charts js     
+// ---------------------------
 
-    // Get data from Django json_script
-    const labels = JSON.parse(document.getElementById('chart-labels').textContent);
-    const data = JSON.parse(document.getElementById('chart-data').textContent);
+///////////// DONUT CHART \\\\\\\\\\\\\
+function donutChart(labels, data, id){
+    const canvas = document.getElementById(id);
+    if (!canvas) return;
 
+    const ctx = canvas.getContext('2d');
     new Chart(ctx, {
         type: 'doughnut',
         data: {
             labels: labels,
             datasets: [{
                 data: data,
-                backgroundColor: ['#4ade80', '#facc15', '#f87171'],
+                // backgroundColor: ['#CBD5E1', '#93C5FD', '#FCA5A5', '#86EFAC'],
+                backgroundColor: ['#F2C75C', '#E59256', '#A13525', ' #00685E','#CBD5E1', '#93C5FD', '#FCA5A5', '#86EFAC'],
             }]
         },
         options: {
             responsive: true,
             plugins: {
-                legend: { position: 'bottom' }
+                legend: { position: 'bottom', rtl: true }
             }
         }
     });
-});
 
-
-// document.addEventListener('DOMContentLoaded', function () {
-    
-//     // ---------------------------
-//     //     js for update form      
-//     // ---------------------------
-
-//     document.querySelectorAll('form[data-edit="true"]').forEach(form => {
-//         form.addEventListener('keydown', function (e) {
-//             if (e.key === 'Enter' && e.target.tagName.toLowerCase() !== 'textarea') {
-//                 e.preventDefault();
-//             }
-//         });
-//     });
-
-
-//     // --------------------------------------
-//     //       js for search & filter buttons    
-//     // --------------------------------------
-//     // Detect which table exists
-//     const plansBody = document.getElementById("plansBody");
-//     const initiativesBody = document.getElementById("initiativesBody");
-//     const goalsBody = document.getElementById("goalsBody");
-//     const isPlansPage = !!plansBody;
-//     const isInitiativesPage = !!initiativesBody;
-//     const isPlanDetailsPage = !!goalsBody;
-
-//     // Shared elements
-//     const dropdownBtn = document.getElementById("dropdownDefaultButton");
-//     const dropdownMenu = document.getElementById("dropdown");
-//     const dropdownIcon = document.getElementById("dropdownIcon");
-//     const filterButtons = document.querySelectorAll(".filter-btn");
-//     const searchInput = document.getElementById("search");
-
-//     let currentFilter = ""; // either status or priority
-
-//     // Universal fetch function
-//     function fetchData(search = "", filter = "", page = 1) {
-//         let url = `?search=${encodeURIComponent(search)}&page=${page}`;
-
-//         if (isPlansPage) url += `&status=${filter}`;
-//         if (isInitiativesPage) url += `&priority=${filter}`;
-//         if (isPlanDetailsPage) url += `&status=${filter}`;
-
-//         fetch(url, { headers: { "X-Requested-With": "XMLHttpRequest" } })
-//             .then(res => res.json())
-//             .then(data => {
-//                 if (isPlansPage) plansBody.innerHTML = data.html;
-//                 if (isInitiativesPage) initiativesBody.innerHTML = data.html;
-//                 if (isPlanDetailsPage) goalsBody.innerHTML = data.html;
-//             });
-//     }
-
-//     // Dropdown toggle
-//     if (dropdownBtn) {
-//         dropdownBtn.addEventListener("click", e => {
-//             e.stopPropagation();
-//             dropdownMenu.classList.toggle("hidden");
-//             dropdownIcon.style.transform = dropdownMenu.classList.contains("hidden") ? "rotate(0deg)" : "rotate(180deg)";
-//         });
-//     }
-
-//     // Click outside to close
-//     document.addEventListener("click", () => {
-//         if (dropdownMenu) {
-//             dropdownMenu.classList.add("hidden");
-//             dropdownIcon.style.transform = "rotate(0deg)";
-//         }
-//     });
-
-//     if (dropdownMenu) dropdownMenu.addEventListener("click", e => e.stopPropagation());
-
-//     // Search input (auto fetch as user types)
-//     if (searchInput) {
-//         searchInput.addEventListener("input", () => {
-//             fetchData(searchInput.value, currentFilter);
-//         });
-//     }
-
-
-//     filterButtons.forEach(btn => {
-//         btn.addEventListener("click", function() {
-//             currentFilter = this.dataset.status || this.dataset.priority || "";
-//             fetchData(searchInput.value, currentFilter);
-//             if (dropdownMenu) {
-//                 dropdownMenu.classList.add("hidden");
-//                 dropdownIcon.style.transform = "rotate(0deg)";
-//             }
-//         });
-//     });
+}
 
 
 
+///////////////////////////////////////// BAR CHART \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+function barChart(labels, data, id, background='#AAC2BF', ticksDisplay=true, maxValue=null){
+    const canvas = document.getElementById(id);
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    new Chart(ctx, {
+        type: 'bar',
+            data: {
+            labels: labels,
+            datasets: [{
+                data: data,
+                backgroundColor: background, 
+                borderRadius: 4, 
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,  
+            plugins: {
+                legend: { display: false },
+                tooltip:{ intersect: false } 
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ...(maxValue !== null && { max: maxValue }),
+                    
+                },               
+                x:  {
+                    ticks: {
+                        display: ticksDisplay
+                    },
+                    grid: {
+                        display: false
+                    },
+                }
 
-//     // ---------------------------
-//     //  initiative page number js     
-//     // ---------------------------
-//     const pageDropdownButton = document.getElementById('initiative-page-dropdown-button'); //button that has the word عدد الصفوف
-//     const pageDropdownIcon = document.getElementById('initiative-page-dropdown-icon'); //icon to be rotated
-//     const pageDropdown = document.getElementById('initiative-page-dropdown'); //the div to be not hidden
-//     const pageFilterButtons = document.querySelectorAll(".initiative-page-filter-btn");// buttons to be clicked an reload
-//     const pageDropdownText = document.getElementById('initiative-page-dropdown-text');
-//     const currentUrl = new URL(window.location.href);
-
-
-
-//     if (currentUrl.searchParams.get('per_page')){
-//         pageDropdownText.textContent = currentUrl.searchParams.get('per_page')
-//     }
-//     if (pageDropdownButton) {
-//         pageDropdownButton.addEventListener("click", e => {
-//             e.stopPropagation();
-//             pageDropdown.classList.toggle("hidden");
-//             pageDropdownIcon.style.transform = pageDropdown.classList.contains("hidden") ? "rotate(0deg)" : "rotate(180deg)";
-//         });
-//     }
-
-//     // Click outside to close
-//     document.addEventListener("click", () => {
-//         if (pageDropdown) {
-//             pageDropdown.classList.add("hidden");
-//             pageDropdownIcon.style.transform = "rotate(0deg)";
-//         }
-//     });
-
-//     if (pageDropdown) pageDropdown.addEventListener("click", e => e.stopPropagation());
-
-
-//     pageFilterButtons.forEach(btn => {
-//         btn.addEventListener("click", function() {
-//             const perPage = this.dataset.number;
-            
-//             if (pageDropdown) {
-//                 pageDropdown.classList.add("hidden");
-//                 pageDropdownIcon.style.transform = "rotate(0deg)";
-//             }
-
-//             const url = new URL(window.location.href);
-//             url.searchParams.set("per_page", perPage);
-//             url.searchParams.set("page", 1); // reset to first page
-//             window.location.href = url.toString();
-//         });
-//     });
+            }
+        }
+    });
+}                      
 
 
 
-//     // ---------------------------
-//     //      page number js (AJAX)
-//     // ---------------------------
+///////// STACKED BAR CHART \\\\\\\\\
+function stackedBarChart(data, id) {
+    const canvas = document.getElementById(id);
+    if (!canvas || !data) return;
 
-//     const plansBodyForPageNumber = document.getElementById("plansBody");
-//     const goalsBodyForPageNumber = document.getElementById("goalsBody");
-//     const isPlansPageForPageNumber = !!plansBodyForPageNumber;
-//     const isPlanDetailsPageForPageNumbe = !!goalsBodyForPageNumber;
+    const ctx = canvas.getContext('2d');
+    new Chart(ctx, {
+        type: 'bar',
+        data: data, 
+        options: {
+            indexAxis: 'y', 
+            responsive: true,
+            plugins: {
+                tooltip: { mode: 'index', intersect: false },
+            },
+            scales: {
+                x:  {
+                    stacked: true,
+                },
 
-//     const pageDropdownButtonForPageNumber = document.getElementById('page-dropdown-button');
-//     const pageDropdownIconForPageNumber = document.getElementById('page-dropdown-icon');
-//     const pageDropdownForPageNumber = document.getElementById('page-dropdown');
-//     const pageFilterButtonsForPageNumber = document.querySelectorAll(".page-filter-btn");
-//     const pageDropdownTextForPageNumber = document.getElementById('page-dropdown-text');
-
-//     // toggle dropdown
-//     if (pageDropdownButtonForPageNumber) {
-//         pageDropdownButtonForPageNumber.addEventListener("click", e => {
-//             e.stopPropagation();
-//             pageDropdownForPageNumber.classList.toggle("hidden");
-//             pageDropdownIconForPageNumber.style.transform =
-//                 pageDropdownForPageNumber.classList.contains("hidden")
-//                     ? "rotate(0deg)"
-//                     : "rotate(180deg)";
-//         });
-//     }
-
-//     // click outside
-//     document.addEventListener("click", () => {
-//         if (pageDropdownForPageNumber) {
-//             pageDropdownForPageNumber.classList.add("hidden");
-//             pageDropdownIconForPageNumber.style.transform = "rotate(0deg)";
-//         }
-//     });
-
-//     if (pageDropdownForPageNumber) {
-//         pageDropdownForPageNumber.addEventListener("click", e => e.stopPropagation());
-//     }
-
-//     // AJAX per_page
-//     pageFilterButtonsForPageNumber.forEach(btn => {
-//         btn.addEventListener("click", function () {
-//             const perPage = this.dataset.number;
-
-//             // update dropdown text
-//             if (pageDropdownTextForPageNumber) {
-//                 pageDropdownTextForPageNumber.textContent = perPage;
-//             }
-
-//             // close dropdown
-//             if (pageDropdownForPageNumber) {
-//                 pageDropdownForPageNumber.classList.add("hidden");
-//                 pageDropdownIconForPageNumber.style.transform = "rotate(0deg)";
-//             }
-
-//             const url = new URL(window.location.href);
-//             url.searchParams.set("per_page", perPage);
-//             url.searchParams.set("page", 1);
-
-//             fetch(url, {
-//                 headers: {
-//                     "X-Requested-With": "XMLHttpRequest"
-//                 }
-//             })
-//             .then(res => res.json())
-//             .then(data => {
-//                 if (isPlansPageForPageNumber) plansBodyForPageNumbe.innerHTML = data.html;
-//                 if (isPlanDetailsPageForPageNumbe) goalsBodyForPageNumbe.innerHTML = data.html;
-//             });
-//         });
-//     });
+                y: { 
+                    stacked: true, 
+                    beginAtZero: true ,                     
+                    grid: {
+                        display: false
+                    },
+                }
+            }
+        }
+    });
+}
 
 
-//     // ---------------------------
-//     //         message js     
-//     // ---------------------------
 
-//     setTimeout(() => {
-//         const container = document.getElementById("django-messages");
-//         if (container) {
-//             container.style.opacity = 0;
-//             setTimeout(() => container.remove(), 500);
-//         }
-//     }, 3000);
+// donut chart labels and data
+if (document.getElementById('donut-chart-labels')){
+    const donutChartLabels = JSON.parse(document.getElementById('donut-chart-labels').textContent);
+    const donutChartData = JSON.parse(document.getElementById('donut-chart-data').textContent);
+    if (donutChartData && donutChartData.length > 0) {
+        donutChart(donutChartLabels, donutChartData, 'donutChart');
+    }  
+}
+// bar chart labels and data
+if (document.getElementById('bar-chart-labels')){
+    const barChartLabels = JSON.parse(document.getElementById('bar-chart-labels').textContent);
+    const barChartData = JSON.parse(document.getElementById('bar-chart-data').textContent);
+    if (barChartData && barChartData.length > 0) {
+        barChart(barChartLabels, barChartData, 'barChart',background='#AAC2BF', ticksDisplay=true, maxValue=100);
+    }
+}
+// bar chart labels and data
+if (document.getElementById('bar-chart2-labels')){
+    const barChartLabels2 = JSON.parse(document.getElementById('bar-chart2-labels').textContent);
+    const barChartData2 = JSON.parse(document.getElementById('bar-chart2-data').textContent);
+    if (barChartData2 && barChartData2.length > 0) {
+        barChart(barChartLabels2, barChartData2, 'barChart2',['#00685E', '#55857F', '#AAC2BF', '#8BAA99'] ,false);
+    }
+}
+// stacked bar chart data
+if (document.getElementById('stacked-bar-chart-data')){
+    const stackedChartData = JSON.parse(document.getElementById('stacked-bar-chart-data').textContent);
+    if (stackedChartData && stackedChartData.labels.length > 0) {
+        stackedBarChart(stackedChartData, 'stackedBarChart');
+    }
+}
 
 
-//     // ---------------------------
-//     //         navbar  js     
-//     // ---------------------------
 
-//     const btn = document.getElementById('toggle-nav');
-//     const sidebar = document.getElementById('sidebar');
-
-//     btn.addEventListener('click', () => {
-//         sidebar.classList.toggle('-translate-x-full');
-//         sidebar.classList.toggle('hidden'); // optional
-//     });
-
-// });
-// }
