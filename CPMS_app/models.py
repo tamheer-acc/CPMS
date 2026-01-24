@@ -218,3 +218,21 @@ class Log (models.Model):
 
     def __str__(self):
         return f"{self.table_name} - {self.action}"
+
+
+
+# ---------------------------
+#     ProgressLog Model
+# ---------------------------
+class ProgressLog(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    initiative = models.ForeignKey(Initiative, on_delete=models.CASCADE)
+    department = models.ForeignKey(Department,null=True, on_delete=models.SET_NULL)
+    progress = models.FloatField()
+    timestamp = models.DateTimeField(auto_now_add=True)
+    class Meta:
+        verbose_name = "Progress Log"
+        verbose_name_plural = "Progress Logs"
+
+    def __str__(self):
+        return f"{self.initiative.title} - {self.progress} - {self.timestamp}"

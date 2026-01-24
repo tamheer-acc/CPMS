@@ -629,6 +629,7 @@ function barChart(labels, data, id, background='#AAC2BF', ticksDisplay=true, max
 
 
 
+
 ///////// STACKED BAR CHART \\\\\\\\\
 function stackedBarChart(data, id) {
     const canvas = document.getElementById(id);
@@ -643,6 +644,15 @@ function stackedBarChart(data, id) {
             responsive: true,
             plugins: {
                 tooltip: { mode: 'index', intersect: false },
+                legend: { 
+                    position: 'right',  // <- here you go
+                    labels: {
+                        boxWidth: 18,
+                        boxHeight: 12,
+                        padding: 12,
+                        font: { size: 12 }
+                    }
+                }
             },
             scales: {
                 x:  {
@@ -661,6 +671,86 @@ function stackedBarChart(data, id) {
     });
 }
 
+
+
+///////// LINE CHART \\\\\\\\\
+function lineChart(data, id) {
+    const canvas = document.getElementById(id);
+    if (!canvas || !data) return;
+
+    const ctx = canvas.getContext('2d');
+
+    // formatted labels (DD/MM)
+    const labels = data[Object.keys(data)[0]].map(d => {
+        const date = new Date(d.date);
+        return date.getDate() + '/' + (date.getMonth() + 1);
+    });
+
+    const colors = [
+        '#F2C75C', '#E59256', '#A13525', '#00685E',
+        '#8BAA99', '#006797', '#00A399', '#B98346'
+    ];
+
+    const datasets = Object.keys(data).map((dept, index) => ({
+        label: dept,
+        data: data[dept].map(d => d.avg),
+        borderColor: colors[index % colors.length],
+        backgroundColor: colors[index % colors.length],
+        tension: 0.3,
+        fill: false,
+        pointRadius: 3,
+        pointHoverRadius: 5,
+        borderWidth: 2
+    }));
+
+    new Chart(ctx, {
+        type: 'line',
+        data: { labels, datasets },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { 
+                    position: 'bottom', 
+                    rtl: true, 
+                    labels: {
+                        boxHeight: 12,
+                        padding: 24,
+                        boxWidth: 18,
+                        font: {
+                            size: 12
+                        }
+                    }
+                },
+                tooltip: { mode: 'index', intersect: false }
+            },
+            animation: {
+                duration: 1500, // 1.5s
+                easing: 'easeOutQuart'
+            },
+            transitions: {
+                show: { animations: { x: { from: 0 }, y: { from: 0 } } },
+                hide: { animations: { x: { to: 0 }, y: { to: 0 } } }
+            },
+            elements: {
+                line: {
+                    tension: 0.3 
+                },
+                point: {
+                    radius: 3,
+                    hoverRadius: 5
+                }
+            },
+            scales: {
+                y: { beginAtZero: true, max: 100 },
+                x: {
+                    ticks: { autoSkip: true, maxRotation: 45, minRotation: 0 },
+                    grid: { display: false }
+                }
+            }
+        }
+    });
+}
 
 
 // donut chart labels and data
@@ -692,6 +782,13 @@ if (document.getElementById('stacked-bar-chart-data')){
     const stackedChartData = JSON.parse(document.getElementById('stacked-bar-chart-data').textContent);
     if (stackedChartData && stackedChartData.labels.length > 0) {
         stackedBarChart(stackedChartData, 'stackedBarChart');
+    }
+}
+// line chart labels and data
+if (document.getElementById('line-chart-data')){
+    const lineChartData = JSON.parse(document.getElementById('line-chart-data').textContent);
+    if (lineChartData && Object.keys(lineChartData).length > 0) {
+        lineChart(lineChartData, 'lineChart');
     }
 }
 
