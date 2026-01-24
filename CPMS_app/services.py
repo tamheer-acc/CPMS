@@ -1,15 +1,15 @@
-from datetime import date, timedelta
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 import json
+from datetime import date, timedelta
+from django.utils import timezone
+from django.utils.timezone import now
+from django.core.serializers.json import DjangoJSONEncoder
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.contrib.auth import get_user_model
 from django.forms.models import model_to_dict
 from django.db.models import Count, Q, Case, When, Value, IntegerField, Avg, Prefetch
-from .models import Note, StrategicGoal, Initiative, Log, UserInitiative
 from django.db.models import Prefetch
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.db.models.functions import TruncMonth
-from django.utils import timezone
-from django.core.serializers.json import DjangoJSONEncoder
-from django.contrib.auth import get_user_model
+from .models import Note, StrategicGoal, Initiative, Log, UserInitiative, ProgressLog
 
 User = get_user_model()
 
@@ -533,3 +533,36 @@ def weight_initiative(initiative):
 
     weighted_score = (total_weight / user_initiatives.count()) * 100
     return round(weighted_score, 2)
+
+
+def departments_progress_over_time(departments, days_count=30):
+    days = [(now() - timedelta(days=i)).date() for i in range(days_count - 1, -1, -1)]
+    chart_data = {}
+
+    for dept in departments:
+        initiatives = Initiative.objects.filter(
+            userinitiative__user__department=dept
+        ).distinct()
+
+        total_initiatives = initiatives.count()
+        chart_data[dept.department_name] = []
+
+        for day in days:
+            total_progress = 0
+
+            for initiative in initiatives:
+                last_log = ProgressLog.objects.filter(
+                    initiative=initiative,
+                    timestamp__date__lte=day
+                ).order_by('-timestamp').first()
+
+                total_progress += last_log.progress if last_log else 0
+
+            avg = total_progress / total_initiatives if total_initiatives else 0
+
+            chart_data[dept.department_name].append({
+                'date': day,
+                'avg': round(avg, 2)
+            })
+
+    return chart_data

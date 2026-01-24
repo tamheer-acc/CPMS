@@ -25,7 +25,7 @@ from .models import ( STATUS, Role, Department, User, StrategicPlan, StrategicGo
                         Initiative, UserInitiative, KPI, Note, Log, ProgressLog)
 from .services import ( generate_KPIs,  create_log, get_plan_dashboard, calc_user_initiative_status, 
                         filter_queryset, get_page_numbers, paginate_queryset, status_count, avg_calculator, 
-                        calc_delayed, kpi_filter, weight_initiative, get_unread_notes_count)
+                        calc_delayed, kpi_filter, weight_initiative, get_unread_notes_count, departments_progress_over_time)
 
 
 
@@ -257,63 +257,28 @@ class DashboardView(LoginRequiredMixin, TemplateView):
 
         # GENERAL MANAGER #
         if user.role.role_name == 'GM':
-            # Department Performance List
+            
             goals = StrategicGoal.objects.all()
             departments = Department.objects.all()
             initiatives = Initiative.objects.all()
             userinitiatives = UserInitiative.objects.all()
             for goal in goals:
                 goal.user_initiatives = initiatives.filter(strategic_goal=goal)
-            context['goals'] = goals
 
-            # List (  ) : list of all departments ordered by performance  
-            departments_performance_dict = {dep.department_name: [] for dep in departments}            
-            for goal in goals: # Avrage for each goal
-                goal_average = avg_calculator(UserInitiative.objects.filter(initiative__strategic_goal = goal, user__role__role_name = 'E' ))
-                departments_performance_dict.setdefault(goal.department.department_name, []).append(float(goal_average))
-            for key in departments_performance_dict: # Average for each department 
-                values = departments_performance_dict[key]
-                departments_performance_dict[key] = sum(values) / len(values) if values else 0.0
-            sorted_departments = dict( sorted(departments_performance_dict.items(), key=lambda x: x[1], reverse=True)) #sort deps based on performance percentage 
-            context['departments_performance_dict'] = sorted_departments
-
-            # Bar Chart ( مدى اكتمال الأهداف ) : avg of progress in each goal
+            # Bar Chart ( مدى اكتمال الأهداف ) : avg of progress for each goal
             goals_with_avg = StrategicGoal.objects.annotate( avg_progress=Avg('initiative__userinitiative__progress', filter=Q(initiative__userinitiative__user__role__role_name='E')))
             bar_chart_labels = [goal.goal_title for goal in goals_with_avg]
             bar_chart_data = [round(goal.avg_progress or 0) for goal in goals_with_avg]
             context['bar_chart_labels'] = bar_chart_labels
             context['bar_chart_data'] = bar_chart_data
 
-            # Donut Chart ( حالة المبادرات ) : count of all user initiatives grouped by status
+            # Donut Chart ( الحالة الإجمالية للمبادرات ) : count of all user initiatives grouped by status
             if userinitiatives.exists():
                 count = status_count(userinitiatives)                
                 context['donut_chart_labels'] = [s[1] for s in STATUS]
                 context['donut_chart_data'] = [count.get(key, 0) for key in status_order]                
 
-            # LINE CHART -> departments progress 
-            days = [ (now() - timedelta(days=i)).date() for i in range(29, -1, -1) ]  # oldest -> newest
-            chart_data = {}
-            for dept in departments:
-                logs = ProgressLog.objects.filter(
-                    user__department=dept,
-                    timestamp__gte=days[0]
-                ).order_by('timestamp')
-                # group by day
-                daily_avg = {}
-                for log in logs:
-                    day = log.timestamp.date()
-                    daily_avg.setdefault(day, []).append(log.progress)
-                chart_data[dept.department_name] = []
-                for day in days:
-                    if day in daily_avg:
-                        avg = sum(daily_avg[day]) / len(daily_avg[day])
-                    else:
-                        avg = 0  
-                    chart_data[dept.department_name].append({'date': day, 'avg': avg})
-            context['line_chart_data'] = chart_data
-            context['chart_days'] = days  # optional, if you want x-axis labels
-
-            # Stacked Bar Chart
+            # Stacked Bar Chart ( مؤشرات الأداء الرئيسية ) : KPIs based on status, grouped by initiatives 
             goal_labels = []
             not_started_data = []
             in_progress_data = []
@@ -356,9 +321,10 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             }
             context['stacked_bar_chart_data'] = stacked_bar_chart_data
             
-            context['plans'] = StrategicPlan.objects.all()  #  plans
-            context['initiatives'] = Initiative.objects.all()  #  initiative
-            context['kpis'] = KPI.objects.all()  #  KPIs
+            context['plans'] = StrategicPlan.objects.all()      #  Plans
+            context['goals'] = goals                            #  Goals
+            context['initiatives'] = Initiative.objects.all()   #  initiative
+            context['kpis'] = KPI.objects.all()                 #  KPIs
 
 
 
@@ -370,7 +336,6 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             goals = StrategicGoal.objects.filter(department = user.department) 
             for goal in goals:
                 goal.user_initiatives = initiatives.filter(strategic_goal=goal)
-            context['goals'] = goals
 
             # Donut Chart ( حالة المبادرات  ) : count of all user initiatives grouped by status
             initiative_id = self.request.GET.get('initiative')  # if there is filter
@@ -404,7 +369,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             context['bar_chart2_data'] = bar_chart2_data
             
             
-            #stacked bar chart مؤشرات الأداء الرئيسي 
+            # Stacked Bar Chart ( مؤشرات الأداء الرئيسية ) : KPIs based on status, grouped by initiatives 
             kpis = KPI.objects.filter(initiative__strategic_goal__department = user.department)
             achieved, in_progress, not_started = kpi_filter(kpis)
             initiative_labels = [initiative.title for initiative in (Initiative.objects.filter(userinitiative__user=user))]
@@ -447,34 +412,31 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             }
             context['stacked_bar_chart_data'] = stacked_bar_chart_data
 
-            context['plans'] = StrategicPlan.objects.all()  #  plans
-            context['initiatives'] = initiatives  #  initiative
-            context['kpis'] = KPI.objects.filter(initiative__userinitiative__user=user)  #  KPIs
+            context['plans'] = StrategicPlan.objects.all()                              #  Plans
+            context['goals'] = goals                                                    #  Goals
+            context['initiatives'] = initiatives                                        #  Initiative
+            context['kpis'] = KPI.objects.filter(initiative__userinitiative__user=user) #  KPIs
 
 
 
 
         # EMPLOYEES #
         else: 
-            context['plans'] = StrategicPlan.objects.filter(is_active = True)  #  plans
-            context['initiatives'] = Initiative.objects.filter(userinitiative__user=user)  #  initiative
-            context['kpis'] = KPI.objects.filter(initiative__userinitiative__user=user)  #  KPIs
+            
             initiatives = Initiative.objects.filter(userinitiative__user=user)
             userinitiatives = UserInitiative.objects.filter(user = user)
             goals = StrategicGoal.objects.filter(initiative__userinitiative__user=user).distinct().prefetch_related('initiative_set__userinitiative_set')
 
             for goal in goals:
                 goal.user_initiatives = initiatives.filter(strategic_goal=goal)
-            context['goals'] = goals
-            # Donut Chart ( حالة مبادراتي  ) : count of all user initiatives grouped by status
+                
+            # Donut Chart ( حالة المبادرات  ) : count of all user initiatives grouped by status
             if userinitiatives.exists():
                 count = status_count(userinitiatives)                
                 context['donut_chart_labels'] = [s[1] for s in STATUS]
                 context['donut_chart_data'] = [count.get(key, 0) for key in status_order]                
-
-            # Progress -> Line Chart تقدمي؟ مستوى التقدم؟// NEEDS LOGSSSS //  
             
-            # Initiative Progress -> Bar Chart متوسط لانجاز
+            # Bar Chart ( متوسط الإنجاز في المبادرات ) : average of all user's progress in all of his/her initiatives 
             bar_chart_data = []
             bar_chart_labels = []
             for initiative in initiatives:
@@ -484,16 +446,16 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             context['bar_chart_data'] = bar_chart_data
             context['bar_chart_labels'] = bar_chart_labels
             
-            # Avrage Progress -> Card
+            # Card ( متوسط نسبة الإنجاز ) : Avrage Progress 
             avrage_progress = avg_calculator(userinitiatives)
             context['avrage_progress'] = avrage_progress
             
-            # Overdue and Delayed Initiatives -> Cards
+            # Card ( المبادرات الموشكة على الانتهاء & المبادرات المنتهية ) : Overdue and Delayed Initiatives 
             overdue, late = calc_delayed(Initiative.objects.filter(userinitiative__user=user))
             context['overdue'] = overdue
             context['late'] = late
 
-            #KPI -> Bar Chart
+            # Stacked Bar Chart ( مؤشرات الأداء الرئيسية ) : KPIs based on status, grouped by users initiatives 
             kpis = KPI.objects.filter(initiative__userinitiative__user = user)
             achieved, in_progress, not_started = kpi_filter(kpis)
             initiative_labels = [initiative.title for initiative in (Initiative.objects.filter(userinitiative__user=user))]
@@ -535,9 +497,34 @@ class DashboardView(LoginRequiredMixin, TemplateView):
                 
             }
             context['stacked_bar_chart_data'] = stacked_bar_chart_data
+            
+            context['plans'] = StrategicPlan.objects.filter(is_active = True)  #  plans
+            context['goals'] = goals
+            context['initiatives'] = Initiative.objects.filter(userinitiative__user=user)  #  initiative
+            context['kpis'] = KPI.objects.filter(initiative__userinitiative__user=user)  #  KPIs
+
+
+
+        # Shared content #
+        
+        # List ( ترتيب أداء الإدارات ) : list of all departments ordered by performance  
+        departments = Department.objects.all()
+        goals = StrategicGoal.objects.all()
+        departments_performance_dict = {dep.department_name: [] for dep in departments}            
+        for goal in goals:
+            goal_average = avg_calculator(UserInitiative.objects.filter(initiative__strategic_goal = goal, user__role__role_name = 'E' ))
+            departments_performance_dict.setdefault(goal.department.department_name, []).append(float(goal_average))
+        for key in departments_performance_dict:
+            values = departments_performance_dict[key]
+            departments_performance_dict[key] = sum(values) / len(values) if values else 0.0
+        sorted_departments = dict( sorted(departments_performance_dict.items(), key=lambda x: x[1], reverse=True)) #sort deps based on performance percentage 
+        context['departments_performance_dict'] = sorted_departments
+        
+        # Line Chart ( مدى تقدم الإدارات ) -> departments progress over time 
+        context['line_chart_data'] = departments_progress_over_time(departments)
 
         context['notes'] = Note.objects.filter(sender=user)
-        context['departments'] = Department.objects.all()
+        context['departments'] = departments
         context['department'] = user.department if user.role.role_name != 'GM' else None
 
         return context
@@ -664,7 +651,7 @@ class InitiativeDetailsView(LoginRequiredMixin, InitiativePermissionMixin, Detai
         notes = Note.objects.filter(initiative=initiative, parent_note__isnull=True).order_by('-created_at')
 
         context['initiative_notes'] = notes
-       
+
 
         if user.role.role_name == 'E':
             try:
