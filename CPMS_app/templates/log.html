@@ -1,51 +1,74 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Logs</title>
-</head>
-<body>
+{% extends "base.html" %}
+{% block title %}سجل النظام{% endblock %}
+{% block breadcrumb %}
+<li class="flex items-center">
+    <span class="mx-2">/</span>
+    <span class="text-gray-800 font-semibold">سجل النظام</span>
+</li>
+{% endblock %}
 
-<h2>All Logs</h2>
+{% block content %}
 
-<table border="1">
-    <thead>
-        <tr>
-            <th>User</th>
-            <th>Table</th>
-            <th>Record ID</th>
-            <th>Action</th>
-            <th>Old Value</th>
-            <th>New Value</th>
-            <th>Date</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for log in logs %}
-        <tr>
-           <td>{{ log.user.get_full_name }}</td>
-            <td>{{ log.table_name }}</td>
-            <td>{{ log.record_id }}</td>
-            <td>{{ log.action }}</td>
-            <td>{{ log.old_value }}</td>
-            <td>{{ log.new_value }}</td>
-            <td>{{ log.created_at }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+<div class="max-w-7xl mx-auto p-6" dir="rtl">
 
-<!-- Pagination -->
-<div>
-    {% if logs.has_previous %}
-        <a href="?page={{ logs.previous_page_number }}">Previous</a>
-    {% endif %}
+    <h2 class="text-2xl font-semibold mb-6">سجل النظام</h2>
 
-    <span>Page {{ logs.number }} of {{ logs.paginator.num_pages }}</span>
+    <div class="overflow-x-auto bg-white shadow rounded-lg border border-gray-200">
+        <table class="min-w-full text-sm text-gray-700">
+            <thead class="bg-gray-50 border-b text-gray-600">
+                <tr>
+                    <th class="px-4 py-3 text-center">المستخدم</th>
+                    <th class="px-4 py-3 text-center">الجدول</th>
+                    <!-- <th class="px-4 py-3 text-center">معرّف السجل</th> -->
+                    <th class="px-4 py-3 text-center">الإجراء</th>
+                    <th class="px-4 py-3 text-center">التاريخ</th>
+                    <th class="px-4 py-3 text-center">التفاصيل</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y">
+                {% for log in logs %}
+                <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="px-4 py-2 text-center">{{ log.user.get_full_name }}</td>
+                    <td class="px-4 py-2 text-center">{{ log.user_friendly_table_name }}</td>
+                    <!-- <td class="px-4 py-2 text-center">{{ log.record_id }}</td> -->
+                    <td class="px-4 py-2 text-center capitalize">{{ log.user_friendly_action }}</td>
+                    <td class="px-4 py-2 text-center">{{ log.created_at|date:"Y-m-d H:i" }}</td>
+                    <td class="px-4 py-2 text-right">
+                            <ul>
+                                {% for item in log.details %}
+                                    <li>{{ item }}</li>
+                                {% empty %}
+                                    <li>لا توجد تفاصيل</li>
+                                {% endfor %}
+                            </ul>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="px-4 py-3 text-center text-gray-400">لا توجد سجلات</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 
-    {% if logs.has_next %}
-        <a href="?page={{ logs.next_page_number }}">Next</a>
-    {% endif %}
+    <!-- Pagination -->
+    <div class="flex justify-between items-center mt-4 text-gray-600">
+        {% if logs.has_previous %}
+            <a href="?page={{ logs.previous_page_number }}" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">السابق</a>
+        {% else %}
+            <span class="px-3 py-1 bg-gray-100 rounded text-gray-400 cursor-not-allowed">السابق</span>
+        {% endif %}
+
+        <span>صفحة {{ logs.number }} من {{ logs.paginator.num_pages }}</span>
+
+        {% if logs.has_next %}
+            <a href="?page={{ logs.next_page_number }}" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">التالي</a>
+        {% else %}
+            <span class="px-3 py-1 bg-gray-100 rounded text-gray-400 cursor-not-allowed">التالي</span>
+        {% endif %}
+    </div>
+
 </div>
 
-</body>
-</html>
+{% endblock %}

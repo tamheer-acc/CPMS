@@ -1,6 +1,8 @@
+import ast, decimal
 from itertools import groupby
 from django import forms
 from django.utils import timezone
+from django.utils.safestring import mark_safe
 from django.utils.timezone import now, timedelta
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy, reverse
@@ -12,7 +14,7 @@ from django.forms.models import model_to_dict
 from django.template.loader import render_to_string
 from django.db.models import Q,F, Case,Exists, When, Value, IntegerField, OuterRef, Subquery, BooleanField,CharField, Avg, Count
 from django.db.models.functions import Concat, Coalesce
-from django.db.models import Q, Case, When, Value, IntegerField
+from django.db.models.query import QuerySet
 from django.contrib import messages
 from django.contrib.auth import login, get_user_model
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
@@ -793,7 +795,6 @@ def is_manager(user):
 
 
 @login_required
-
 @user_passes_test(is_manager)
 def assign_employee_to_initiative(request, pk):
     initiative = get_object_or_404(Initiative, id=pk)
@@ -848,6 +849,8 @@ def assign_employee_to_initiative(request, pk):
     })
 
 
+
+@login_required
 def add_progress(request, initiative_id):
     user = request.user
     initiative = get_object_or_404(Initiative, id=initiative_id)
@@ -882,7 +885,6 @@ def add_progress(request, initiative_id):
 
 
 
-
 # ---------------------------
 #  KPI Views
 # ---------------------------
@@ -893,6 +895,7 @@ class KPIDetailsView(DetailView):
     model = KPI
     template_name = "KPI_detail.html"
     context_object_name = "KPI"
+
 
 
 @user_passes_test(is_manager)
@@ -1005,6 +1008,8 @@ class AllKPIsView(ListView): #not needed but here we go
 #                                                    WALAA's Views                                                      #
 #########################################################################################################################
 
+
+
 # ---------------------------
 #  Department View
 # ---------------------------
@@ -1018,6 +1023,8 @@ class AllDepartmentsView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         return Department.objects.all()
+
+
 
 # ---------------------------
 #  StrategicPlan View
@@ -1130,6 +1137,7 @@ class PlanDetailsview(LoginRequiredMixin, RoleRequiredMixin, DetailView):
          return super().render_to_response(context, **response_kwargs)
 
 
+
 class CreatePlanView(LoginRequiredMixin, CreateView):
     '''
     - Only Committee Manager can create a new strategic plan
@@ -1150,6 +1158,7 @@ class CreatePlanView(LoginRequiredMixin, CreateView):
         self.object = form.save(user=self.request.user)
         messages.success(self.request, "تم إنشاء الخطة بنجاح", extra_tags="create")
         return super().form_valid(form)
+
 
 
 class UpdatePlanView(LoginRequiredMixin, UpdateView):
@@ -1175,6 +1184,7 @@ class UpdatePlanView(LoginRequiredMixin, UpdateView):
         return super().form_valid(form)
 
 
+
 class DeletePlanView(LoginRequiredMixin, RoleRequiredMixin, DeleteView):
     '''
     - Only Committee Manager can delete a plan
@@ -1189,6 +1199,7 @@ class DeletePlanView(LoginRequiredMixin, RoleRequiredMixin, DeleteView):
         response = super().form_valid(form)
         messages.success(self.request, "تم حذف الخطة بنجاح", extra_tags="delete")
         return response
+
 
 
 # ---------------------------
@@ -1236,6 +1247,7 @@ class AllGoalsView(LoginRequiredMixin, ListView):
         return super().render_to_response(context, **response_kwargs)
 
 
+
 class GoalDetailsview(LoginRequiredMixin, DetailView):
     '''
     - Shows details of a single goal
@@ -1243,6 +1255,7 @@ class GoalDetailsview(LoginRequiredMixin, DetailView):
     model = StrategicGoal
     template_name = 'goal_detail.html'
     context_object_name = 'goal'
+
 
 
 class CreateGoalView(LoginRequiredMixin, RoleRequiredMixin, CreateView):
@@ -1264,6 +1277,7 @@ class CreateGoalView(LoginRequiredMixin, RoleRequiredMixin, CreateView):
         return reverse('plan_detail', kwargs={'pk': self.kwargs['plan_id']})
 
 
+
 class UpdateGoalView(LoginRequiredMixin, RoleRequiredMixin, UpdateView):
     '''
     - Managers and Committee Managers can update goals in their department
@@ -1282,6 +1296,7 @@ class UpdateGoalView(LoginRequiredMixin, RoleRequiredMixin, UpdateView):
         return super().form_valid(form)
 
 
+
 class DeleteGoalView(LoginRequiredMixin, RoleRequiredMixin, DeleteView):
     '''
     - Managers and Committee Managers can delete goals in their department
@@ -1297,6 +1312,8 @@ class DeleteGoalView(LoginRequiredMixin, RoleRequiredMixin, DeleteView):
         response = super().form_valid(form)
         messages.success(self.request, "تم حذف الهدف بنجاح", extra_tags="delete")
         return response
+
+
 
 # ---------------------------
 #  Note View
@@ -1686,6 +1703,7 @@ class NoteDetailsview(LoginRequiredMixin, DetailView):
      return HttpResponse(status=204)
 
 
+
 class CreateNoteView(LoginRequiredMixin, CreateView):
     model = Note
     form_class = NoteForm
@@ -1792,6 +1810,7 @@ class CreateNoteView(LoginRequiredMixin, CreateView):
         return super().form_valid(form)
 
 
+
 class UpdateNoteView(LoginRequiredMixin, UpdateView):
     '''
     - Allows updating a note
@@ -1818,6 +1837,7 @@ class UpdateNoteView(LoginRequiredMixin, UpdateView):
         return super().form_valid(form)
 
 
+
 class DeleteNoteView(LoginRequiredMixin, DeleteView):
     '''
     - Allows deleting a note
@@ -1842,21 +1862,287 @@ class DeleteNoteView(LoginRequiredMixin, DeleteView):
         messages.success(self.request, "تم حذف الملاحظة بنجاح", extra_tags="delete")
         return response
 
+
+
 # ---------------------------
 #  Log View
 # ---------------------------
-class AllLogsView(ListView):
+class AllLogsView(LoginRequiredMixin,ListView):
     model = Log
     template_name = 'log.html'
     context_object_name = 'logs'
-    paginate_by = 20  # لو تبي تقسيم صفحات
+    paginate_by = 20 
+    
+    ACTION_MAP = {
+        'CREATE': 'إنشاء',
+        'UPDATE': 'تعديل',
+        'DELETE': 'حذف',
+        'LOGIN': 'تسجيل الدخول',
+        'LOGOUT': 'تسجيل الخروج',
+        }
+    TABLE_MAP = {
+        'User':'نشاط المستخدم',
+        'Role': 'المنصب',
+        'Department': 'الإدارة',
+        'StrategicPlan': 'الخطة الاستراتيجية',
+        'StrategicGoal': 'الهدف الاستراتيجي',
+        'Initiative': 'المبادرة',
+        'UserInitiative': 'تقدم المبادرة',
+        'KPI': 'مؤشر الأداء الرئيسي',
+        'Note': 'الملاحظات'
+    }
+    NOTE_FIELD_MAP = {
+        'title': 'عنوان الملاحظة',
+        'content': 'المحتوى',
+        'sender': 'المرسل',
+        'receiver': 'المستلم',
+        'initiative': 'المبادرة',
+        'strategic_goal': 'الهدف الاستراتيجي',
+        'parent_note': 'نوع الملاحظة',
+        'created_at': 'تاريخ الإنشاء',
+        'read_by': 'مقروء من قبل',
+        'is_starred': 'مميزة بنجمة',
+    }
+    KPI_FIELD_MAP = {
+        'kpi': 'مؤشر الأداء',
+        'unit': 'الوحدة',
+        'target_value': 'القيمة المستهدفة',
+        'actual_value': 'القيمة الفعلية',
+        'start_value': 'قيمة البداية',
+        'initiative': 'المبادرة',
+    }
+    INITIATIVE_FIELD_MAP = {
+        # Initiative fields
+        'title': 'عنوان المبادرة',
+        'description': 'وصف المبادرة',
+        'start_date': 'تاريخ البداية',
+        'end_date': 'تاريخ النهاية',
+        'priority': 'الأولوية',
+        'category': 'الفئة',
+        'strategic_goal': 'الهدف الاستراتيجي المرتبط',
+        
+        # UserInitiative fields
+        'status': 'حالة المبادرة للموظف',
+        'progress': 'نسبة التقدم',
+        'initiative': 'المبادرة',
+        'user': 'الموظف',
+    }
+    STRATEGIC_GOAL_FIELD_MAP = {
+        'strategicplan': 'الخطة الاستراتيجية',
+        'department': 'الإدارة',
+        'goal_title': 'عنوان الهدف الاستراتيجي',
+        'description': 'وصف الهدف الاستراتيجي',
+        'start_date': 'تاريخ بداية الهدف',
+        'end_date': 'تاريخ نهاية الهدف',
+        'goal_status': 'حالة الهدف',
+        'goal_priority': 'أهمية الهدف',
+    }
+    STRATEGIC_PLAN_FIELD_MAP = {
+        'plan_name': 'اسم الخطة الاستراتيجية',
+        'vision': 'الرؤية',
+        'mission': 'الرسالة',
+        'start_date': 'تاريخ بداية الخطة',
+        'end_date': 'تاريخ نهاية الخطة',
+        'created_by': 'أنشئ بواسطة',
+        'is_active': 'نشطة',
+    }
+    USER_DEPARTMENT_ROLE_FIELD_MAP = {
+        'username': 'اسم المستخدم',
+        'first_name': 'الاسم الأول',
+        'last_name': 'اسم العائلة',
+        'email': 'البريد الإلكتروني',
+        'employee_number': 'رقم الموظف',
+        'role': 'المنصب',
+        'department': 'الإدارة',
+        'is_staff': 'موظف إداري',
+        'is_active': 'نشط',
+        'date_joined': 'تاريخ الانضمام',
+    }
+    STATUS_VALUE_MAP = {
+        'NS': 'لم يبدأ بعد',
+        'IP': 'قيد التنفيذ',
+        'D' : 'متأخر',
+        'C': 'مكتمل'
+    }
+    PRIORITY_VALUE_MAP = {
+        'L': 'منخفضة',
+        'M': 'متوسطة',
+        'H': 'عالية',
+        'C': 'حرجة'
+    }
 
+
+
+    def safe_eval(self, value):
+        import ast
+        import re
+
+        if not value:
+            return {}
+
+        value = value.replace("Decimal('", "").replace("')", "")
+        value = re.sub(
+            r"datetime\.date\((\d+),\s*(\d+),\s*(\d+)\)",
+            r"'\1-\2-\3'",
+            value
+        )
+        # replace <User: ...> with string quotes
+        value = re.sub(r"<User: ([^>]+)>", r"'\1'", value)
+
+        try:
+            return ast.literal_eval(value)
+        except Exception:
+            return {}
+        
+
+
+    def map_value(self, field, value):
+        if value is None:
+            return None
+
+        if isinstance(value, (dict, list, tuple)):
+            return value
+
+        if field in ['status', 'goal_status']:
+            return self.STATUS_VALUE_MAP.get(value, value)
+
+        if field in ['priority', 'goal_priority']:
+            return self.PRIORITY_VALUE_MAP.get(value, value)
+
+        return value
+
+
+
+    def make_friendly_details(self, log):
+        """
+        Returns a list of friendly strings for a log record:
+        - CREATE/DELETE: show all fields as "Field: Value"
+        - UPDATE: show only changed fields as "Field: Old → New"
+        """
+        import ast
+        import decimal
+        from datetime import datetime
+
+        if not log.old_value and not log.new_value:
+            return []
+
+        old_dict = self.safe_eval(log.old_value)
+        new_dict = self.safe_eval(log.new_value)
+
+        if log.table_name == 'User':
+            field_map = self.USER_DEPARTMENT_ROLE_FIELD_MAP
+        elif log.table_name in ['Initiative', 'UserInitiative']:
+            field_map = self.INITIATIVE_FIELD_MAP
+        elif log.table_name == 'KPI':
+            field_map = self.KPI_FIELD_MAP
+        elif log.table_name == 'Note':
+            field_map = self.NOTE_FIELD_MAP
+        elif log.table_name == 'StrategicGoal':
+            field_map = self.STRATEGIC_GOAL_FIELD_MAP
+        elif log.table_name == 'StrategicPlan':
+            field_map = self.STRATEGIC_PLAN_FIELD_MAP
+        else:
+            field_map = {}
+
+        details = []
+
+        if log.action.upper() in ['CREATE', 'DELETE']:
+            source = new_dict if log.action.upper() == 'CREATE' else old_dict
+            for key, val in source.items():
+                val = self.map_value(key, val)
+                # handle types
+                if key == 'id': #skip id
+                    continue
+                if key == 'read_by':
+                    if len(val) == 0:
+                        val = 'لم تُقرأ بعد'
+                    else:
+                        val = '، '.join(str(v) for v in val)
+
+                if key == 'initiative':
+                    if val:
+                        initiative = Initiative.objects.filter(id=val).first()
+                        val = initiative.title if initiative else 'مبادرة'
+                    else:
+                        val = 'لا يوجد'
+
+                if key == 'strategic_goal':
+                    if val:
+                        strategic_goal = StrategicGoal.objects.filter(id=val).first()
+                        val = strategic_goal.goal_title if strategic_goal else 'هدف استراتيجي'
+                    else:
+                        val = 'لا يوجد'
+
+                if key == 'parent_note':
+                    if val is None:
+                        val = 'ملاحظة رئيسية'
+                    else:
+                        parent = Note.objects.filter(id=val).first()
+                        if parent:
+                            val = f"رد على ملاحظة: {parent.title or f'#{parent.id}'}"
+                        else:
+                            val = "رد على ملاحظة"
+                if val is None:
+                    val = 'لا يوجد'
+                if val is False:
+                    val = 'لا'
+                if val is True:
+                    val = 'نعم'
+                if isinstance(val, decimal.Decimal):
+                    val = float(val)
+                if isinstance(val, datetime):
+                    val = val.strftime("%Y-%m-%d %H:%M")
+                if hasattr(val, '__str__'):
+                    try:
+                        val = str(val)
+                    except:
+                        pass
+                arabic_name = field_map.get(key, key)
+                details.append(f"{arabic_name}: {val}")
+
+
+        elif log.action.upper() == 'UPDATE':
+            for key in set(old_dict.keys()).union(new_dict.keys()):
+                old_val = self.map_value(key, old_dict.get(key))
+                new_val = self.map_value(key, new_dict.get(key))
+
+                # handle read_by
+                if isinstance(old_val, (list, tuple, QuerySet)):
+                    old_val = '، '.join(str(u) for u in old_val) if old_val else 'لم تُقرأ بعد'
+                if isinstance(new_val, (list, tuple, QuerySet)):
+                    new_val = '، '.join(str(u) for u in new_val) if new_val else 'لم تُقرأ بعد'
+
+                # booleans
+                if old_val is True:
+                    old_val = 'نعم'
+                elif old_val is False:
+                    old_val = 'لا'
+                if new_val is True:
+                    new_val = 'نعم'
+                elif new_val is False:
+                    new_val = 'لا'
+
+                if old_val != new_val:
+                    arabic_name = field_map.get(key, key)
+                    arrow_svg = """<svg xmlns="http://www.w3.org/2000/svg" fill="none"
+                        viewBox="0 0 24 24" stroke-width="1.5"
+                        stroke="currentColor" class="size-6 inline mx-1">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M6.75 15.75 3 12m0 0 3.75-3.75M3 12h18" />
+                    </svg>"""
+                    details.append(mark_safe(f"{arabic_name}: {old_val} {arrow_svg} {new_val}"))
+
+        return details
+            
+            
+            
     def get_queryset(self):
-        return Log.objects.all().order_by('-created_at')
+        qs = Log.objects.filter(table_name__in=self.TABLE_MAP.keys()).order_by('-created_at')
+        for log in qs:
+            log.user_friendly_action = self.ACTION_MAP.get(log.action.upper(), log.action)
+            log.user_friendly_table_name = self.TABLE_MAP.get(log.table_name, log.table_name)
+            log.details = self.make_friendly_details(log)
 
-
-
-
-
+        return qs
 
 
