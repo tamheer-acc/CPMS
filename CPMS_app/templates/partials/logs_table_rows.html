@@ -1,0 +1,25 @@
+
+
+{% for log in logs %}
+<tr class="border-b hover:bg-gray-50 hover:font-medium" data-title="{{ log.id }}">
+    <td class="px-4 py-2 text-center">{{ log.user.get_full_name }}</td>
+    <td class="px-4 py-2 text-center">{{ log.user_friendly_table_name }}</td>
+    <td class="px-4 py-2 text-center capitalize">{{ log.user_friendly_action }}</td>
+    <td class="px-4 py-2 text-center">{{ log.created_at|date:"Y-m-d H:i" }}</td>
+    <td class="px-4 py-2 text-right">
+        <ul>
+            {% for item in log.details %}
+                <li>{{ item|safe }}</li>
+            {% empty %}
+                <li>لا توجد تفاصيل</li>
+            {% endfor %}
+        </ul>
+    </td>
+</tr>
+{% empty %}
+<tr>
+    <td colspan="4" class="text-center py-4 text-gray-500 font-medium">
+        لا توجد سجلات
+    </td>
+</tr>
+{% endfor %}

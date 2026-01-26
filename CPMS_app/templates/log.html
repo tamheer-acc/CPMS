@@ -12,6 +12,120 @@
 <div class="max-w-7xl mx-auto p-6" dir="rtl">
 
     <h2 class="text-2xl font-semibold mb-6">سجل النظام</h2>
+    <!-- Container for Search, Filter, and pages number  -->
+    <div class="p-4 flex items-center justify-between gap-4"> 
+
+        <!-- Container for Search and Filter -->
+        <div class="flex items-center gap-2">
+
+            <!-- Search Input -->
+            <div class="relative">
+                <div class="absolute inset-y-0 end-0 flex items-center pe-3 pointer-events-none">
+                    <!-- Search icon -->
+                    <svg class="w-4 h-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M21 21l-4.35-4.35M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0z" />
+                    </svg>
+                </div>
+                <input type="text" id="search"
+                    class="block w-80 pe-9 ps-3 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="البحث عن سجل...">
+            </div>
+            <!-- Filter Button -->
+            <div class="relative">
+                <button id="dropdownDefaultButton"
+                    class="flex flex-row-reverse items-center justify-between text-body bg-neutral-secondary-medium border rounded text-gray-500 hover:text-gray-800 hover:bg-neutral-tertiary-medium shadow-xs font-medium leading-5 rounded-base text-sm px-3 py-2 focus:outline-none gap-2 "
+                    type="button">
+                    <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-width="2"
+                            d="M18.796 4H5.204a1 1 0 0 0-.753 1.659l5.302 6.058a1 1 0 0 1 .247.659v4.874a.5.5 0 0 0 .2.4l3 2.25a.5.5 0 0 0 .8-.4v-7.124a1 1 0 0 1 .247-.659l5.302-6.059c.566-.646.106-1.658-.753-1.658Z" />
+                    </svg>
+                    <span class="ml-1">الإجراء</span>
+                    <svg id="dropdownIcon" class="w-4 h-4 transition-transform duration-200"
+                        xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="m19 9-7 7-7-7" />
+                    </svg>
+                </button>
+
+                <!-- Dropdown Menu -->
+                <div id="dropdown"
+                    class="absolute right-0 z-10 hidden bg-neutral-primary-medium border border-default-medium rounded-base shadow-lg w-32 overflow-hidden">
+                    <ul class="p-2 text-sm text-body font-medium">
+                        <li>
+                            <button type="button" data-action=""
+                                class="filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">الكل</button>
+                        </li>
+                        <li>
+                            <button type="button" data-action="إضافة"
+                                class="filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">إضافة</button>
+                        </li>
+                        <li>
+                            <button type="button" data-action="تعديل"
+                                class="filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">تعديل</button>
+                        </li>
+                        <li>
+                            <button type="button" data-action="حذف"
+                                class="filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">حذف</button>
+                        </li>
+                        <li>
+                            <button type="button" data-action="تسجيل دخول"
+                                class="filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">تسجيل دخول</button>
+                        </li>
+                        <li>
+                            <button type="button" data-action="تسجيل خروج"
+                                class="filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">تسجيل خروج</button>
+                        </li>
+                    </ul>
+                </div>
+            </div> 
+        
+        </div>
+
+
+        <!-- dropdown page number -->
+            <div class="relative"> 
+                <button id="page-dropdown-button"
+                    class="flex flex-row-reverse items-center justify-between text-body bg-neutral-secondary-medium border rounded text-gray-500 hover:text-gray-800 hover:bg-neutral-tertiary-medium shadow-xs font-medium leading-5 rounded-base text-sm px-3 py-2 focus:outline-none gap-2 "
+                    type="button">
+                    <span id="page-dropdown-text" class="ml-1">عدد الصفوف</span> 
+                    <svg id="page-dropdown-icon" class="w-4 h-4 transition-transform duration-200" 
+                        xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="m19 9-7 7-7-7" />
+                    </svg>
+                </button>
+
+                <!-- Dropdown Menu --> 
+                <div id="page-dropdown" 
+                    class="absolute right-0 z-10 hidden bg-neutral-primary-medium border border-default-medium rounded-base shadow-lg w-32 overflow-hidden">
+                    <ul class="p-2 text-sm text-body font-medium">
+                        <li>
+                            <button type="button" data-number="25"
+                                class="page-filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">عدد الصفوف</button>
+                        </li>
+                        <li>
+                            <button type="button" data-number="5"
+                                class="page-filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">5</button>
+                        </li>
+                        <li>
+                            <button type="button" data-number="10"
+                                class="page-filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">10</button>
+                        </li>
+                        <li>
+                            <button type="button" data-number="50"
+                                class="page-filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">50</button>
+                        </li>
+                        <li>
+                            <button type="button" data-number="100"
+                                class="page-filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">100</button>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+    </div>
 
     <div class="overflow-x-auto bg-white shadow rounded-lg border border-gray-200">
         <table class="min-w-full text-sm text-gray-700">
@@ -25,49 +139,76 @@
                     <th class="px-4 py-3 text-center">التفاصيل</th>
                 </tr>
             </thead>
-            <tbody class="divide-y">
-                {% for log in logs %}
-                <tr class="hover:bg-gray-50 transition-colors">
-                    <td class="px-4 py-2 text-center">{{ log.user.get_full_name }}</td>
-                    <td class="px-4 py-2 text-center">{{ log.user_friendly_table_name }}</td>
-                    <!-- <td class="px-4 py-2 text-center">{{ log.record_id }}</td> -->
-                    <td class="px-4 py-2 text-center capitalize">{{ log.user_friendly_action }}</td>
-                    <td class="px-4 py-2 text-center">{{ log.created_at|date:"Y-m-d H:i" }}</td>
-                    <td class="px-4 py-2 text-right">
-                            <ul>
-                                {% for item in log.details %}
-                                    <li>{{ item }}</li>
-                                {% empty %}
-                                    <li>لا توجد تفاصيل</li>
-                                {% endfor %}
-                            </ul>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="7" class="px-4 py-3 text-center text-gray-400">لا توجد سجلات</td>
-                </tr>
-                {% endfor %}
+            <tbody id="logsBody" class="divide-y">
+                {% include 'partials/logs_table_rows.html' %}
             </tbody>
         </table>
     </div>
 
-    <!-- Pagination -->
-    <div class="flex justify-between items-center mt-4 text-gray-600">
-        {% if logs.has_previous %}
-            <a href="?page={{ logs.previous_page_number }}" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">السابق</a>
-        {% else %}
-            <span class="px-3 py-1 bg-gray-100 rounded text-gray-400 cursor-not-allowed">السابق</span>
-        {% endif %}
+<!-- Pagination -->
+{% if is_paginated %}
+    <div class="relative flex items-center justify-center p-4 w-full" aria-label="Table navigation" dir="rtl">
+        <!-- Page info on the right -->
+        <div class="absolute right-0 text-right">
+            <span class="text-sm font-normal text-gray-600">
+                عرض
+                <span class="font-semibold text-gray-900">{{ page_obj.number }}</span>
+                من
+                <span class="font-semibold text-gray-900">{{ paginator.num_pages }}</span>
+            </span>
+        </div>
 
-        <span>صفحة {{ logs.number }} من {{ logs.paginator.num_pages }}</span>
+        <ul class="flex gap-8 items-center justify-center border rounded-full py-2 px-5">
+            
+            <!-- Previous button -->
+            <li>
+                {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}&per_page={{ per_page }}&search={{ search }}&action={{ action }}"
+                        class="text-[#00685E] hover:text-[#00A399] transition-colors duration-200 text-lg">
+                        ‹
+                    </a>
+                {% else %}
+                    <span class="text-gray-400 text-lg cursor-not-allowed">‹</span>
+                {% endif %}
+            </li>
 
-        {% if logs.has_next %}
-            <a href="?page={{ logs.next_page_number }}" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">التالي</a>
-        {% else %}
-            <span class="px-3 py-1 bg-gray-100 rounded text-gray-400 cursor-not-allowed">التالي</span>
-        {% endif %}
+            <!-- Page numbers -->
+            {% for num in page_numbers %}
+                {% if num == '...' %}
+                    <li>
+                        <span class="text-gray-400">…</span>
+                    </li>
+                {% elif num == page_obj.number %}
+                    <li>
+                        <span class="flex items-center justify-center w-8 h-8 bg-[#00A399] text-white rounded-full">
+                            {{ num }}
+                        </span>
+                    </li>
+                {% else %}
+                    <li>
+                        <a href="?page={{ num }}&per_page={{ per_page }}&search={{ search }}&action={{ action }}"
+                            class="text-[#00685E] hover:text-[#00A399] transition-colors duration-200">
+                            {{ num }}
+                        </a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+
+            <!-- Next button -->
+            <li>
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}&per_page={{ per_page }}&search={{ search }}&action={{ action }}"
+                        class="text-[#00685E] hover:text-[#00A399] transition-colors duration-200 text-lg">
+                        ›
+                    </a>
+                {% else %}
+                    <span class="text-gray-400 text-lg cursor-not-allowed">›</span>
+                {% endif %}
+            </li>
+
+        </ul>
     </div>
+{% endif %}
 
 </div>
 

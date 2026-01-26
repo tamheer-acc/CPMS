@@ -1,5 +1,6 @@
-import ast, decimal
+import ast, decimal,  json, re
 from itertools import groupby
+from datetime import datetime
 from django import forms
 from django.utils import timezone
 from django.utils.safestring import mark_safe
@@ -29,6 +30,7 @@ from .models import ( STATUS, Role, Department, User, StrategicPlan, StrategicGo
 from .services import ( calc_goal_status, calc_initiative_status_by_avg, generate_KPIs,  create_log, get_plan_dashboard, calc_user_initiative_status, 
                         filter_queryset, get_page_numbers, model_to_dict_with_usernames, paginate_queryset, status_count, avg_calculator, 
                         calc_delayed, kpi_filter, weight_initiative, get_unread_notes_count, departments_progress_over_time)
+
 
 
 class LogMixin:
@@ -62,6 +64,7 @@ class LogMixin:
             instance=instance,
             old_data=model_to_dict_with_usernames(instance)
         )
+
 
 
 #Helper class that acts like UserPassesTestMixin:
@@ -139,6 +142,8 @@ class InitiativePermissionMixin:
 #                                                    RENAD's Views                                                      #
 #########################################################################################################################
 
+
+
 # ---------------------------
 #  Access Denied View
 # ---------------------------
@@ -148,7 +153,7 @@ def access_denied_view(request, exception=None):
 
 
 # ---------------------------
-#  Access Denied View
+#  Page not Found View
 # ---------------------------
 def page_not_found_view(request, exception=None):
     return render(request, 'page_not_found.html', status=404)
@@ -501,6 +506,10 @@ class AllInitiativeView(LoginRequiredMixin, InitiativePermissionMixin, ListView)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        context['search'] = self.request.GET.get('search', '')
+        context['action'] = self.request.GET.get('action', '')
+        context['per_page'] = self.request.GET.get('per_page', 25)
+
         page_obj = context['page_obj']
         total_pages = context['paginator'].num_pages
         current = page_obj.number
@@ -659,7 +668,7 @@ class UpdateInitiativeView(LoginRequiredMixin, RoleRequiredMixin, InitiativePerm
     '''
     model = Initiative
     template_name = 'initiative_form.html'
-    fields = ['title', 'description', 'start_date', 'end_date', 'priority', 'category']
+    form_class = InitiativeForm
     allowed_roles = ['M', 'CM']
 
     def get_queryset(self):
@@ -720,7 +729,7 @@ class DeleteInitiativeView(LoginRequiredMixin, RoleRequiredMixin, InitiativePerm
 
         messages.success( self.request, f"تم حذف المبادرة: {obj.title} بنجاح", extra_tags="delete")
         return redirect(success_url)
-    
+
 
 
 
@@ -804,7 +813,7 @@ def add_progress(request, initiative_id):
     user_initiative = get_object_or_404(UserInitiative, initiative=initiative, user=user)
     
     if request.method == 'POST':
-          # ===== OLD DATA  =====
+        # ===== OLD DATA  =====
         old_data = model_to_dict_with_usernames(user_initiative)
 
         form = UserInitiativeForm(request.POST, instance=user_initiative)
@@ -826,7 +835,7 @@ def add_progress(request, initiative_id):
         #         initiative.initiative_status = new_status
         #         initiative.save()
         #         print("Status updated ✔")
-   
+
             logger = LogMixin(request=request)
             logger.log_update(old_instance=old_data, new_instance=obj)
 
@@ -943,7 +952,6 @@ class DeleteKPIView(RoleRequiredMixin, LogMixin, DeleteView):
 
         messages.success( self.request, f"تم حذف مؤشر القياس: {obj.kpi} بنجاح", extra_tags="delete")
         return redirect(success_url)
-    
 
 
 
@@ -1046,22 +1054,22 @@ class AllPlansView(LoginRequiredMixin, RoleRequiredMixin, ListView):
         return queryset
 
     def get_context_data(self, **kwargs):
-      context = super().get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
 
-      queryset = self.get_queryset()
-      per_page = 5
+        queryset = self.get_queryset()
+        per_page = 5
 
-      page_list, page_obj, paginator = paginate_queryset(queryset, self.request, per_page)
+        page_list, page_obj, paginator = paginate_queryset(queryset, self.request, per_page)
 
-      context['plans'] = page_list               
-      context['page_obj'] = page_obj
-      context['paginator'] = paginator
-      context['page_numbers'] = get_page_numbers(page_obj, paginator)
-      context['per_page'] = per_page
-      context['is_paginated'] = True if paginator.num_pages > 1 else False
-      context['active_plan_exists'] = StrategicPlan.objects.filter(is_active=True).exists()
+        context['plans'] = page_list               
+        context['page_obj'] = page_obj
+        context['paginator'] = paginator
+        context['page_numbers'] = get_page_numbers(page_obj, paginator)
+        context['per_page'] = per_page
+        context['is_paginated'] = True if paginator.num_pages > 1 else False
+        context['active_plan_exists'] = StrategicPlan.objects.filter(is_active=True).exists()
 
-      return context
+        return context
 
 
     def render_to_response(self, context, **response_kwargs):
@@ -1075,78 +1083,79 @@ class AllPlansView(LoginRequiredMixin, RoleRequiredMixin, ListView):
 
 
 class PlanDetailsview(LoginRequiredMixin, RoleRequiredMixin, DetailView):
-     '''
-     - Displays details of a single strategic plan
-     '''
-     model = StrategicPlan
-     template_name = 'plan_detail.html'
-     context_object_name = 'plan'
-     allowed_roles = ['M', 'CM', 'GM']  # Roles allowed to access this view
+    '''
+    - Displays details of a single strategic plan
+    '''
+    model = StrategicPlan
+    template_name = 'plan_detail.html'
+    context_object_name = 'plan'
+    allowed_roles = ['M', 'CM', 'GM']  # Roles allowed to access this view
 
-     def get_queryset(self):
-         return StrategicPlan.objects.all()
+    def get_queryset(self):
+        return StrategicPlan.objects.all()
 
-     def get_context_data(self, **kwargs):
-         context = super().get_context_data(**kwargs)
-         dashboard_data = get_plan_dashboard(self.object, self.request.user)
-         context.update(dashboard_data)
-         user = self.request.user
-         role = user.role.role_name
-         goals_qs = StrategicGoal.objects.filter(strategicplan=self.object)
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        dashboard_data = get_plan_dashboard(self.object, self.request.user)
+        context.update(dashboard_data)
+        user = self.request.user
+        role = user.role.role_name
+        goals_qs = StrategicGoal.objects.filter(strategicplan=self.object)
 
-         #search & filter function
-         goals_qs = filter_queryset(
-           queryset=goals_qs,
-           request=self.request,
-           search_fields=['goal_title'],
-           status_field='goal_status',
-           priority_field='goal_priority'
-         )
+        #search & filter function
+        goals_qs = filter_queryset(
+        queryset=goals_qs,
+        request=self.request,
+        search_fields=['goal_title'],
+        status_field='goal_status',
+        priority_field='goal_priority'
+        )
 
-         if role in ['M', 'CM']:
-           # ===== add prefetch for initiatives and user initiatives =====
-             goals_qs = goals_qs.prefetch_related(
-               Prefetch(
-                'initiative_set',
-                queryset=Initiative.objects.prefetch_related(
-                    Prefetch(
-                        'userinitiative_set',
-                        queryset=UserInitiative.objects.filter(user=user),
-                        to_attr='user_initiative'
-                    )
+        if role in ['M', 'CM']:
+        # ===== add prefetch for initiatives and user initiatives =====
+            goals_qs = goals_qs.prefetch_related(
+            Prefetch(
+            'initiative_set',
+            queryset=Initiative.objects.prefetch_related(
+                Prefetch(
+                    'userinitiative_set',
+                    queryset=UserInitiative.objects.filter(user=user),
+                    to_attr='user_initiative'
                 )
             )
         )
-            # goals_qs = goals_qs.filter(department=user.department)
+    )
+        # goals_qs = goals_qs.filter(department=user.department)
 
-         per_page = 5
-         goal_list, page_obj, paginator = paginate_queryset(goals_qs, self.request, per_page)
+        per_page = 5
+        goal_list, page_obj, paginator = paginate_queryset(goals_qs, self.request, per_page)
 
-         context['goals'] = goal_list
-         context['page_obj'] = page_obj
-         context['paginator'] = paginator
-         context['per_page'] = per_page
-         context['is_paginated'] = True if paginator.num_pages > 1 else False
-         context['page_numbers'] = get_page_numbers(page_obj, paginator)
-         goals_with_progress = []
-         for goal in goal_list:
-             goals_with_progress.append({
-                 "goal": goal,
-                #  "progress": calc_goal_progress(goal, self.request.user)
-             })
+        context['goals'] = goal_list
+        context['page_obj'] = page_obj
+        context['paginator'] = paginator
+        context['per_page'] = per_page
+        context['is_paginated'] = True if paginator.num_pages > 1 else False
+        context['page_numbers'] = get_page_numbers(page_obj, paginator)
+        goals_with_progress = []
+        for goal in goal_list:
+            goals_with_progress.append({
+                "goal": goal,
+            #  "progress": calc_goal_progress(goal, self.request.user)
+            })
 
-         context['goals_with_progress'] = goals_with_progress
+        context['goals_with_progress'] = goals_with_progress
 
-         return context
+        return context
 
-     def render_to_response(self, context, **response_kwargs):
-         if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
-             html = render_to_string('partials/goals_table_rows.html', context, request=self.request)
-             return JsonResponse({
-                 'html': html
-             })
+    def render_to_response(self, context, **response_kwargs):
+        if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            html = render_to_string('partials/goals_table_rows.html', context, request=self.request)
+            return JsonResponse({
+                'html': html
+            })
 
-         return super().render_to_response(context, **response_kwargs)
+        return super().render_to_response(context, **response_kwargs)
+
 
 
 class CreatePlanView(LoginRequiredMixin, LogMixin, CreateView):
@@ -1171,7 +1180,6 @@ class CreatePlanView(LoginRequiredMixin, LogMixin, CreateView):
         messages.success(self.request, "تم إنشاء الخطة بنجاح", extra_tags="create")
         return redirect(self.get_success_url())
 
-    
 
 
 class UpdatePlanView(LoginRequiredMixin, LogMixin, UpdateView):
@@ -1199,6 +1207,7 @@ class UpdatePlanView(LoginRequiredMixin, LogMixin, UpdateView):
 
         messages.success(self.request, "تم تحديث الخطة بنجاح", extra_tags="update")
         return response
+
 
 
 class DeletePlanView(LoginRequiredMixin, RoleRequiredMixin, LogMixin, DeleteView):
@@ -1276,6 +1285,7 @@ class GoalDetailsview(LoginRequiredMixin, DetailView):
     context_object_name = 'goal'
 
 
+
 class CreateGoalView(LoginRequiredMixin, RoleRequiredMixin, LogMixin, CreateView):
     '''
     - Allows Managers and Committee Managers to create a new goal
@@ -1297,6 +1307,7 @@ class CreateGoalView(LoginRequiredMixin, RoleRequiredMixin, LogMixin, CreateView
         return reverse('plan_detail', kwargs={'pk': self.kwargs['plan_id']})
 
 
+
 class UpdateGoalView(LoginRequiredMixin, RoleRequiredMixin, LogMixin, UpdateView):
     '''
     - Managers and Committee Managers can update goals in their department
@@ -1315,6 +1326,7 @@ class UpdateGoalView(LoginRequiredMixin, RoleRequiredMixin, LogMixin, UpdateView
         self.log_update(old_instance, self.object)
         messages.success(self.request, "تم تحديث الهدف بنجاح", extra_tags="update")
         return response
+
 
 
 class DeleteGoalView(LoginRequiredMixin, RoleRequiredMixin, LogMixin, DeleteView):
@@ -1384,7 +1396,7 @@ class AllNotesView(LoginRequiredMixin, ListView):
         else:
             qs = Note.objects.none()
 
-       
+
         # annotate last sender (for unread)
         last_note_qs = Note.objects.filter(
            Q(parent_note=OuterRef('pk')) | Q(pk=OuterRef('pk'))).order_by('-created_at')
@@ -1609,7 +1621,6 @@ class AllNotesView(LoginRequiredMixin, ListView):
 
 
 
-
 class NoteDetailsview(LoginRequiredMixin, LogMixin, DetailView):
     model = Note
     template_name = 'partials/note_detail.html'
@@ -1739,6 +1750,7 @@ class NoteDetailsview(LoginRequiredMixin, LogMixin, DetailView):
      return HttpResponse(status=204)
 
 
+
 class CreateNoteView(LoginRequiredMixin, LogMixin, CreateView):
     model = Note
     form_class = NoteForm
@@ -1846,6 +1858,7 @@ class CreateNoteView(LoginRequiredMixin, LogMixin, CreateView):
         return super().form_valid(form)
 
 
+
 class UpdateNoteView(LoginRequiredMixin, LogMixin, UpdateView):
     '''
     - Allows updating a note
@@ -1872,6 +1885,7 @@ class UpdateNoteView(LoginRequiredMixin, LogMixin, UpdateView):
         self.log_update(old_instance, self.object)
         messages.success(self.request, "تم تحديث الملاحظة بنجاح", extra_tags="update")
         return response
+
 
 
 class DeleteNoteView(LoginRequiredMixin, LogMixin, DeleteView):
@@ -1909,8 +1923,11 @@ class AllLogsView(LoginRequiredMixin,ListView):
     model = Log
     template_name = 'log.html'
     context_object_name = 'logs'
-    paginate_by = 20 
     
+    def get_paginate_by(self, queryset):
+        return int(self.request.GET.get('per_page', 25))  # default 25
+
+
     ACTION_MAP = {
         'CREATE': 'إنشاء',
         'UPDATE': 'تعديل',
@@ -2012,26 +2029,31 @@ class AllLogsView(LoginRequiredMixin,ListView):
 
 
     def safe_eval(self, value):
-        import ast
-        import re
-
         if not value:
             return {}
+        # value = value.replace('""', '"')
 
+        # replace Decimal(...) to float
         value = value.replace("Decimal('", "").replace("')", "")
-        value = re.sub(
-            r"datetime\.date\((\d+),\s*(\d+),\s*(\d+)\)",
-            r"'\1-\2-\3'",
-            value
-        )
-        # replace <User: ...> with string quotes
-        value = re.sub(r"<User: ([^>]+)>", r"'\1'", value)
 
+        # replace datetime.date(...) to string
+        value = re.sub(r"datetime\.date\((\d+),\s*(\d+),\s*(\d+)\)", r"'\1-\2-\3'", value)
+
+        # replace <User: ...> with string
+        value = re.sub(r"<User: ([^>]+)>", r'"\1"', value)
+
+        # try JSON first
+        try:
+            return json.loads(value)
+        except Exception:
+            pass
+
+        # fallback to ast.literal_eval
         try:
             return ast.literal_eval(value)
         except Exception:
             return {}
-        
+
 
 
     def map_value(self, field, value):
@@ -2084,8 +2106,8 @@ class AllLogsView(LoginRequiredMixin,ListView):
 
         details = []
 
-        if log.action.upper() in ['CREATE', 'DELETE']:
-            source = new_dict if log.action.upper() == 'CREATE' else old_dict
+        if log.action.upper() in ['إضافة', 'حذف','CREATE', 'DELETE']:
+            source = new_dict if log.action == 'إضافة' or log.action.upper() == 'CREATE'  else old_dict
             for key, val in source.items():
                 val = self.map_value(key, val)
                 # handle types
@@ -2139,7 +2161,7 @@ class AllLogsView(LoginRequiredMixin,ListView):
                 details.append(f"{arabic_name}: {val}")
 
 
-        elif log.action.upper() == 'UPDATE':
+        elif log.action.upper() == 'UPDATE' or log.action == 'تعديل' :
             for key in set(old_dict.keys()).union(new_dict.keys()):
                 old_val = self.map_value(key, old_dict.get(key))
                 new_val = self.map_value(key, new_dict.get(key))
@@ -2171,17 +2193,76 @@ class AllLogsView(LoginRequiredMixin,ListView):
                     details.append(mark_safe(f"{arabic_name}: {old_val} {arrow_svg} {new_val}"))
 
         return details
-            
-            
-            
+
+
+
+    def render_to_response(self, context, **response_kwargs):
+        if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            html = render_to_string(
+                'partials/logs_table_rows.html',
+                context,
+                request=self.request
+            )
+            return JsonResponse({'html': html})
+        return super().render_to_response(context, **response_kwargs)
+
+
+
     def get_queryset(self):
-        qs = Log.objects.filter(table_name__in=self.TABLE_MAP.keys()).order_by('-created_at')
+        qs = Log.objects.filter(table_name__in=self.TABLE_MAP.keys()).order_by('-created_at')        
+        user_id = self.request.GET.get('user','')
+        search = self.request.GET.get('search', '')
+        action = self.request.GET.get('action', '')
+        log_date = self.request.GET.get('log_date','')
+        
+        if user_id:
+            qs = qs.filter(user_id=user_id)
+        if search: 
+            qs = qs.filter(
+                Q(user__first_name__icontains=search) |
+                Q(user__last_name__icontains=search) |
+                Q(action__icontains=search) |
+                Q(table_name__icontains=search)
+            )
+        if action:
+            qs = qs.filter(action=action)
+        if log_date:
+            try:
+                date_obj = datetime.strptime(log_date, "%Y-%m-%d").date()
+                qs = qs.filter(created_at__date=date_obj)
+            except ValueError:
+                pass  # invalid date input, ignore filter
+
         for log in qs:
             log.user_friendly_action = self.ACTION_MAP.get(log.action.upper(), log.action)
             log.user_friendly_table_name = self.TABLE_MAP.get(log.table_name, log.table_name)
             log.details = self.make_friendly_details(log)
 
         return qs
+
+
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['users'] = User.objects.all()
+        context['search'] = self.request.GET.get('search', '')
+        context['action'] = self.request.GET.get('action', '')
+
+        context['action_map'] = self.ACTION_MAP
+        context['current_filters'] = self.request.GET
+        context['per_page'] = self.request.GET.get('per_page', 25)
+        page_obj = context['page_obj']
+        total_pages = context['paginator'].num_pages
+        current = page_obj.number
+
+        page_numbers = []
+        for num in range(1, total_pages + 1):
+            if num == 1 or num == total_pages or abs(num - current) <= 2:
+                page_numbers.append(num)
+            elif page_numbers[-1] != '...':
+                page_numbers.append('...')
+        context['page_numbers'] = page_numbers
+        return context
 
 
 
