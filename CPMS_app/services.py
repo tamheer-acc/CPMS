@@ -312,10 +312,10 @@ def get_plan_dashboard(plan, user):
     goals_delayed = goals.filter(goal_status='D').count()
 
     # -----------------------------
-    initiatives_not_started = initiatives_qs.filter(initiative_status='NS').count()
-    initiatives_in_progress = initiatives_qs.filter(initiative_status='IP').count()
-    initiatives_completed = initiatives_qs.filter(initiative_status='C').count()
-    initiatives_delayed = initiatives_qs.filter(initiative_status='D').count()
+    # initiatives_not_started = initiatives_qs.filter(initiative_status='NS').count()
+    # initiatives_in_progress = initiatives_qs.filter(initiative_status='IP').count()
+    # initiatives_completed = initiatives_qs.filter(initiative_status='C').count()
+    # initiatives_delayed = initiatives_qs.filter(initiative_status='D').count()
 
     # -----------------------------
     priority_map = {'C': 1, 'H': 2, 'M': 3, 'L': 4}
@@ -335,12 +335,12 @@ def get_plan_dashboard(plan, user):
 
     initiatives_total = len(i)
 
-    initiative_status = [
-    initiatives_not_started,
-    initiatives_in_progress,
-    initiatives_completed,
-    initiatives_delayed
-    ]
+    # initiative_status = [
+    # initiatives_not_started,
+    # initiatives_in_progress,
+    # initiatives_completed,
+    # initiatives_delayed
+    # ]
     
     departments_progress_json = json.dumps(list(departments_progress)) if departments_progress else "[]"
     employees_progress_json = json.dumps(list(employees_progress)) if employees_progress else "[]"
@@ -360,7 +360,7 @@ def get_plan_dashboard(plan, user):
         'goals_total': goals_total,
         'initiatives_count':initiatives_total,
         'goals_status': goals_status,
-        'initiative_status': initiative_status,
+        # 'initiative_status': initiative_status,
         'delayed_goals_monthly': delayed_goals_monthly,
         'plan_avg': round(plan_avg),
         'plan_avg_by_two': round(plan_avg / 2),

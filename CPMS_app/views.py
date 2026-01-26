@@ -814,15 +814,15 @@ def add_progress(request, initiative_id):
             goal.goal_status = new_status
             goal.save()
 
-           # ===== Update Initiative Status =====
-            old_status = initiative.initiative_status
-            new_status = calc_initiative_status_by_avg(initiative)
-            print("OLD STATUS:", old_status)
-            print("NEW STATUS:", new_status)
-            if old_status != new_status:
-                initiative.initiative_status = new_status
-                initiative.save()
-                print("Status updated ✔")
+        #    # ===== Update Initiative Status =====
+        #     old_status = initiative.initiative_status
+        #     new_status = calc_initiative_status_by_avg(initiative)
+        #     print("OLD STATUS:", old_status)
+        #     print("NEW STATUS:", new_status)
+        #     if old_status != new_status:
+        #         initiative.initiative_status = new_status
+        #         initiative.save()
+        #         print("Status updated ✔")
    
             logger = LogMixin(request=request)
             logger.log_update(old_instance=old_data, new_instance=obj)
