@@ -10,96 +10,140 @@ from django.db.models import Count, Q, Case, When, Value, IntegerField, Avg, Pre
 from django.db.models import Prefetch
 from django.db.models.functions import TruncMonth
 from .models import Note, StrategicGoal, Initiative, Log, UserInitiative, ProgressLog
+from django.db.models import OuterRef, Subquery, Q
 
-User = get_user_model()
+def format_log_values(old_value, new_value, action, instance=None):
+    """
+    Return human-readable log text instead of raw JSON
+    """
+    def format_field(key, value):
+        if instance:
+            try:
+                field = instance._meta.get_field(key)
+
+                if hasattr(field, "choices") and field.choices:
+                    for k, v in field.choices:
+                        if str(k) == str(value):
+                            value = v
+                            break
+
+                if field.is_relation and value is not None:
+                    related_model = field.related_model
+                    related_obj = related_model.objects.filter(pk=value).first()
+                    if related_obj:
+                        value = str(related_obj)
+                    
+                # if isinstance(field, models.BooleanField):
+                #     value = "نعم" if value else "لا"
+
+            except Exception:
+                pass
+
+        return f"• {key}: {value}"
+
+    # إضافة
+    if action == "إضافة" and new_value:
+        data = json.loads(new_value)
+        return "\n".join([format_field(k, v) for k, v in data.items()])
+
+    # حذف
+    if action == "حذف" and old_value:
+        data = json.loads(old_value)
+        return "\n".join([format_field(k, v) for k, v in data.items()])
+
+    # تعديل
+    if action == "تعديل" and old_value and new_value:
+        old = json.loads(old_value)
+        new = json.loads(new_value)
+
+        changes = []
+        for key in new:
+            if old.get(key) != new.get(key):
+                changes.append(
+                    f"• {key}: {old.get(key)} → {new.get(key)}"
+                )
+
+        return "\n".join(changes) if changes else "لا يوجد تغييرات فعلية"
+
+    return ""
+
+
+
 
 def model_to_dict_with_usernames(instance):
+    """
+    Convert model to dict and convert FK user to username/full name.
+    """
+    User = get_user_model()
     data = model_to_dict(instance)
 
-    # ===== Convert any FK to User into the user's name instead of ID =====
     for field in instance._meta.fields:
-        if field.related_model == User:
+        if getattr(field, "related_model", None) == User:
             user_obj = getattr(instance, field.name)
-            data[field.name] = user_obj.get_full_name() or user_obj.username if user_obj else None
+            data[field.name] = user_obj.get_full_name() if user_obj else None
     
-    # ===== If this record is a reply (has parent_note) =====
+    # Convert M2M fields (مثل read_by)
+    for field in instance._meta.many_to_many:
+        if getattr(field, "related_model", None) == User:
+            users = getattr(instance, field.name).all()
+            data[field.name] = [u.get_full_name() for u in users]
+
     if hasattr(instance, "parent_note") and instance.parent_note:
         parent = instance.parent_note
         parent_title = parent.title or ""
 
-        # If title is empty, set it to "Reply - :<parent_title>"
         if not data.get("title"):
-            data["title"] = f"Reply - :{parent_title} "
+            data["title"] = f"رد:{parent_title} "
+
 
     return data
 
 
-
-def get_unread_notes_count(user):
-    '''
-    -  Returns unread notes count for the user   
-    -  Use: inside AllNotesView, and NoteDetailview
-    '''
-    
-    # GM never receives notes
-    if user.role.role_name == 'GM':
-        return 0
-
-    role = user.role.role_name
-
-    if role in ['M', 'CM']:
-        return (
-            Note.objects
-            .filter(
-                Q(receiver=user) |
-                Q(strategic_goal__department=user.department) |
-                Q(initiative__userinitiative__user=user),
-                parent_note__isnull=True
-            )
-            .exclude(sender=user)
-            .exclude(read_by=user)
-            .distinct()
-            .count()
-        )
-
-    # Employee
-    return (
-        Note.objects
-        .filter(
-            Q(receiver=user) |
-            Q(initiative__userinitiative__user=user),
-            parent_note__isnull=True
-        )
-        .exclude(sender=user)
-        .exclude(read_by=user)
-        .distinct()
-        .count()
-    )
-
-
-
-
 def create_log(user, action, instance=None, old_data=None, table_name=None, record_id=None):
-    # get new_data
-    new_data = model_to_dict(instance) if instance and action != "DELETE" else None
+    """
+    General helper to log any action:
+    - LOGIN/LOGOUT -> user only
+    - CREATE -> new data
+    - UPDATE -> old and new data
+    - DELETE -> old data
+    - OTHER -> event only (like star/unstar)
+    """
+    # LOGIN/LOGOUT
+    if action in ["تسجيل دخول", "تسجيل خروج"]:
+        Log.objects.create(
+            user=user,
+            action=action,
+            table_name="User",
+            record_id=None,
+            old_value=None,
+            new_value=None
+        )
+        return
 
-    # try to get table_name and record_id from instance if not provided
+    new_data = model_to_dict_with_usernames(instance) if instance else None
+
     if instance:
         table_name = instance.__class__.__name__
         record_id = instance.pk
 
-    # prepare values
-    if action == "CREATE":
+    # CREATE
+    if action == "إضافة":
         old_value = None
         new_value = json.dumps(new_data, ensure_ascii=False, cls=DjangoJSONEncoder)
 
-    elif action == "UPDATE":
+    # UPDATE
+    elif action == "تعديل":
         old_value = json.dumps(old_data, ensure_ascii=False, cls=DjangoJSONEncoder)
         new_value = json.dumps(new_data, ensure_ascii=False, cls=DjangoJSONEncoder)
 
-    elif action == "DELETE":
+    # DELETE
+    elif action == "حذف":
         old_value = json.dumps(old_data, ensure_ascii=False, cls=DjangoJSONEncoder)
         new_value = None
+
+    else:
+        old_value = json.dumps(old_data, ensure_ascii=False, cls=DjangoJSONEncoder)
+        new_value = json.dumps(new_data, ensure_ascii=False, cls=DjangoJSONEncoder)
 
     Log.objects.create(
         user=user,
@@ -112,10 +156,60 @@ def create_log(user, action, instance=None, old_data=None, table_name=None, reco
 
 
 
+def get_unread_notes_count(user):
+    '''
+    -  Returns unread notes count for the user   
+    -  Use: inside AllNotesView, and NoteDetailview
+    '''
+
+    last_reply_sender = Note.objects.filter(
+        parent_note=OuterRef('pk')
+    ).order_by('-created_at').values('sender')[:1]
+
+    # GM never receives notes
+    if user.role.role_name == 'GM':
+        return 0
+
+    role = user.role.role_name
+
+    if role in ['M', 'CM']:
+        return (
+            Note.objects
+            .filter(parent_note__isnull=True)
+            .annotate(last_sender=Subquery(last_reply_sender))
+            .exclude(last_sender=user)
+            .exclude(read_by=user)
+            .filter(
+                Q(receiver=user) |
+                Q(strategic_goal__department=user.department) |
+                Q(initiative__userinitiative__user=user)
+            )
+            .distinct()
+            .count()
+        )
+
+    # Employee
+    return (
+        Note.objects
+        .filter(parent_note__isnull=True)
+        .annotate(last_sender=Subquery(last_reply_sender))
+        .exclude(last_sender=user)
+        .exclude(read_by=user)
+        .filter(
+            Q(receiver=user) |
+            Q(initiative__userinitiative__user=user)
+        )
+        .distinct()
+        .count()
+    )
 
 
 def generate_KPIs(initiative):
     pass
+
+def donutChart_data():
+    return
+
 
 # def build_donut_data(not_started, in_progress, completed, delayed, total):
 #     total = total or 1
@@ -171,7 +265,6 @@ def get_delayed_goals_monthly(goals_qs, role, user):
     return list(delayed)
 
 
-
 def get_plan_dashboard(plan, user):
     role = user.role.role_name
     can_edit = False  # Read only
@@ -181,6 +274,15 @@ def get_plan_dashboard(plan, user):
         'initiative_set__userinitiative_set',
         queryset=UserInitiative.objects.select_related('user')
         ))
+    i = [
+     initiative
+     for goal in goals
+     for initiative in goal.initiative_set.all()
+     if any(
+        ui.user_id == user.id
+        for ui in initiative.userinitiative_set.all()
+     )
+    ]
 
     initiatives_qs = Initiative.objects.filter(strategic_goal__in=goals)
 
@@ -231,7 +333,7 @@ def get_plan_dashboard(plan, user):
      goals_delayed
     ]
 
-    initiatives_total = initiatives_qs.count()
+    initiatives_total = len(i)
 
     initiatives_status = [
     initiatives_not_started,
@@ -287,7 +389,6 @@ def get_plan_dashboard(plan, user):
     }
 
 
-
 def calc_user_initiative_status(user_initiative):
     """
     Calculate the status of a user initiative
@@ -311,6 +412,77 @@ def calc_user_initiative_status(user_initiative):
     
     return 'NS'
 
+#====================================================================
+def calc_initiative_status_by_avg(initiative):
+    avg_progress = UserInitiative.objects.filter(
+        initiative=initiative
+    ).aggregate(avg=Avg('progress'))['avg'] or 0
+
+    start_date = initiative.start_date
+    end_date = initiative.end_date
+    today = date.today()
+
+    total_days = max((end_date - start_date).days, 1)
+    days_left = 0 if end_date < today else (end_date - today).days
+
+    if avg_progress >= 100:
+        return 'C'
+    elif days_left <= 0.10 * total_days:
+        return 'D'
+    elif avg_progress > 0:
+        return 'IP'
+    return 'NS'
+#=====================================================================
+def calc_goal_progress(goal, user):
+    qs = goal.initiative_set.all()
+
+    if user.role.role_name == 'E':
+        qs = qs.filter(userinitiative__user=user)
+
+    if not qs.exists():
+        return 0
+
+    avg = qs.aggregate(
+        avg=Avg('userinitiative__progress')
+    )['avg'] or 0
+
+    return round(float(avg), 2)
+
+#=====================================================================
+def calc_goal_status(goal,user):
+    start_date = goal.start_date
+    end_date = goal.end_date
+    today = date.today()
+
+    initiatives = goal.initiative_set.all()
+    if not initiatives.exists():
+        return 'NS'
+
+    avg_progress = calc_goal_progress(goal,user)
+
+    if today > end_date:
+        return 'D'
+
+    if avg_progress >= 100:
+        return 'C'
+
+    if avg_progress > 0:
+        return 'IP'
+
+    return 'NS'
+
+#==========================================================
+def calc_plan_progress(plan):
+    goals = plan.goals.all()
+
+    if not goals.exists():
+        return 0
+
+    total = 0
+    for goal in goals:
+        total += calc_goal_progress(goal)
+
+    return round(total / goals.count(), 2)
 
 
 def filter_queryset(queryset, request, search_fields=None, status_field=None, priority_field=None):
@@ -566,3 +738,11 @@ def departments_progress_over_time(departments, days_count=30):
             })
 
     return chart_data
+
+# def kpi_progress( list_of_kpis ):
+#     # check logs for start 
+#     for kpi in list_of_kpis:
+#         logs = Log.objects.filter(table_name = 'KPI', record_id = kpi.pk).first
+#         if logs:
+#             # start_value = 
+#             pass

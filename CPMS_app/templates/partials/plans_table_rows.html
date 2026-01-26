@@ -15,7 +15,7 @@
     {% endif %}
   </td>
 
-  <td class="px-6 py-4 text-center flex justify-between gap-3">
+  <td class="px-6 py-4 text-center flex justify-start gap-6">
 
     <!-- View Button -->
     <a href="{% url 'plan_detail' plan.id %}" class="text-blue-600 hover:text-blue-800 p-1">
@@ -26,22 +26,6 @@
         <path d="M2 12c2-4 6-8 10-8s8 4 10 8c-2 4-6 8-10 8s-8-4-10-8" />
       </svg>
     </a>
-
-    <!-- Update Button -->
-    {% if user.role.role_name == 'CM' %}
-    <a href="{% if plan.is_active %}{% url 'plan_update' plan.id %}{% else %}#{% endif %}"
-      class="{% if plan.is_active %}text-yellow-600 hover:text-yellow-800{% else %}text-gray-400 cursor-not-allowed{% endif %} p-1"
-      {% if not plan.is_active %}onclick="return false;" {% endif %}>
-      <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2"
-        stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-        <path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" />
-        <path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415" />
-        <path d="M16 5l3 3" />
-      </svg>
-    </a>
-
-    {% endif %}
 
     {% if user.role.role_name == 'CM' %}
     <!-- Delete Button -->
@@ -57,6 +41,23 @@
         <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" />
       </svg>
     </button>
+    {% endif %}
+
+     <!-- Update Button -->
+    {% if user.role.role_name == 'CM' %}
+    {% if plan.is_active %}
+    <a href="{% if plan.is_active %}{% url 'plan_update' plan.id %}{% else %}#{% endif %}"
+      class="{% if plan.is_active %}text-yellow-600 hover:text-yellow-800{% else %}text-gray-400 cursor-not-allowed{% endif %} p-1"
+      {% if not plan.is_active %}onclick="return false;" {% endif %}>
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+        <path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" />
+        <path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415" />
+        <path d="M16 5l3 3" />
+      </svg>
+    </a>
+     {% endif %}
     {% endif %}
   </td>
 

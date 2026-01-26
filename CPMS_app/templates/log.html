@@ -1,51 +1,76 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Logs</title>
-</head>
-<body>
+{% extends 'base.html' %}
+{% load static %}
+{% block breadcrumb %}
+<li class="flex items-center">
+    <span class="mx-2">/</span>
+    <span class="text-gray-800 font-semibold">سجل الأحداث</span>
+</li>
+{% endblock %}
 
-<h2>All Logs</h2>
+{% block content %}
+<h2 class="text-2xl font-bold mb-4">كل السجلات</h2>
 
-<table border="1">
-    <thead>
-        <tr>
-            <th>User</th>
-            <th>Table</th>
-            <th>Record ID</th>
-            <th>Action</th>
-            <th>Old Value</th>
-            <th>New Value</th>
-            <th>Date</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for log in logs %}
-        <tr>
-           <td>{{ log.user.get_full_name }}</td>
-            <td>{{ log.table_name }}</td>
-            <td>{{ log.record_id }}</td>
-            <td>{{ log.action }}</td>
-            <td>{{ log.old_value }}</td>
-            <td>{{ log.new_value }}</td>
-            <td>{{ log.created_at }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+<section dir="rtl">
+    <div class="max-w-3xl mx-auto px-4 py-6 space-y-6">
 
-<!-- Pagination -->
-<div>
-    {% if logs.has_previous %}
-        <a href="?page={{ logs.previous_page_number }}">Previous</a>
-    {% endif %}
+        <div class=" rounded-lg shadow-md">
+            <table class="w-full text-right text-xs text-gray-700 border border-gray-200 table-auto">
+                <thead class="bg-blue-500 text-white">
+                    <tr>
+                        <th class="px-3 py-2 w-[15%]">المستخدم</th>
+                        <th class="px-3 py-2 w-[12%]">الجدول</th>
+                        <th class="px-3 py-2 w-[8%]">السجل</th>
+                        <th class="px-3 py-2 w-[10%]">الحدث</th>
+                        <th class="px-3 py-2 w-[35%]">التفاصيل</th>
+                        <th class="px-3 py-2 w-[20%]">التاريخ</th>
+                    </tr>
+                </thead>
 
-    <span>Page {{ logs.number }} of {{ logs.paginator.num_pages }}</span>
+                <tbody>
+                    {% for log in logs %}
+                    <tr class="border-b bg-white hover:bg-gray-50">
+                        <td class="px-3 py-2">{{ log.user.get_full_name }}</td>
+                        <td class="px-3 py-2">{{ log.table_name }}</td>
+                        <td class="px-3 py-2 text-center">{{ log.record_id|default:"—" }}</td>
+                        <td class="px-3 py-2 font-semibold">{{ log.action }}</td>
 
-    {% if logs.has_next %}
-        <a href="?page={{ logs.next_page_number }}">Next</a>
-    {% endif %}
-</div>
+                        <td class="px-3 py-2 text-xs text-gray-600 whitespace-pre-line">
+                            {{ log.old_value|default:"—" }}
+                        </td>
 
-</body>
-</html>
+                        <td class="px-3 py-2 text-xs text-gray-500">
+                            {{ log.created_at|date:"Y/m/d H:i" }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+
+            </table>
+        </div>
+
+
+
+        <!-- Pagination -->
+        <div class="flex justify-center items-center gap-3 mt-4">
+            {% if logs.has_previous %}
+            <a href="?page={{ logs.previous_page_number }}"
+                class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">
+                السابق
+            </a>
+            {% endif %}
+
+            <span class="px-4 py-2 bg-gray-200 rounded-lg">
+                الصفحة {{ logs.number }} من {{ logs.paginator.num_pages }}
+            </span>
+
+            {% if logs.has_next %}
+            <a href="?page={{ logs.next_page_number }}"
+                class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">
+                التالي
+            </a>
+            {% endif %}
+        </div>
+
+    </div>
+</section>
+{% endblock %}

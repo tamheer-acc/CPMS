@@ -1,52 +1,67 @@
 {% extends 'base.html' %}
+{% block breadcrumb %}
+<li class="flex items-center">
+    <span class="mx-2">/</span>
+    <a href="{% url 'initiative_list' %}" class="hover:text-gray-700">المبادرات</span>
+</li>
+<li class="flex items-center">
+    <span class="mx-2">/</span>
+    <a href="{% url 'initiative_detail' %}" class="hover:text-gray-700">تفاصيل المبادرة</span>
+</li>
+<li class="flex items-center">
+    <span class="mx-2">/</span>
+    <span class="text-gray-800 font-semibold"> {% if object %}تعديل مؤشر الأداء{% else %}إضافة مؤشر أداء{% endif
+        %}</span>
+</li>
+{% endblock %}
+
 {% block content %}
 
 <div class="max-w-3xl mx-auto mt-10" dir="rtl">
     <h1 class="text-2xl font-semibold mb-6">
         {% if object %}
-            تعديل مؤشر {{ object.kpi }}
+        تعديل مؤشر {{ object.kpi }}
         {% else %}
-            إضافة مؤشر أداء لمبادرة {{ initiative.title }}
+        إضافة مؤشر أداء لمبادرة {{ initiative.title }}
         {% endif %}
     </h1>
 
     <form method="post">
-{% csrf_token %}
+        {% csrf_token %}
 
-<div class="mb-4">
-    {{ form.kpi.label_tag }}
-    {{ form.kpi }}
-    {% if form.kpi.errors %}
-        <div class="text-red-500 text-sm mt-1">{{ form.kpi.errors }}</div>
-    {% endif %}
-</div>
+        <div class="mb-4">
+            {{ form.kpi.label_tag }}
+            {{ form.kpi }}
+            {% if form.kpi.errors %}
+            <div class="text-red-500 text-sm mt-1">{{ form.kpi.errors }}</div>
+            {% endif %}
+        </div>
 
-<div class="mb-4">
-    {{ form.unit.label_tag }}
-    {{ form.unit }}
-    {% if form.unit.errors %}
-        <div class="text-red-500 text-sm mt-1">{{ form.unit.errors }}</div>
-    {% endif %}
-</div>
+        <div class="mb-4">
+            {{ form.unit.label_tag }}
+            {{ form.unit }}
+            {% if form.unit.errors %}
+            <div class="text-red-500 text-sm mt-1">{{ form.unit.errors }}</div>
+            {% endif %}
+        </div>
 
-<div class="mb-4">
-    {{ form.target_value.label_tag }}
-    {{ form.target_value }}
-    {% if form.target_value.errors %}
-        <div class="text-red-500 text-sm mt-1">{{ form.target_value.errors }}</div>
-    {% endif %}
-</div>
+        <div class="mb-4">
+            {{ form.target_value.label_tag }}
+            {{ form.target_value }}
+            {% if form.target_value.errors %}
+            <div class="text-red-500 text-sm mt-1">{{ form.target_value.errors }}</div>
+            {% endif %}
+        </div>
 
-<div class="mb-4">
-    {{ form.actual_value.label_tag }}
-    {{ form.actual_value }}
-    {% if form.actual_value.errors %}
-        <div class="text-red-500 text-sm mt-1">{{ form.actual_value.errors }}</div>
-    {% endif %}
-</div>
+        <div class="mb-4">
+            {{ form.actual_value.label_tag }}
+            {{ form.actual_value }}
+            {% if form.actual_value.errors %}
+            <div class="text-red-500 text-sm mt-1">{{ form.actual_value.errors }}</div>
+            {% endif %}
+        </div>
 
-        <button type="submit"
-            class="mt-6 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+        <button type="submit" class="mt-6 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
             {% if object %}تحديث{% else %}إضافة{% endif %}
         </button>
     </form>
