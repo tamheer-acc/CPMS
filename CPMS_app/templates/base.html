@@ -7,20 +7,20 @@
         <title>{% block title %}متابعة الأداء المؤسسي{% endblock %}</title>
         {% load static %}
 
-        <!-- APP CSS -->
-        <link rel="stylesheet" href="{% static 'CPMS_app/style.css' %}">
-        <!-- Tailwind CSS -->
-        <script src="https://cdn.tailwindcss.com"></script>
-        <!-- CHART JS -->
-        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-        <!-- APP JS -->
-        <script defer src="{% static 'CPMS_app/app.js' %}"></script>
-        <!-- Daisy UI -->
-        <link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" type="text/css" />
-        <!-- HTMX -->
-        <script src="https://unpkg.com/htmx.org@1.9.12"></script>
-        
-    </head>
+    <!-- APP CSS -->
+    <link rel="stylesheet" href="{% static 'CPMS_app/style.css' %}">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- APP JS -->
+    <script defer src="{% static 'CPMS_app/app.js' %}"></script>
+    <!-- Daisy UI -->
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" type="text/css" />
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+    <!-- Chart JS -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+</head>
 
     <body class="flex bg-gray-50 min-h-screen">
 
@@ -52,6 +52,12 @@
                     <a href="{% url 'plans_list' %}"
                         class="flex items-center gap-3 px-6 py-3 text-gray-700 hover:bg-green-100 hover:text-green-700 rounded-lg transition">
                         <span>الخطط</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'logs_list' %}"
+                        class="flex items-center gap-3 px-6 py-3 text-gray-700 hover:bg-green-100 hover:text-green-700 rounded-lg transition">
+                        <span>سجل النظام</span>
                     </a>
                 </li>
             </ul>

@@ -121,58 +121,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
 
 
-// ---------------------------
-//  initiative page number js     
-// ---------------------------
-document.addEventListener('DOMContentLoaded', function(){
-    const pageDropdownButton = document.getElementById('initiative-page-dropdown-button'); //button that has the word عدد الصفوف
-    const pageDropdownIcon = document.getElementById('initiative-page-dropdown-icon'); //icon to be rotated
-    const pageDropdown = document.getElementById('initiative-page-dropdown'); //the div to be not hidden
-    const pageFilterButtons = document.querySelectorAll(".initiative-page-filter-btn");// buttons to be clicked an reload
-    const pageDropdownText = document.getElementById('initiative-page-dropdown-text');
-    const currentUrl = new URL(window.location.href);
 
-
-
-    if (currentUrl.searchParams.get('per_page')){
-        pageDropdownText.textContent = currentUrl.searchParams.get('per_page')
-    }
-    if (pageDropdownButton) {
-        pageDropdownButton.addEventListener("click", e => {
-            e.stopPropagation();
-            pageDropdown.classList.toggle("hidden");
-            pageDropdownIcon.style.transform = pageDropdown.classList.contains("hidden") ? "rotate(0deg)" : "rotate(180deg)";
-        });
-    }
-
-    // Click outside to close
-    document.addEventListener("click", () => {
-        if (pageDropdown) {
-            pageDropdown.classList.add("hidden");
-            pageDropdownIcon.style.transform = "rotate(0deg)";
-        }
-    });
-
-    if (pageDropdown) pageDropdown.addEventListener("click", e => e.stopPropagation());
-
-
-    pageFilterButtons.forEach(btn => {
-        btn.addEventListener("click", function() {
-            const perPage = this.dataset.number;
-            
-            if (pageDropdown) {
-                pageDropdown.classList.add("hidden");
-                pageDropdownIcon.style.transform = "rotate(0deg)";
-            }
-
-            const url = new URL(window.location.href);
-            url.searchParams.set("per_page", perPage);
-            url.searchParams.set("page", 1); // reset to first page
-            window.location.href = url.toString();
-        });
-    });
-
-});
 
 
 
@@ -183,8 +132,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const plansBody = document.getElementById("plansBody");
     const goalsBody = document.getElementById("goalsBody");
+    const initiativesBody = document.getElementById("initiativesBody");
     const isPlansPage = !!plansBody;
     const isPlanDetailsPage = !!goalsBody;
+    const isInitiativesPage = !!initiativesBody;
 
     const pageDropdownButton = document.getElementById('page-dropdown-button');
     const pageDropdownIcon = document.getElementById('page-dropdown-icon');
@@ -231,21 +182,23 @@ document.addEventListener('DOMContentLoaded', function () {
                 pageDropdown.classList.add("hidden");
                 pageDropdownIcon.style.transform = "rotate(0deg)";
             }
-
             const url = new URL(window.location.href);
             url.searchParams.set("per_page", perPage);
             url.searchParams.set("page", 1);
 
-            fetch(url, {
-                headers: {
-                    "X-Requested-With": "XMLHttpRequest"
-                }
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (isPlansPage) plansBody.innerHTML = data.html;
-                if (isPlanDetailsPage) goalsBody.innerHTML = data.html;
-            });
+            if (isInitiativesPage) {
+                // full reload
+                window.location.href = url.toString(); 
+            } else {
+                // AJAX 
+                fetch(url, { headers: { "X-Requested-With": "XMLHttpRequest" } })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (isPlansPage) plansBody.innerHTML = data.html;
+                        if (isPlanDetailsPage) goalsBody.innerHTML = data.html;
+                    });
+            }
+
         });
     });
 
