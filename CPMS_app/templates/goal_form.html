@@ -1,7 +1,16 @@
 {% extends "base.html" %}
 {% load static %}
+{% block breadcrumb %}
+<li class="flex items-center">
+    <span class="mx-2">/</span>
+    <span class="hover:text-gray-700">الأهداف</span>
+</li>
+<li class="flex items-center">
+    <span class="mx-2">/</span>
+    <span class="text-gray-800 font-semibold"> {% if object %}تعديل هدف{% else %}إضافة هدف{% endif %}</span>
+</li>
+{% endblock %}
 {% block content %}
-
 <div class="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8" dir="rtl">
     <div class="max-w-2xl mx-auto">
         <div class="bg-white shadow-lg rounded-2xl border-gray-900 p-8">

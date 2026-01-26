@@ -1,3 +1,4 @@
+from django import apps
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from datetime import date
@@ -133,6 +134,7 @@ class Initiative(models.Model):  # 1 : M Relationship with StrategicGoal (Many S
     start_date = models.DateField()
     end_date = models.DateField()
     priority = models.CharField( max_length = 1, choices = PRIORITY, default= PRIORITY[3][0])
+    # initiative_status = models.CharField(max_length=2, choices=STATUS, default=STATUS[0][0])
     category = models.CharField(max_length=50)
     strategic_goal = models.ForeignKey(StrategicGoal, on_delete=models.CASCADE )
     
@@ -199,14 +201,13 @@ class Note (models.Model):
         return  f"Note #{self.id}"
 
 
-
 # ---------------------------
 #  Log Model
 # ---------------------------
 class Log (models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="logs")
     table_name = models.CharField(max_length=50, null=True)
-    record_id = models.IntegerField(null=True)
+    record_id = models.CharField(null=True)
     action = models.CharField(max_length=100, null=False)
     old_value = models.TextField(null=True)
     new_value = models.TextField(null=True)
@@ -218,8 +219,21 @@ class Log (models.Model):
 
     def __str__(self):
         return f"{self.table_name} - {self.action}"
+    
+    def get_instance(self):
+        if not self.table_name or not self.record_id:
+            return None
+        try:
+            model = apps.get_model('CPMS_app', self.table_name)
+            return model.objects.filter(pk=self.record_id).first()
+        except Exception:
+            return None
 
-
+    @property
+    def formatted_details(self):
+        from .services import format_log_values
+        instance = self.get_instance()
+        return format_log_values(self.old_value, self.new_value, self.action, instance)
 
 # ---------------------------
 #     ProgressLog Model

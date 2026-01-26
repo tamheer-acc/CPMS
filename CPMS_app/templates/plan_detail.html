@@ -187,15 +187,15 @@
             </div>
 
             <!-- Bar chart-->
-            <div class="mt-8 bg-white p-4 rounded-lg shadow">
+            <!-- <div class="mt-8 bg-white p-4 rounded-lg shadow">
                 <h3 class="font-semibold mb-4 text-center">top 5 based on completed goals</h3>
                 <div class="w-full h-72">
                     <canvas id="progressBarChart"></canvas>
                 </div>
-            </div>
+            </div> -->
 
             <!-- JSON data -->
-            <script id="progress-data" type="application/json">
+            <!-- <script id="progress-data" type="application/json">
              {% if user.role.role_name == 'GM' %}
                  {{ departments_progress|safe }}
              {% elif user.role.role_name == 'M' or user.role.role_name == 'CM' %}
@@ -214,7 +214,7 @@
                  {{ delayed_goals_monthly|safe }}
             </script>
 
-            {% if user.role.role_name == 'GM' %}
+            {% if user.role.role_name == 'CM' %}
             <div class="relative w-60 h-60 ml-10">
                 <svg class="w-full h-full rotate-180" viewBox="0 0 36 36">
                     <circle cx="18" cy="18" r="16" fill="none" class="stroke-current text-green-100" stroke-width="3"
@@ -232,7 +232,7 @@
                     <span class="text-xs text-green-600">تقدم الخطة</span>
                 </div>
             </div>
-            {% endif %}
+            {% endif %} -->
 
 
             <!-- <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -378,6 +378,7 @@
                                     الأهمية
                                 </span>
                             </th>
+                            <!-- <th class="py-3 font-semibold"></th> -->
                             <th class="py-3 font-semibold">
                                 <span class="inline-flex items-center gap-1 font-semibold">
                                     <a class="text-gray-400 hover:text-gray-700 transition" title="فرز حسب المدة"
@@ -491,7 +492,7 @@
     },
         {
             label: 'المبادرات',
-            data: {{ initiatives_status }},
+            data: {{ initiative_status }},
         backgroundColor: ['#CBD5E1', '#93C5FD', '#86EFAC', '#FCA5A5'],
         borderWidth: 0,
         weight: 1
@@ -537,7 +538,7 @@
         month: 'short',
         year: 'numeric'
     }));
-
+ 
     const lineData = delayedData.map(d => d.count);
 
     new Chart(document.getElementById("delayedGoalsLineChart"), {
@@ -557,7 +558,7 @@
             scales: { y: { beginAtZero: true } }
         }
     });
-    
+
     const planGauge = document.getElementById('plan-gauge');
     const value = planGauge.dataset.value;
     planGauge.setAttribute('stroke-dasharray', `${value} 100`);
