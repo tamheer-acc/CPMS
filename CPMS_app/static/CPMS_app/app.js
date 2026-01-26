@@ -706,6 +706,7 @@ function lineChart(data, id) {
 }
 
 
+
 // donut chart labels and data
 if (document.getElementById('donut-chart-labels')){
     const donutChartLabels = JSON.parse(document.getElementById('donut-chart-labels').textContent);
