@@ -1,5 +1,6 @@
 import json
 from datetime import date, timedelta
+from statistics import mean
 from django.utils import timezone
 from django.utils.timezone import now
 from django.core.serializers.json import DjangoJSONEncoder
@@ -11,6 +12,7 @@ from django.db.models import Prefetch
 from django.db.models.functions import TruncMonth
 from .models import Note, StrategicGoal, Initiative, Log, UserInitiative, ProgressLog
 from django.db.models import OuterRef, Subquery, Q
+from collections import defaultdict
 
 def format_log_values(old_value, new_value, action, instance=None):
     """
@@ -233,65 +235,170 @@ def donutChart_data():
 
 #     return result
 
-def goal_progress_from_status(status):
-    return {
-        'C': 100,
-        'IP': 50,
-        'NS': 0,
-        'D': 20
-    }.get(status, 0)
 
 
 
-def get_delayed_goals_monthly(goals_qs, role, user):
-    today = timezone.now().date()
-    twelve_months_ago = today - timedelta(days=365)
+def get_time_based_progress_for_role(user_initiatives_qs, role):
+    """
+    Returns ready-to-use progress data for template based on role
+    """
 
-    # إذا المدير العام -> كل الأهداف
+    today = date.today()
+
+    employees = defaultdict(lambda: {
+        'name': '',
+        'department_id': None,
+        'department_name': '',
+        'scores': []
+    })
+
+    # ===== Calculate employees performance =====
+    for ui in user_initiatives_qs.select_related(
+        'user',
+        'initiative',
+        'user__department'
+    ):
+        start = ui.initiative.start_date
+        end = ui.initiative.end_date
+        progress = ui.progress or 0
+
+        total_days = max((end - start).days, 1)
+        elapsed_days = min(max((today - start).days, 0), total_days)
+
+        time_ratio = elapsed_days / total_days
+        actual_ratio = progress / 100
+
+        score = 0 if time_ratio == 0 else (actual_ratio / time_ratio) * 100
+        score = round(min(score, 100), 1)
+
+        emp = employees[ui.user.id]
+        emp['name'] = ui.user.get_full_name() or ui.user.username
+        emp['department_id'] = ui.user.department_id
+        emp['department_name'] = ui.user.department.department_name if ui.user.department else ''
+        emp['scores'].append(score)
+
+    # ===== Final employee progress =====
+    employees_result = []
+    for emp_id, data in employees.items():
+        avg_score = round(sum(data['scores']) / len(data['scores']), 1)
+
+        employees_result.append({
+            'id': emp_id,
+            'name': data['name'],
+            'percentage': avg_score
+        })
+
+    emp_most = max(employees_result, key=lambda x: x['percentage'], default=None)
+    emp_least = min(employees_result, key=lambda x: x['percentage'], default=None)
+
+    # ===== Department progress (from employees) =====
+    departments = defaultdict(list)
+    for emp in employees_result:
+        dept_id = next(
+            (ui.user.department_id for ui in user_initiatives_qs if ui.user.id == emp['id']),
+            None
+        )
+        departments[dept_id].append(emp['percentage'])
+
+    departments_result = []
+    for dept_id, scores in departments.items():
+        dept_name = next(
+            (ui.user.department.department_name
+             for ui in user_initiatives_qs
+             if ui.user.department_id == dept_id),
+            ''
+        )
+
+        departments_result.append({
+            'id': dept_id,
+            'name': dept_name,
+            'percentage': round(sum(scores) / len(scores), 1)
+        })
+
+    dept_most = max(departments_result, key=lambda x: x['percentage'], default=None)
+    dept_least = min(departments_result, key=lambda x: x['percentage'], default=None)
+
+    # ===== Return based on role =====
     if role == 'GM':
-        qs = goals_qs
-    else:
-        # مدير إدارة -> أهداف قسمه فقط
-        qs = goals_qs.filter(department=user.department)
+        return {
+            'items': departments_result,
+            'top': dept_most,
+            'low': dept_least,
+            'view_type': 'departments'
+        }
 
-    delayed = (
-        qs.filter(goal_status='D', end_date__gte=twelve_months_ago)
-          .annotate(month=TruncMonth('end_date'))
-          .values('month')
-          .annotate(count=Count('id'))
-          .order_by('month')
-    )
-
-    return list(delayed)
+    return {
+        'items': employees_result,
+        'top': emp_most,
+        'low': emp_least,
+        'view_type': 'employees'
+    }
 
 
 def get_plan_dashboard(plan, user):
     role = user.role.role_name
-    can_edit = False  # Read only
+    can_edit = False
 
-    goals = plan.goals.prefetch_related(
-    Prefetch(
-        'initiative_set__userinitiative_set',
-        queryset=UserInitiative.objects.select_related('user')
-        ))
-    i = [
-     initiative
-     for goal in goals
-     for initiative in goal.initiative_set.all()
-     if any(
-        ui.user_id == user.id
-        for ui in initiative.userinitiative_set.all()
-     )
-    ]
+    # ====== Goals (filter by role) ======
+    goals = StrategicGoal.objects.filter(strategicplan=plan).prefetch_related('initiative_set')
 
+
+    if role in ['M', 'CM']:
+        goals = goals.filter(department=user.department)
+
+    # ====== Initiatives related to these goals ======
     initiatives_qs = Initiative.objects.filter(strategic_goal__in=goals)
 
+    # ====== If normal user (not manager), show only their initiatives ======
+    if role not in ['M', 'CM', 'GM']:
+        initiatives_qs = initiatives_qs.filter(userinitiative__user=user).distinct()
+
+    # ====== Precompute avg progress for each initiative (efficient) ======
+    
+    # ====== Compute initiative status using avg_map ======
+    initiative_status_map = {}
+    for ini in initiatives_qs:
+        initiative_status_map[ini.id] = calc_initiative_status_by_avg(ini)
+
+    # ====== initiatives by goal (for display) ======
+    initiatives_by_goal = {g.id: [] for g in goals}
+    for ini in initiatives_qs:
+        initiatives_by_goal[ini.strategic_goal_id].append(ini)
+
+   # ====== USER INITIATIVES QS (important) ======
+    user_initiatives_qs = UserInitiative.objects.filter(
+        initiative__in=initiatives_qs
+    ).select_related('user', 'user__department', 'initiative')
+
+    # ====== Progress data (employees or departments) ======
+    if role in ['M', 'CM']:
+        # filter only employees of that department (exclude managers)
+        user_initiatives_qs = user_initiatives_qs.filter(
+            user__department=user.department
+        ).exclude(
+            user__role__role_name__in=['M', 'CM', 'GM']
+        )
+
+    progress_data = get_time_based_progress_for_role(user_initiatives_qs, role)
+    # ====== Limit to Top 5 ======
+    progress_data['items'] = sorted(
+      progress_data['items'],
+      key=lambda x: x['percentage'],
+      reverse=True
+)[:5]
+    progress_data_json = {
+    "labels": [x['name'] for x in progress_data['items']],
+    "values": [x['percentage'] for x in progress_data['items']],
+    "view_type": progress_data['view_type']
+}
+
+
+
+    # ====== Progress / top 5 etc ======
     employees_progress = None
     departments_progress = None
 
     if role in ['M', 'CM']:
-        goals = goals.filter(department=user.department)
-        initiatives_qs = initiatives_qs.filter(strategic_goal__department=user.department)
         employees_progress = (
             initiatives_qs.values('userinitiative__user__username')
                           .annotate(completed_initiatives=Count('id', filter=Q(userinitiative__status='C')))
@@ -305,88 +412,227 @@ def get_plan_dashboard(plan, user):
                  .order_by('-completed_goals')[:5]
         )
 
-    # -----------------------------
+    # ====== Goals status counts ======
     goals_not_started = goals.filter(goal_status='NS').count()
     goals_in_progress = goals.filter(goal_status='IP').count()
     goals_completed = goals.filter(goal_status='C').count()
     goals_delayed = goals.filter(goal_status='D').count()
 
-    # -----------------------------
-    # initiatives_not_started = initiatives_qs.filter(initiative_status='NS').count()
-    # initiatives_in_progress = initiatives_qs.filter(initiative_status='IP').count()
-    # initiatives_completed = initiatives_qs.filter(initiative_status='C').count()
-    # initiatives_delayed = initiatives_qs.filter(initiative_status='D').count()
+    goals_total = goals.count()
 
-    # -----------------------------
+    goals_status = [
+        goals_not_started,
+        goals_in_progress,
+        goals_completed,
+        goals_delayed
+    ]
+
+    # ====== Initiatives totals & status counts ======
+    initiatives_total = initiatives_qs.count()
+
+    initiative_status_counts = {
+        'NS': 0, 'IP': 0, 'C': 0, 'D': 0
+    }
+    for status in initiative_status_map.values():
+        initiative_status_counts[status] += 1
+
+    initiative_status = [
+        initiative_status_counts['NS'],
+        initiative_status_counts['IP'],
+        initiative_status_counts['C'],
+        initiative_status_counts['D']
+    ]
+
+
+    labels = ['لم تبدأ', 'قيد التنفيذ', 'مكتملة', 'متأخرة']
+
+
+    # ====== Top goals & initiatives by priority ======
     priority_map = {'C': 1, 'H': 2, 'M': 3, 'L': 4}
 
     top_3_goals = sorted(goals, key=lambda g: priority_map.get(g.goal_priority, 99))[:3]
     top_3_initiative = sorted(initiatives_qs, key=lambda g: priority_map.get(g.priority, 99))[:3]
 
-    # ----------------------------
-    goals_total = goals.count()
+    # ====== Delayed monthly ======
+    delayed_goals_list = get_delayed_goals_with_days(goals)
 
-    goals_status = [
-     goals_not_started,
-     goals_in_progress,
-     goals_completed,
-     goals_delayed
-    ]
+    delayed_titles = [g["goal_title"] for g in delayed_goals_list]
+    delayed_days = [g["delay_days"] for g in delayed_goals_list]
 
-    initiatives_total = len(i)
 
-    # initiative_status = [
-    # initiatives_not_started,
-    # initiatives_in_progress,
-    # initiatives_completed,
-    # initiatives_delayed
-    # ]
-    
-    departments_progress_json = json.dumps(list(departments_progress)) if departments_progress else "[]"
-    employees_progress_json = json.dumps(list(employees_progress)) if employees_progress else "[]"
-    
-    delayed_goals_monthly = get_delayed_goals_monthly(goals, role, user)
+    # ====== Plan avg ======
     if goals_total == 0:
         plan_avg = 0
     else:
-        sum_progress = sum(
-            goal_progress_from_status(g.goal_status) for g in goals
-        )
-        plan_avg = sum_progress / goals_total
+       
+       plan_avg = calc_plan_progress(plan)
 
-
+  
     return {
         'goals': goals,
         'goals_total': goals_total,
-        'initiatives_count':initiatives_total,
-        'goals_status': goals_status,
-        # 'initiative_status': initiative_status,
-        'delayed_goals_monthly': delayed_goals_monthly,
-        'plan_avg': round(plan_avg),
-        'plan_avg_by_two': round(plan_avg / 2),
+        'initiatives_count': initiatives_total,
 
-        'can_edit': can_edit,
+        'goals_status_json': json.dumps(goals_status),
+        'labels_json': json.dumps(labels),
+        'initiative_status_json': json.dumps(initiative_status),
 
-        # # goals status
-        # 'goals_not_started': goals_not_started,
-        # 'goals_in_progress': goals_in_progress,
-        # 'goals_completed': goals_completed,
-        # 'goals_delayed': goals_delayed,
+        "delayed_goals_list": delayed_goals_list,
+        "delayed_goals_titles_json": json.dumps(delayed_titles),
+        "delayed_goals_delay_days_json": json.dumps(delayed_days),
+        'plan_avg': plan_avg,
 
-        # # initiatives status
-        # 'initiatives_not_started': initiatives_not_started,
-        # 'initiatives_in_progress': initiatives_in_progress,
-        # 'initiatives_completed': initiatives_completed,
-        # 'initiatives_delayed': initiatives_delayed,
+        'progress_data_json': json.dumps(progress_data_json),
 
-        # top 3 goals and initiatives based on priority
-        'top_3_goals': top_3_goals,
-        'top_3_initiative': top_3_initiative,
-    
-        'departments_progress': departments_progress_json,
-        'employees_progress': employees_progress_json
-
+        'departments_progress': json.dumps(list(departments_progress)) if departments_progress else "[]",
+        'employees_progress': json.dumps(list(employees_progress)) if employees_progress else "[]"
     }
+
+
+def get_delayed_goals_with_days(goals_qs):
+    today = date.today()
+    delayed = []
+
+    for goal in goals_qs.filter(goal_status='D'):
+        delay_days = (today - goal.end_date).days
+        if delay_days < 0:
+            delay_days = 0
+
+        delayed.append({
+            "goal_id": goal.id,
+            "goal_title": goal.goal_title,
+            "delay_days": delay_days,
+            "end_date": goal.end_date.strftime("%Y-%m-%d"),
+            "goal_status": goal.goal_status,
+        })
+
+    delayed.sort(key=lambda x: x['delay_days'], reverse=True)
+
+    return delayed
+
+
+# def get_plan_dashboard(plan, user):
+#     role = user.role.role_name
+#     can_edit = False  # Read only
+
+#     goals = plan.goals.prefetch_related(
+#     Prefetch(
+#         'initiative_set__userinitiative_set',
+#         queryset=UserInitiative.objects.select_related('user')
+#         ))
+#     i = [
+#      initiative
+#      for goal in goals
+#      for initiative in goal.initiative_set.all()
+#      if any(
+#         ui.user_id == user.id
+#         for ui in initiative.userinitiative_set.all()
+#      )
+#     ]
+
+#     initiatives_qs = Initiative.objects.filter(strategic_goal__in=goals)
+
+#     employees_progress = None
+#     departments_progress = None
+
+#     if role in ['M', 'CM']:
+#         goals = goals.filter(department=user.department)
+#         initiatives_qs = initiatives_qs.filter(strategic_goal__department=user.department)
+#         employees_progress = (
+#             initiatives_qs.values('userinitiative__user__username')
+#                           .annotate(completed_initiatives=Count('id', filter=Q(userinitiative__status='C')))
+#                           .order_by('-completed_initiatives')[:5]
+#         )
+#     elif role == 'GM':
+#         departments_progress = (
+#             goals.values('department__department_name')
+#                  .annotate(total_goals=Count('id'),
+#                            completed_goals=Count('id', filter=Q(goal_status='C')))
+#                  .order_by('-completed_goals')[:5]
+#         )
+
+#     # -----------------------------
+#     goals_not_started = goals.filter(goal_status='NS').count()
+#     goals_in_progress = goals.filter(goal_status='IP').count()
+#     goals_completed = goals.filter(goal_status='C').count()
+#     goals_delayed = goals.filter(goal_status='D').count()
+
+#     # -----------------------------
+#     # initiatives_not_started = initiatives_qs.filter(initiative_status='NS').count()
+#     # initiatives_in_progress = initiatives_qs.filter(initiative_status='IP').count()
+#     # initiatives_completed = initiatives_qs.filter(initiative_status='C').count()
+#     # initiatives_delayed = initiatives_qs.filter(initiative_status='D').count()
+
+#     # -----------------------------
+#     priority_map = {'C': 1, 'H': 2, 'M': 3, 'L': 4}
+
+#     top_3_goals = sorted(goals, key=lambda g: priority_map.get(g.goal_priority, 99))[:3]
+#     top_3_initiative = sorted(initiatives_qs, key=lambda g: priority_map.get(g.priority, 99))[:3]
+
+#     # ----------------------------
+#     goals_total = goals.count()
+
+#     goals_status = [
+#      goals_not_started,
+#      goals_in_progress,
+#      goals_completed,
+#      goals_delayed
+#     ]
+
+#     initiatives_total = len(i)
+
+#     # initiative_status = [
+#     # initiatives_not_started,
+#     # initiatives_in_progress,
+#     # initiatives_completed,
+#     # initiatives_delayed
+#     # ]
+    
+#     departments_progress_json = json.dumps(list(departments_progress)) if departments_progress else "[]"
+#     employees_progress_json = json.dumps(list(employees_progress)) if employees_progress else "[]"
+    
+#     delayed_goals_monthly = get_delayed_goals_monthly(goals, role, user)
+#     if goals_total == 0:
+#         plan_avg = 0
+#     else:
+#         sum_progress = sum(
+#             goal_progress_from_status(g.goal_status) for g in goals
+#         )
+#         plan_avg = sum_progress / goals_total
+
+
+#     return {
+#         'goals': goals,
+#         'goals_total': goals_total,
+#         'initiatives_count':initiatives_total,
+#         'goals_status': goals_status,
+#         # 'initiative_status': initiative_status,
+#         'delayed_goals_monthly': delayed_goals_monthly,
+#         'plan_avg': round(plan_avg),
+#         'plan_avg_by_two': round(plan_avg / 2),
+
+#         'can_edit': can_edit,
+
+#         # # goals status
+#         # 'goals_not_started': goals_not_started,
+#         # 'goals_in_progress': goals_in_progress,
+#         # 'goals_completed': goals_completed,
+#         # 'goals_delayed': goals_delayed,
+
+#         # # initiatives status
+#         # 'initiatives_not_started': initiatives_not_started,
+#         # 'initiatives_in_progress': initiatives_in_progress,
+#         # 'initiatives_completed': initiatives_completed,
+#         # 'initiatives_delayed': initiatives_delayed,
+
+#         # top 3 goals and initiatives based on priority
+#         'top_3_goals': top_3_goals,
+#         'top_3_initiative': top_3_initiative,
+    
+#         'departments_progress': departments_progress_json,
+#         'employees_progress': employees_progress_json
+
+#     }
 
 
 def calc_user_initiative_status(user_initiative):
@@ -401,7 +647,7 @@ def calc_user_initiative_status(user_initiative):
     total_days = max((end_date - start_date).days, 1)
     days_left = 0 if end_date < today else (end_date - today).days
     
-    if progress == 100:
+    if progress >= 100:
         return 'C'
 
     if days_left <= 0.10*total_days: #if the user is in last 10% of the duration, then they're late
@@ -412,61 +658,59 @@ def calc_user_initiative_status(user_initiative):
     
     return 'NS'
 
-#====================================================================
+#=============================initiative status=======================================
 def calc_initiative_status_by_avg(initiative):
-    avg_progress = UserInitiative.objects.filter(
-        initiative=initiative
-    ).aggregate(avg=Avg('progress'))['avg'] or 0
 
+    initiative_average = avg_calculator(UserInitiative.objects.filter(initiative = initiative, user__role__role_name = 'E'))
     start_date = initiative.start_date
     end_date = initiative.end_date
     today = date.today()
 
-    # حماية من التواريخ الخاطئة
     total_days = max((end_date - start_date).days, 1)
     days_left = (end_date - today).days
 
-    # ===== STATUS LOGIC =====
-    if avg_progress >= 100:
-        return 'C'  # Completed
+    # Completed
+    if initiative_average >= 100:
+        return 'C'
 
-    if today > end_date:
-        return 'D'  # Delayed
+    # Delayed (if in last 10% of time and progress not enough)
+    if days_left <= 0.10 * total_days and initiative_average < 100:
+        return 'D'
+  
+    # In progress
+    if initiative_average > 0:
+        return 'IP'
 
-    if avg_progress > 0:
-        return 'IP'  # In Progress
+    # Not started
+    return 'NS'
 
-    return 'NS'  # Not Started
 
-#=====================================================================
-def calc_goal_progress(goal, user):
-    qs = goal.initiative_set.all()
+#==============================goal progress=======================================
+def calc_goal_progress(goal):
+    initiatives = goal.initiative_set.all()
 
-    if user.role.role_name == 'E':
-        qs = qs.filter(userinitiative__user=user)
+    initiatives_average_list = []
+    for initiative in initiatives:
+        initiatives_average_list.append(avg_calculator(UserInitiative.objects.filter(initiative = initiative, user__role__role_name = 'E')))
+    goal_progress= mean(initiatives_average_list) if initiatives_average_list else 0
+    return round(goal_progress, 2)
 
-    if not qs.exists():
-        return 0
-
-    avg = qs.aggregate(
-        avg=Avg('userinitiative__progress')
-    )['avg'] or 0
-
-    return round(float(avg), 2)
-
-#=====================================================================
-def calc_goal_status(goal,user):
+#==============================goal status=======================================
+def calc_goal_status(goal):
     start_date = goal.start_date
     end_date = goal.end_date
     today = date.today()
+    total_days = max((end_date - start_date).days, 1)
+    days_left = (end_date - today).days
 
     initiatives = goal.initiative_set.all()
+
     if not initiatives.exists():
         return 'NS'
 
-    avg_progress = calc_goal_progress(goal,user)
+    avg_progress = calc_goal_progress(goal)
 
-    if today > end_date:
+    if days_left <= 0.10 * total_days and avg_progress < 100:
         return 'D'
 
     if avg_progress >= 100:
@@ -488,7 +732,8 @@ def calc_plan_progress(plan):
     for goal in goals:
         total += calc_goal_progress(goal)
 
-    return round(total / goals.count(), 2)
+    return round(total / goals.count())
+
 
 
 def filter_queryset(queryset, request, search_fields=None, status_field=None, priority_field=None):

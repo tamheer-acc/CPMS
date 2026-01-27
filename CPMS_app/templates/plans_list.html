@@ -74,7 +74,7 @@
             </div>
 
             <!-- Add Plan Button chanege style -->
-            {% if request.user.role.role_name == 'CM' %}
+            {% if request.user.role.role_name == 'M' %}
             <div class="relative inline-block group">
 
                 <a href="{% if not active_plan_exists %}{% url 'plan_create' %}{% else %}#{% endif %}"

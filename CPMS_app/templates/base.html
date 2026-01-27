@@ -36,10 +36,22 @@
                         <span>لوحة التحكم</span>
                     </a>
                 </li>
+                 <li>
+                    <a href="{% url 'goals_list' %}"
+                        class="flex items-center gap-3 px-6 py-3 text-gray-700 hover:bg-green-100 hover:text-green-700 rounded-lg transition">
+                        <span>الأهداف</span>
+                    </a>
+                </li>
                 <li>
                     <a href="{% url 'initiatives_list' %}"
                         class="flex items-center gap-3 px-6 py-3 text-gray-700 hover:bg-green-100 hover:text-green-700 rounded-lg transition">
                         <span>المبادرات</span>
+                    </a>
+                </li>
+                 <li>
+                    <a href="{% url 'plans_list' %}"
+                        class="flex items-center gap-3 px-6 py-3 text-gray-700 hover:bg-green-100 hover:text-green-700 rounded-lg transition">
+                        <span>الخطط</span>
                     </a>
                 </li>
                 <li>
@@ -48,12 +60,7 @@
                         <span>الملاحظات</span>
                     </a>
                 </li>
-                <li>
-                    <a href="{% url 'plans_list' %}"
-                        class="flex items-center gap-3 px-6 py-3 text-gray-700 hover:bg-green-100 hover:text-green-700 rounded-lg transition">
-                        <span>الخطط</span>
-                    </a>
-                </li>
+            
                 <li>
                     <a href="{% url 'logs_list' %}"
                         class="flex items-center gap-3 px-6 py-3 text-gray-700 hover:bg-green-100 hover:text-green-700 rounded-lg transition">
