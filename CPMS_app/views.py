@@ -1,4 +1,4 @@
-import ast, decimal,  json, re
+import ast, decimal,  json, re, math
 from itertools import groupby
 from datetime import datetime
 from django import forms
@@ -29,7 +29,7 @@ from .models import ( STATUS, Role, Department, User, StrategicPlan, StrategicGo
                         Initiative, UserInitiative, KPI, Note, Log, ProgressLog)
 from .services import ( calc_goal_status, calc_initiative_status_by_avg, generate_KPIs,  create_log, get_plan_dashboard, calc_user_initiative_status, 
                         filter_queryset, get_page_numbers, model_to_dict_with_usernames, paginate_queryset, status_count, avg_calculator, 
-                        calc_delayed, kpi_filter, weight_initiative, get_unread_notes_count, departments_progress_over_time)
+                        calc_delayed, kpi_filter, weight_initiative, get_unread_notes_count, departments_progress_over_time, calc_goal_progress, calculate_goal_timeline)
 
 
 
@@ -75,7 +75,7 @@ class RoleRequiredMixin(UserPassesTestMixin):
         return self.request.user.role.role_name in self.allowed_roles
 
     def handle_no_permission(self):
-        return redirect('access_denied')
+        raise PermissionDenied("ليست لديك صلاحية لرؤية هذه الصفحة")
 
 
 
@@ -1283,7 +1283,43 @@ class GoalDetailsview(LoginRequiredMixin, DetailView):
     model = StrategicGoal
     template_name = 'goal_detail.html'
     context_object_name = 'goal'
+    def get_context_data(self, **kwargs):
+        user = self.request.user 
+        strategic_goal = self.get_object() 
+        context = super().get_context_data(**kwargs)
+        
+        initiatives = Initiative.objects.filter(strategic_goal = strategic_goal)
+        initiatives_count = initiatives.count()
+        context['initiatives'] = initiatives
+        context['initiatives_count'] = initiatives_count
+        context['goal'] = strategic_goal
+        
+        goal_progress = calc_goal_progress(strategic_goal)
+        context['progress'] = goal_progress
+        
+        status_value = calc_goal_status(strategic_goal,'')
+        status_display = {
+            'NS': 'لم يبدأ بعد',
+            'IP': 'قيد التنفيذ',
+            'D': 'متأخر',
+            'C': 'مكتمل'
+        }.get(status_value, '')
+        context['status'] = status_display
 
+        timeline = calculate_goal_timeline(strategic_goal)
+        context['passed'] = timeline['passed']
+        context['duration'] = timeline['duration']
+        context["remaining_duration"] = timeline["remaining_duration"]
+        context["passed_duration_percent"] = timeline["passed_duration_percent"]
+        # svg_size = 48  # in px
+        # radius = 0.45 * svg_size
+        # circumference = 2 * math.pi * radius
+        # context["circumference"] = circumference
+        # context["circle_offset"] = round(circumference * (1 - timeline["passed_duration_percent"]/100), 2)
+        # context["circle_offset_for_progress"] = round(circumference * (1 - goal_progress/100), 2)
+
+        return context
+        
 
 
 class CreateGoalView(LoginRequiredMixin, RoleRequiredMixin, LogMixin, CreateView):
@@ -1317,7 +1353,7 @@ class UpdateGoalView(LoginRequiredMixin, RoleRequiredMixin, LogMixin, UpdateView
     model = StrategicGoal
     form_class = StrategicGoalForm
     template_name = 'goal_form.html'
-    success_url = reverse_lazy('plan_goals_list')
+    success_url = reverse_lazy('goals_list') # changed this from plan_goals_list to goals list <3
     allowed_roles = ['M', 'CM']  # Roles allowed to access this view
 
     def form_valid(self, form):
@@ -1336,7 +1372,7 @@ class DeleteGoalView(LoginRequiredMixin, RoleRequiredMixin, LogMixin, DeleteView
     - Redirects to goals list
     '''
     model = StrategicGoal
-    success_url = reverse_lazy('plan_goals_list')
+    success_url = reverse_lazy('goals_list') # changed this from plan_goals_list to goals list <3
     allowed_roles = ['M', 'CM']  # Roles allowed to access this view
 
     def form_valid(self, form):

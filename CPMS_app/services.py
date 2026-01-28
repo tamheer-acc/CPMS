@@ -1,4 +1,5 @@
 import json
+from statistics import mean
 from datetime import date, timedelta
 from django.utils import timezone
 from django.utils.timezone import now
@@ -6,11 +7,11 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.contrib.auth import get_user_model
 from django.forms.models import model_to_dict
-from django.db.models import Count, Q, Case, When, Value, IntegerField, Avg, Prefetch
-from django.db.models import Prefetch
+from django.db.models import Count, Q, Case, When, Value, IntegerField, Avg, Prefetch,OuterRef, Subquery
 from django.db.models.functions import TruncMonth
 from .models import Note, StrategicGoal, Initiative, Log, UserInitiative, ProgressLog
-from django.db.models import OuterRef, Subquery, Q
+
+
 
 def format_log_values(old_value, new_value, action, instance=None):
     """
@@ -69,7 +70,6 @@ def format_log_values(old_value, new_value, action, instance=None):
 
 
 
-
 def model_to_dict_with_usernames(instance):
     """
     Convert model to dict and convert FK user to username/full name.
@@ -97,6 +97,7 @@ def model_to_dict_with_usernames(instance):
 
 
     return data
+
 
 
 def create_log(user, action, instance=None, old_data=None, table_name=None, record_id=None):
@@ -204,11 +205,15 @@ def get_unread_notes_count(user):
     )
 
 
+
 def generate_KPIs(initiative):
     pass
 
+
+
 def donutChart_data():
     return
+
 
 
 # def build_donut_data(not_started, in_progress, completed, delayed, total):
@@ -263,6 +268,40 @@ def get_delayed_goals_monthly(goals_qs, role, user):
     )
 
     return list(delayed)
+
+
+
+def calculate_goal_timeline(goal):
+    today = timezone.now().date()
+    start = goal.start_date
+    end = goal.end_date
+    duration = (end - start).days
+
+    if today <= start:
+        return {
+            'passed': 0,
+            'duration' : duration,
+            "remaining_duration": (end - start).days,
+            "passed_duration_percent": 0
+        }
+
+    if today >= end:
+        return {
+            'passed': (end - start).days,
+            'duration' : duration,
+            "remaining_duration": 0,
+            "passed_duration_percent": 100
+        }
+
+    passed = (today - start).days
+
+    return {
+        'passed':passed,
+        'duration' : duration,
+        "remaining_duration": (end - today).days,
+        "passed_duration_percent": round((passed / duration) * 100)
+    }
+
 
 
 def get_plan_dashboard(plan, user):
@@ -439,20 +478,33 @@ def calc_initiative_status_by_avg(initiative):
     return 'NS'  # Not Started
 
 #=====================================================================
-def calc_goal_progress(goal, user):
-    qs = goal.initiative_set.all()
+# def calc_goal_progress(goal, user):
+#     qs = goal.initiative_set.all()
 
-    if user.role.role_name == 'E':
-        qs = qs.filter(userinitiative__user=user)
+#     if user.role.role_name == 'E':
+#         qs = qs.filter(userinitiative__user=user)
 
-    if not qs.exists():
-        return 0
+#     if not qs.exists():
+#         return 0
 
-    avg = qs.aggregate(
-        avg=Avg('userinitiative__progress')
-    )['avg'] or 0
+#     avg = qs.aggregate(
+#         avg=Avg('userinitiative__progress')
+#     )['avg'] or 0
 
-    return round(float(avg), 2)
+#     return round(float(avg), 2)
+
+def calc_goal_progress(goal):
+    initiatives = goal.initiative_set.all()
+
+    initiatives_average_list = []
+    for initiative in initiatives:
+        initiatives_average_list.append(avg_calculator(UserInitiative.objects.filter(initiative = initiative, user__role__role_name = 'E')))
+
+    goal_progress = mean(initiatives_average_list) if initiatives_average_list else 0
+    
+
+    return round(goal_progress, 2)
+
 
 #=====================================================================
 def calc_goal_status(goal,user):
@@ -464,7 +516,7 @@ def calc_goal_status(goal,user):
     if not initiatives.exists():
         return 'NS'
 
-    avg_progress = calc_goal_progress(goal,user)
+    avg_progress = calc_goal_progress(goal)
 
     if today > end_date:
         return 'D'
@@ -489,6 +541,7 @@ def calc_plan_progress(plan):
         total += calc_goal_progress(goal)
 
     return round(total / goals.count(), 2)
+
 
 
 def filter_queryset(queryset, request, search_fields=None, status_field=None, priority_field=None):
@@ -711,6 +764,7 @@ def weight_initiative(initiative):
 
     weighted_score = (total_weight / user_initiatives.count()) * 100
     return round(weighted_score, 2)
+
 
 
 def departments_progress_over_time(departments, days_count=30):
