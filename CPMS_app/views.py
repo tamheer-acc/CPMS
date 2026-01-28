@@ -32,6 +32,9 @@ from .services import ( calc_goal_status, calc_initiative_status_by_avg, generat
                         calc_delayed, kpi_filter, weight_initiative, get_unread_notes_count, departments_progress_over_time, calc_goal_progress, calculate_goal_timeline)
 
 
+from django.db.models import Count
+from django.utils.safestring import mark_safe
+import json
 
 class LogMixin:
     def __init__(self, request=None):
@@ -825,6 +828,7 @@ def add_progress(request, initiative_id):
             new_status = calc_goal_status(goal,user)
             goal.goal_status = new_status
             goal.save()
+   
 
         #    # ===== Update Initiative Status =====
         #     old_status = initiative.initiative_status
@@ -1083,78 +1087,72 @@ class AllPlansView(LoginRequiredMixin, RoleRequiredMixin, ListView):
 
 
 class PlanDetailsview(LoginRequiredMixin, RoleRequiredMixin, DetailView):
-    '''
-    - Displays details of a single strategic plan
-    '''
-    model = StrategicPlan
-    template_name = 'plan_detail.html'
-    context_object_name = 'plan'
-    allowed_roles = ['M', 'CM', 'GM']  # Roles allowed to access this view
+     '''
+     - Displays details of a single strategic plan
+     '''
+     model = StrategicPlan
+     template_name = 'plan_detail.html'
+     context_object_name = 'plan'
+     allowed_roles = ['M', 'CM', 'GM']  # Roles allowed to access this view
 
-    def get_queryset(self):
-        return StrategicPlan.objects.all()
+     def get_queryset(self):
+         return StrategicPlan.objects.all()
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        dashboard_data = get_plan_dashboard(self.object, self.request.user)
-        context.update(dashboard_data)
-        user = self.request.user
-        role = user.role.role_name
-        goals_qs = StrategicGoal.objects.filter(strategicplan=self.object)
+     def get_context_data(self, **kwargs):
+      context = super().get_context_data(**kwargs)
+      dashboard_data = get_plan_dashboard(self.object, self.request.user)
+      context.update(dashboard_data)
 
-        #search & filter function
-        goals_qs = filter_queryset(
+      user = self.request.user
+      role = user.role.role_name
+      goals_qs = StrategicGoal.objects.filter(strategicplan=self.object)
+
+    # search & filter
+      goals_qs = filter_queryset(
         queryset=goals_qs,
         request=self.request,
         search_fields=['goal_title'],
         status_field='goal_status',
         priority_field='goal_priority'
-        )
+    )
 
-        if role in ['M', 'CM']:
-        # ===== add prefetch for initiatives and user initiatives =====
-            goals_qs = goals_qs.prefetch_related(
+      if role in ['M', 'CM']:
+        goals_qs = goals_qs.prefetch_related(
             Prefetch(
-            'initiative_set',
-            queryset=Initiative.objects.prefetch_related(
-                Prefetch(
-                    'userinitiative_set',
-                    queryset=UserInitiative.objects.filter(user=user),
-                    to_attr='user_initiative'
+                'initiative_set',
+                queryset=Initiative.objects.prefetch_related(
+                    Prefetch(
+                        'userinitiative_set',
+                        queryset=UserInitiative.objects.filter(user=user),
+                        to_attr='user_initiative'
+                    )
                 )
             )
         )
-    )
-        # goals_qs = goals_qs.filter(department=user.department)
 
-        per_page = 5
-        goal_list, page_obj, paginator = paginate_queryset(goals_qs, self.request, per_page)
+      per_page = 5
+      goal_list, page_obj, paginator = paginate_queryset(goals_qs, self.request, per_page)
 
-        context['goals'] = goal_list
-        context['page_obj'] = page_obj
-        context['paginator'] = paginator
-        context['per_page'] = per_page
-        context['is_paginated'] = True if paginator.num_pages > 1 else False
-        context['page_numbers'] = get_page_numbers(page_obj, paginator)
-        goals_with_progress = []
-        for goal in goal_list:
-            goals_with_progress.append({
-                "goal": goal,
-            #  "progress": calc_goal_progress(goal, self.request.user)
-            })
+      # Add status attribute for each initiative
+      for goal in goal_list:
+         for initiative in goal.initiative_set.all():
+             initiative.status = calc_initiative_status_by_avg(initiative)
 
-        context['goals_with_progress'] = goals_with_progress
-
-        return context
-
-    def render_to_response(self, context, **response_kwargs):
-        if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
-            html = render_to_string('partials/goals_table_rows.html', context, request=self.request)
-            return JsonResponse({
-                'html': html
-            })
-
-        return super().render_to_response(context, **response_kwargs)
+      context['goals'] = goal_list
+      context['page_obj'] = page_obj
+      context['paginator'] = paginator
+      context['per_page'] = per_page
+      context['is_paginated'] = True if paginator.num_pages > 1 else False
+      context['page_numbers'] = get_page_numbers(page_obj, paginator)
+ 
+      return context
+     
+     def render_to_response(self, context, **response_kwargs):
+         if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
+             html = render_to_string('partials/goals_table_rows.html', context, request=self.request)
+             return JsonResponse({
+                 'html': html
+             })
 
 
 
@@ -1243,6 +1241,8 @@ class AllGoalsView(LoginRequiredMixin, ListView):
     template_name = 'goals_list.html'
     context_object_name = 'goals'
 
+
+
     def get_queryset(self):
         user = self.request.user
         role = user.role.role_name
@@ -1254,13 +1254,44 @@ class AllGoalsView(LoginRequiredMixin, ListView):
         elif role == 'E':
             qs = StrategicGoal.objects.all().prefetch_related('initiative_set__userinitiative_set')
 
-        search = self.request.GET.get('search', '').strip()
-
-        if search:
-                qs = qs.filter(goal_title__icontains=search)
-
+        #search & filter function
+        qs = filter_queryset(
+           queryset=qs,
+           request=self.request,
+           search_fields=['goal_title'],
+           status_field='goal_status',
+           priority_field='goal_priority'
+         )
 
         return qs
+      
+    def get_context_data(self, **kwargs):
+      context = super().get_context_data(**kwargs)
+      queryset = self.get_queryset()
+      per_page = 5
+
+      goal_list, page_obj, paginator = paginate_queryset(queryset, self.request, per_page)
+
+      # Add status attribute for each initiative
+      for goal in goal_list:
+         for initiative in goal.initiative_set.all():
+             initiative.status = calc_initiative_status_by_avg(initiative)
+    
+     # ====== Get plan from the first goal ======
+      plan = None
+      if goal_list:
+        plan = goal_list[0].strategicplan
+
+      context['goals'] = goal_list
+      context['page_obj'] = page_obj
+      context['paginator'] = paginator
+      context['per_page'] = per_page
+      context['is_paginated'] = True if paginator.num_pages > 1 else False
+      context['page_numbers'] = get_page_numbers(page_obj, paginator)
+      context['plan_is_active'] = plan.is_active if plan else False
+
+      return context
+    
     
     def render_to_response(self, context, **response_kwargs):
         """

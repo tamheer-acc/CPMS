@@ -535,7 +535,6 @@ function donutChart(labels, data, id){
             }]
         },
         options: {
-            responsive: true,
             plugins: {
                 legend: { position: 'bottom', rtl: true }
             }
@@ -754,5 +753,37 @@ if (document.getElementById('line-chart-data')){
     }
 }
 
+// //====================== Plan Detail Dashboard =============================
+// function GoalsInitiativesDonut(labels, goalsData, initiativesData, elementId) {
+//     const donutCtx = document.getElementById(elementId);
+//     if (!donutCtx) return;
 
-
+//     new Chart(donutCtx, {
+//         type: 'doughnut',
+//         data: {
+//             labels: labels,
+//             datasets: [
+//                 {
+//                     label: 'الأهداف',
+//                     data: { goalsData },
+//                     backgroundColor: ['#F2C75C', '#E59256', '#A13525', ' #00685E'],
+//                     borderWidth: 0,
+//                     weight: 2
+//                 },
+//                 {
+//                     label: 'المبادرات',
+//                     data: { initiativesData },
+//                     backgroundColor: ['#D1D5DB', '#93C5FD', '#6EE7B7', '#FCA5A5'],
+//                     borderWidth: 0,
+//                     weight: 1
+//                 }
+//             ]
+//         },
+//         options: {
+//             cutout: '55%',
+//             plugins: {
+//                 legend: { position: 'right' }
+//             }
+//         }
+//     });
+// }
