@@ -49,9 +49,11 @@ document.addEventListener("DOMContentLoaded", function() {
     const plansBody = document.getElementById("plansBody");
     const initiativesBody = document.getElementById("initiativesBody");
     const goalsBody = document.getElementById("goalsBody");
+    const logsBody = document.getElementById('logsBody')
     const isPlansPage = !!plansBody;
     const isInitiativesPage = !!initiativesBody;
     const isPlanDetailsPage = !!goalsBody;
+    const isLogsBodyPage = !!logsBody;
 
     // Shared elements
     const dropdownBtn = document.getElementById("dropdownDefaultButton");
@@ -69,12 +71,14 @@ document.addEventListener("DOMContentLoaded", function() {
         if (isPlansPage) url += `&status=${filter}`;
         if (isInitiativesPage) url += `&priority=${filter}`;
         if (isPlanDetailsPage) url += `&status=${filter}`;
+        if (isLogsBodyPage) url += `&action=${filter}`;
 
         fetch(url, { headers: { "X-Requested-With": "XMLHttpRequest" } })
             .then(res => res.json())
             .then(data => {
                 if (isPlansPage) plansBody.innerHTML = data.html;
                 if (isInitiativesPage) initiativesBody.innerHTML = data.html;
+                if (isLogsBodyPage) logsBody.innerHTML = data.html;
                 if (isPlanDetailsPage) goalsBody.innerHTML = data.html;
             });
     }
@@ -108,7 +112,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
     filterButtons.forEach(btn => {
         btn.addEventListener("click", function() {
-            currentFilter = this.dataset.status || this.dataset.priority || "";
+            currentFilter = this.dataset.status || this.dataset.priority ||  this.dataset.action || "";
             fetchData(searchInput.value, currentFilter);
             if (dropdownMenu) {
                 dropdownMenu.classList.add("hidden");
@@ -133,9 +137,11 @@ document.addEventListener('DOMContentLoaded', function () {
     const plansBody = document.getElementById("plansBody");
     const goalsBody = document.getElementById("goalsBody");
     const initiativesBody = document.getElementById("initiativesBody");
+    const logsBody = document.getElementById('logsBody');
     const isPlansPage = !!plansBody;
     const isPlanDetailsPage = !!goalsBody;
     const isInitiativesPage = !!initiativesBody;
+    const isLogsBodyPage = !!logsBody;
 
     const pageDropdownButton = document.getElementById('page-dropdown-button');
     const pageDropdownIcon = document.getElementById('page-dropdown-icon');
@@ -189,13 +195,15 @@ document.addEventListener('DOMContentLoaded', function () {
             if (isInitiativesPage) {
                 // full reload
                 window.location.href = url.toString(); 
-            } else {
+            } 
+            else {
                 // AJAX 
                 fetch(url, { headers: { "X-Requested-With": "XMLHttpRequest" } })
                     .then(res => res.json())
                     .then(data => {
                         if (isPlansPage) plansBody.innerHTML = data.html;
                         if (isPlanDetailsPage) goalsBody.innerHTML = data.html;
+                        if (isLogsBodyPage) logsBody.innerHTML = data.html;
                     });
             }
 
@@ -527,7 +535,6 @@ function donutChart(labels, data, id){
             }]
         },
         options: {
-            responsive: true,
             plugins: {
                 legend: { position: 'bottom', rtl: true }
             }
@@ -746,5 +753,37 @@ if (document.getElementById('line-chart-data')){
     }
 }
 
+// //====================== Plan Detail Dashboard =============================
+// function GoalsInitiativesDonut(labels, goalsData, initiativesData, elementId) {
+//     const donutCtx = document.getElementById(elementId);
+//     if (!donutCtx) return;
 
-
+//     new Chart(donutCtx, {
+//         type: 'doughnut',
+//         data: {
+//             labels: labels,
+//             datasets: [
+//                 {
+//                     label: 'الأهداف',
+//                     data: { goalsData },
+//                     backgroundColor: ['#F2C75C', '#E59256', '#A13525', ' #00685E'],
+//                     borderWidth: 0,
+//                     weight: 2
+//                 },
+//                 {
+//                     label: 'المبادرات',
+//                     data: { initiativesData },
+//                     backgroundColor: ['#D1D5DB', '#93C5FD', '#6EE7B7', '#FCA5A5'],
+//                     borderWidth: 0,
+//                     weight: 1
+//                 }
+//             ]
+//         },
+//         options: {
+//             cutout: '55%',
+//             plugins: {
+//                 legend: { position: 'right' }
+//             }
+//         }
+//     });
+// }

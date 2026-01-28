@@ -134,87 +134,103 @@
                     ملخص الخطة
                 </h2>
             </div>
-            <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <div class="mt-6 grid grid-cols-1 gap-6">
 
-                <!-- بطاقة عدد الأهداف -->
-                <div class="bg-white p-4 rounded-lg shadow text-center">
-                    <h3 class="font-semibold mb-2">عدد الأهداف</h3>
-                    <p class="text-2xl font-bold">{{ goals_total }}</p>
-                </div>
+                <div class="bg-white rounded-xl shadow p-6 relative">
 
-                <!-- بطاقة عدد المبادرات -->
-                <div class="bg-white p-4 rounded-lg shadow text-center">
-                    <h3 class="font-semibold mb-2">عدد المبادرات</h3>
-                    <p class="text-2xl font-bold">{{ initiatives_count }}</p>
-                </div>
+                    <!-- فلترة -->
+                    <div class="absolute top-4 right-4">
+                        <button class="text-gray-500 hover:text-gray-700" title="فلترة">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2l-6 6v6l-4 2v-8L3 6V4z" />
+                            </svg>
+                        </button>
+                    </div>
 
-                <!-- أهم 3 أهداف -->
-                <div class="bg-white p-4 rounded-lg shadow">
-                    <button class="w-full text-left font-semibold flex justify-between items-center"
-                        onclick="this.nextElementSibling.classList.toggle('hidden')">
-                        أهم 3 أهداف
-                        <span>▼</span>
-                    </button>
-                    <ol class="mt-2 pl-5 hidden">
-                        {% for goal in top_3_goals %}
-                        <li>{{ goal.goal_title }} - أولوية: {{ goal.goal_priority }}</li>
-                        {% endfor %}
-                    </ol>
-                </div>
+                    <!-- الكاردات -->
+                    <div class="grid grid-cols-2 gap-4 mb-6">
 
-                <!-- أهم 3 مبادرات -->
-                <div class="bg-white p-4 rounded-lg shadow">
-                    <button class="w-full text-left font-semibold flex justify-between items-center"
-                        onclick="this.nextElementSibling.classList.toggle('hidden')">
-                        أهم 3 مبادرات
-                        <span>▼</span>
-                    </button>
-                    <ol class="mt-2 pl-5 hidden">
-                        {% for initiative in top_3_initiative %}
-                        <li>{{ initiative.title }} - أولوية: {{ initiative.priority }}</li>
-                        {% endfor %}
-                    </ol>
-                </div>
+                        <!-- بطاقة عدد الأهداف -->
+                        <div class="bg-white p-4 rounded-lg shadow text-center">
+                            <h3 class="text-sm text-gray-500 mb-1">عدد الأهداف</h3>
+                            <p class="text-3xl font-bold text-gray-800">
+                                {{ goals_total }}
+                            </p>
+                        </div>
 
-                <!-- Donut chart -->
-                <div class="bg-white p-4 rounded-lg shadow col-span-1 sm:col-span-2 lg:col-span-2">
-                    <h3 class="font-semibold mb-3 text-center">حالات الأهداف والمبادرات</h3>
-                    <div class="w-full h-64 mx-auto">
+                        <!-- بطاقة عدد المبادرات -->
+                        <div class="bg-white p-4 rounded-lg shadow text-center">
+                            <h3 class="text-sm text-gray-500 mb-1">عدد المبادرات</h3>
+                            <p class="text-3xl font-bold text-gray-800">
+                                {{ initiatives_count }}
+                            </p>
+                        </div>
+
+                    </div>
+
+                    <!-- Donut Chart -->
+                    <div class="w-full h-72">
+                         <h3 class="font-semibold mb-3 text-center" id="donut-chart-title">الحالة الإجمالية للأهداف والمبادرات</h3>
                         <canvas id="goalsInitiativesDonut"></canvas>
                     </div>
+
                 </div>
-
-            </div>
-
-            <!-- Bar chart-->
+<!-- fخليها اكثر انجازا واقل انجازا بالفلترة -->
+           
             <!-- <div class="mt-8 bg-white p-4 rounded-lg shadow">
                 <h3 class="font-semibold mb-4 text-center">top 5 based on completed goals</h3>
                 <div class="w-full h-72">
                     <canvas id="progressBarChart"></canvas>
                 </div>
-            </div> -->
+            </div>
 
-            <!-- JSON data -->
-            <!-- <script id="progress-data" type="application/json">
+            <script id="progress-data" type="application/json">
              {% if user.role.role_name == 'GM' %}
                  {{ departments_progress|safe }}
              {% elif user.role.role_name == 'M' or user.role.role_name == 'CM' %}
                  {{ employees_progress|safe }}
              {% endif %}
-            </script>
-            
+            </script> -->
             <div class="mt-8 bg-white p-4 rounded-lg shadow">
-                <h3 class="font-semibold mb-4 text-center">الأهداف المتأخرة (آخر 12 شهر)</h3>
+    <h3 class="font-semibold mb-4 text-center">
+        {% if progress_data.view_type == 'departments' %}
+            أفضل 5 إدارات حسب التقدم
+        {% else %}
+            أفضل 5 موظفين حسب التقدم
+        {% endif %}
+    </h3>
+
+    <div class="w-full h-72">
+        <canvas id="progressChart" width="400" height="300"></canvas>
+    </div>
+</div>
+<script id="progress-data" type="application/json">
+    {{ progress_data_json|safe }}
+</script>
+
+
+            
+            <script id="delayed-goals-titles" type="application/json">
+                {{ delayed_goals_titles_json|safe }}
+            </script>
+
+            <script id="delayed-goals-delay" type="application/json">
+                  {{ delayed_goals_delay_json|safe }}
+            </script>
+
+            <!-- الاهداف المتأخرة -->
+            <div class="mt-8 bg-white p-4 rounded-lg shadow">
+                <h3 class="font-semibold mb-4 text-center">الأهداف المتأخرة</h3>
                 <div class="w-full h-72">
-                    <canvas id="delayedGoalsLineChart"></canvas>
+                    <canvas id="delayedGoalsChart"></canvas>
                 </div>
             </div>
 
-            <script id="delayed-data" type="application/json">
-                 {{ delayed_goals_monthly|safe }}
-            </script>
 
-            {% if user.role.role_name == 'CM' %}
+
+            <!-- مستوى تقدم الخطة -->
             <div class="relative w-60 h-60 ml-10">
                 <svg class="w-full h-full rotate-180" viewBox="0 0 36 36">
                     <circle cx="18" cy="18" r="16" fill="none" class="stroke-current text-green-100" stroke-width="3"
@@ -232,40 +248,10 @@
                     <span class="text-xs text-green-600">تقدم الخطة</span>
                 </div>
             </div>
-            {% endif %} -->
+<!-- بحط ترتيب الاداراات -->
 
+</div>
 
-            <!-- <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-
-                <div class="bg-white p-4 rounded-lg shadow">
-                    <label class="flex items-center justify-between cursor-pointer font-semibold"
-                        onclick="this.nextElementSibling.classList.toggle('hidden')">
-                        ملخص الأهداف
-                        <span>▼</span>
-                    </label>
-                    <ul class="mt-2 pl-5 hidden">
-                        <li>لم تبدأ: {{ goals_not_started }}</li>
-                        <li>جارية: {{ goals_in_progress }}</li>
-                        <li>مكتملة: {{ goals_completed }}</li>
-                        <li>متأخرة: {{ goals_delayed }}</li>
-                    </ul>
-                </div>
-
-                <div class="bg-white p-4 rounded-lg shadow">
-                    <label class="flex items-center justify-between cursor-pointer font-semibold"
-                        onclick="this.nextElementSibling.classList.toggle('hidden')">
-                        ملخص المبادرات
-                        <span>▼</span>
-                    </label>
-                    <ul class="mt-2 pl-5 hidden">
-                        <li>لم تبدأ: {{ initiatives_not_started }}</li>
-                        <li>جارية: {{ initiatives_in_progress }}</li>
-                        <li>مكتملة: {{ initiatives_completed }}</li>
-                        <li>متأخرة: {{ initiatives_delayed }}</li>
-                    </ul>
-                </div>
-
-            </div> -->
 
             <!-- #################################################################################################### -->
             <div class="flex items-center gap-3 bg-[#00675B]/20 px-4 py-2 rounded-md">
@@ -334,7 +320,8 @@
                                 </li>
                                 <li>
                                     <button type="button" data-status="NS"
-                                        class="filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">لم يبدأ
+                                        class="filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">لم
+                                        يبدأ
                                         بعد</button>
                                 </li>
                                 <li>
@@ -359,7 +346,7 @@
                     <thead class="text-sm bg-gray-50 border-b text-center items-center">
                         <tr>
                             <th class="py-3 font-semibold">عنوان الهدف</th>
-                            <th class="py-3 font-semibold">وصف الهدف</th>
+                            <!-- <th class="py-3 font-semibold">وصف الهدف</th> -->
                             {% if request.user.role.role_name == 'GM' %}
                             <th class="py-3 font-semibold">الإدارة</th>
                             {% endif %}
@@ -394,7 +381,7 @@
                                 </span>
 
                             </th>
-                            <th class="px-3 py-3 font-semibold">المبادرات</th>
+                            <th class="px-4 py-3 font-semibold text-right">المبادرات</th>
                         </tr>
                     </thead>
                     <tbody id="goalsBody">
@@ -478,67 +465,111 @@
 <script>
     // ====== DONUT ======
     const donutCtx = document.getElementById('goalsInitiativesDonut');
+
     new Chart(donutCtx, {
         type: 'doughnut',
         data: {
-            labels: ['لم تبدأ', 'قيد التنفيذ', 'مكتملة', 'متأخرة'],
+            labels: ['لم تبدأ', 'قيد التنفيذ', 'متأخرة', 'مكتملة'],
             datasets: [
                 {
                     label: 'الأهداف',
-                    data: {{ goals_status }},
-        backgroundColor: ['#9CA3AF', '#3B82F6', '#10B981', '#EF4444'],
-        borderWidth: 0,
-        weight: 2
-    },
-        {
-            label: 'المبادرات',
-            data: {{ initiative_status }},
-        backgroundColor: ['#CBD5E1', '#93C5FD', '#86EFAC', '#FCA5A5'],
-        borderWidth: 0,
-        weight: 1
-        }
-      ]
-    },
-        options: {
-        cutout: '55%',
-        plugins: {
-            legend: { position: 'bottom' }
-        }
-    }
-  });
-
-
-    // ====== BAR ======
-    const progressData = JSON.parse(document.getElementById('progress-data').textContent);
-
-    const barLabels = progressData.map(x => x.department__department_name || x.userinitiative__user__username);
-    const barData = progressData.map(x => x.completed_goals || x.completed_initiatives);
-
-    new Chart(document.getElementById("progressBarChart"), {
-        type: 'bar',
-        data: {
-            labels: barLabels,
-            datasets: [{
-                label: "الأهداف/المبادرات المكتملة",
-                data: barData,
-                borderWidth: 1
-            }]
+                    data: {{ goals_status_json|safe }},
+                    backgroundColor: ['#F2C75C', '#E59256', '#A13525', ' #00685E'],
+                    borderWidth: 0,
+                    weight: 2
+                },
+                {
+                    label: 'المبادرات',
+                    data: {{ initiative_status_json|safe }},
+                    backgroundColor: ['#F7E3A9', '#E8B8A0', '#C77C7A', '#0D6A63'],
+                    borderWidth: 0,
+                    weight: 1
+                }
+            ]
         },
         options: {
-            responsive: true,
-            scales: { y: { beginAtZero: true } }
+            cutout: '55%',
+            plugins: {
+                legend: { position: 'right' }
+            },
+            responsive:true,
+            maintainAspectRatio:false
         }
     });
 
 
-    // ====== LINE ======
-    const delayedData = JSON.parse(document.getElementById('delayed-data').textContent);
+    // // ====== BAR ======
+    // const progressData = JSON.parse(document.getElementById('progress-data').textContent);
 
-    const lineLabels = delayedData.map(d => new Date(d.month).toLocaleDateString('ar-SA', {
-        month: 'short',
-        year: 'numeric'
-    }));
- 
+    // const barLabels = progressData.map(x => x.department__department_name || x.userinitiative__user__username);
+    // const barData = progressData.map(x => x.completed_goals || x.completed_initiatives);
+
+    // new Chart(document.getElementById("progressBarChart"), {
+    //     type: 'bar',
+    //     data: {
+    //         labels: barLabels,
+    //         datasets: [{
+    //             label: "الأهداف/المبادرات المكتملة",
+    //             data: barData,
+    //             borderWidth: 1
+    //         }]
+    //     },
+    //     options: {
+    //         responsive: true,
+    //         scales: { y: { beginAtZero: true } }
+    //     }
+    // });
+
+    // ====== BAR (Delayed Goals) ======
+    // ====== BAR (Delayed Goals) ======
+// const delayedTitles = JSON.parse(document.getElementById('delayed-goals-titles').textContent);
+// const delayedDelay = JSON.parse(document.getElementById('delayed-goals-delay').textContent);
+
+// const delayedCtx = document.getElementById('delayedGoalsBar');
+
+// if (delayedCtx) {
+//     new Chart(delayedCtx, {
+//         type: 'bar',
+//         data: {
+//             labels: delayedTitles,
+//             datasets: [{
+//                 label: 'أيام التأخير',
+//                 data: delayedDelay,
+//                 borderRadius: 8,
+//                 borderWidth: 0,
+//                 backgroundColor: '#F97316'
+//             }]
+//         },
+//         options: {
+//             indexAxis: 'y',
+//             responsive: true,
+//             maintainAspectRatio: false,
+//             plugins: {
+//                 legend: { display: false },
+//                 tooltip: {
+//                     callbacks: {
+//                         label: function (context) {
+//                             return context.parsed.x + " يوم تأخير";
+//                         }
+//                     }
+//                 }
+//             },
+//             scales: {
+//                 x: { beginAtZero: true }
+//             }
+//         }
+//     });
+// }
+
+
+    // // ====== LINE ======
+    // const delayedData = JSON.parse(document.getElementById('delayed-data').textContent);
+
+    // const lineLabels = delayedData.map(d => new Date(d.month).toLocaleDateString('ar-SA', {
+    //     month: 'short',
+    //     year: 'numeric'
+    // }));
+
     const lineData = delayedData.map(d => d.count);
 
     new Chart(document.getElementById("delayedGoalsLineChart"), {
@@ -558,6 +589,7 @@
             scales: { y: { beginAtZero: true } }
         }
     });
+    
 
     const planGauge = document.getElementById('plan-gauge');
     const value = planGauge.dataset.value;

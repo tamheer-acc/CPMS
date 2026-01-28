@@ -38,3 +38,102 @@
         opacity: 0;
     }
 }
+
+
+
+.progress-bar-inner {
+    position: relative;
+    overflow: hidden;
+    border-radius: 9999px;
+}
+
+.progress-bar-inner::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: repeating-linear-gradient(
+        45deg,
+        rgba(255,255,255,0.2) 0,
+        rgba(255,255,255,0.2) 10px,
+        transparent 10px,
+        transparent 20px
+    );
+    background-size: 40px 100%;
+    animation: move-stripes 1s linear infinite;
+    pointer-events: none;
+}
+
+@keyframes move-stripes {
+    0% { background-position: 0 0; }
+    100% { background-position: 40px 0; }
+}
+
+.animate-move-stripes {
+    background-size: 40px 100%;
+    background-image: repeating-linear-gradient(
+        45deg,
+        rgba(255,255,255,0.2) 0,
+        rgba(255,255,255,0.2) 10px,
+        transparent 10px,
+        transparent 20px
+    );
+    animation: move-stripes 1s linear infinite;
+}
+.bg-gradient-stripes {
+    background: linear-gradient(90deg, #6366f1, #8b5cf6); /* gradient */
+    background-image: 
+        linear-gradient(90deg, #6366f1, #8b5cf6),
+        repeating-linear-gradient(
+            45deg,
+            rgba(255,255,255,0.2) 0,
+            rgba(255,255,255,0.2) 10px,
+            transparent 10px,
+            transparent 20px
+        );
+    background-size: 100% 100%, 40px 100%;
+    background-position: 0 0, 0 0;
+    animation: move-stripes 1s linear infinite;
+}
+@keyframes stripe-move {
+    0% { background-position: 0 0; }
+    100% { background-position: 40px 0; }
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateX(0); }
+    50% { transform: translateX(5px); }
+}
+
+@keyframes glow {
+    0%, 100% { box-shadow: 0 0 8px rgba(0,0,0,0.1); }
+    50% { box-shadow: 0 0 20px rgba(0,0,0,0.2); }
+}
+
+.animate-stripes {
+    background-image: repeating-linear-gradient(
+        45deg,
+        rgba(255,255,255,0.15) 0,
+        rgba(255,255,255,0.15) 10px,
+        transparent 10px,
+        transparent 20px
+    );
+    background-size: 40px 100%;
+    animation: stripe-move 1s linear infinite;
+}
+
+.animate-pulse-slow {
+    animation: pulse 3s ease-in-out infinite;
+}
+
+.animate-bounce {
+    animation: bounce 1s ease-in-out infinite;
+}
+
+.animate-glow {
+    animation: glow 2s ease-in-out infinite;
+}
