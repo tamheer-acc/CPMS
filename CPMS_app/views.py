@@ -825,7 +825,7 @@ def add_progress(request, initiative_id):
 
             # ===== Update goal status =====
             goal = initiative.strategic_goal
-            new_status = calc_goal_status(goal,user)
+            new_status = calc_goal_status(goal)
             goal.goal_status = new_status
             goal.save()
    
@@ -1328,7 +1328,7 @@ class GoalDetailsview(LoginRequiredMixin, DetailView):
         goal_progress = calc_goal_progress(strategic_goal)
         context['progress'] = goal_progress
         
-        status_value = calc_goal_status(strategic_goal,'')
+        status_value = calc_goal_status(strategic_goal)
         status_display = {
             'NS': 'لم يبدأ بعد',
             'IP': 'قيد التنفيذ',
