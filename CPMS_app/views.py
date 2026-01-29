@@ -1328,7 +1328,7 @@ class GoalDetailsview(LoginRequiredMixin, DetailView):
         goal_progress = calc_goal_progress(strategic_goal)
         context['progress'] = goal_progress
         
-        status_value = calc_goal_status(strategic_goal,'')
+        status_value = calc_goal_status(strategic_goal)
         status_display = {
             'NS': 'لم يبدأ بعد',
             'IP': 'قيد التنفيذ',
