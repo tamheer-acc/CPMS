@@ -25,7 +25,6 @@
     </td> -->
 
 
-
     <!-- Status -->
     <td class="px-4 py-3">
         <span class="inline-flex items-center justify-center px-3 py-1 text-xs font-semibold rounded-full whitespace-nowrap
@@ -93,6 +92,7 @@
 
         <!-- send note - only for GM -->
         {% if request.user.role.role_name == 'GM' %}
+        {% if active_plan_exists %}
         <label for="note-modal-toggle"
             hx-get="{% url 'note_create_modal' %}?goal_id={{ goal.id }}&next={{ request.path }}"
             hx-target="#note-form-container" hx-swap="innerHTML"
@@ -117,6 +117,7 @@
             z-50"> ارسل ملاحظة
             </div>
         </label>
+        {% endif %}
         {% endif %}
 
         <!-- {% if user.role.role_name == 'CM' %}
@@ -156,22 +157,22 @@
 </tr>
 <tr id="goal-{{ goal.id }}" class="hidden bg-gray-50">
     <td colspan="6" class="px-6 py-4">
-
+ 
         {% if goal.initiative_set.exists %}
         <div class="space-y-3">
-
-            <div class="flex justify-between items-center mb-4 px-3">
+            <div class="flex justify-between items-center mb-4 px-1">
                 <h3 class="font-semibold text-[#00675B] text-lg ">| قائمة المبادرات</h3>
                 <!-- <a href="{% url 'initiative_create' goal.id %}"
                     class="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700">
                     إضافة مبادرة
                 </a> -->
             </div>
-
+   
             <!-- List of initiatives -->
-            <ol class="list-none space-y-2">
-                {% for initiative in goal.initiative_set.all %}
-                <li class="flex items-start gap-3 p-3 bg-white rounded-lg border hover:bg-gray-50">
+            <ol  dir="ltr"class="custom-scroll list-none space-y-2 overflow-y-auto max-h-64">
+                {% for initiative in goal.initiatives_with_status %}
+
+                <li dir="rtl" class="flex items-start gap-3 p-3 bg-white rounded-lg border hover:bg-gray-50">
                     <span class="border-l-2 border-gray-300 h-10"></span>
 
                     <div class="flex-1">
@@ -220,6 +221,7 @@
                 </li>
                 {% endfor %}
             </ol>
+            </div>
         </div>
         {% else %}
         <p class="text-center text-gray-400">
@@ -266,3 +268,35 @@
     }
 
 </script>
+<style>/* Scrollbar – thin & subtle */
+.custom-scroll {
+    scrollbar-width: thin;          /* Firefox */
+    scrollbar-color: #cbd5e1 transparent;
+}
+
+/* Chrome / Edge / Safari */
+.custom-scroll::-webkit-scrollbar {
+    width: 1px;
+}
+
+.custom-scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+/* hide arrows */
+.custom-scroll::-webkit-scrollbar-button {
+    display: none;
+    width: 0;
+    height: 0;
+}
+
+.custom-scroll::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 9999px;
+}
+
+.custom-scroll::-webkit-scrollbar-thumb:hover {
+    background-color: #94a3b8;
+}
+
+</style>

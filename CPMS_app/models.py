@@ -118,7 +118,7 @@ class StrategicGoal (models.Model):
     class Meta:
         verbose_name = "StrategicGoal"
         verbose_name_plural = "StrategicGoals"
-        ordering = ['start_date']  
+        ordering = ['-start_date']  
 
     def __str__(self):
         return f"{self.goal_title} ({self.department.department_name})"

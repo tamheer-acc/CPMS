@@ -24,7 +24,7 @@ from .forms import InitiativeForm, KPIForm, NoteForm, StrategicGoalForm, Strateg
 from .models import ( STATUS, Role, Department, User, StrategicPlan, StrategicGoal,
                         Initiative, UserInitiative, KPI, Note, Log, ProgressLog)
 from .services import ( calc_goal_status, calc_initiative_status_by_avg, generate_KPIs,  create_log, get_plan_dashboard, calc_user_initiative_status, 
-                        filter_queryset, get_page_numbers, model_to_dict_with_usernames, paginate_queryset, status_count, avg_calculator, 
+                        filter_queryset, get_page_numbers, get_timeline_data, model_to_dict_with_usernames, paginate_queryset, status_count, avg_calculator, 
                         calc_delayed, kpi_filter, weight_initiative, get_unread_notes_count, departments_progress_over_time)
 
 from django.db.models import Count
@@ -185,7 +185,14 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             initiatives = Initiative.objects.all()
             userinitiatives = UserInitiative.objects.all()
             for goal in goals:
-                goal.user_initiatives = initiatives.filter(strategic_goal=goal)
+                goal.user_initiatives = UserInitiative.objects.filter(
+                     initiative__strategic_goal=goal
+                     )
+                initiatives_with_status = []
+                for initiative in goal.initiative_set.all():
+                    initiative.status = calc_initiative_status_by_avg(initiative)
+                    initiatives_with_status.append(initiative)
+                    goal.initiatives_with_status = initiatives_with_status
 
             # Bar Chart ( مدى اكتمال الأهداف ) : avg of progress for each goal
             goals_with_avg = StrategicGoal.objects.annotate( avg_progress=Avg('initiative__userinitiative__progress', filter=Q(initiative__userinitiative__user__role__role_name='E')))
@@ -256,8 +263,18 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             userinitiatives = UserInitiative.objects.filter(user__department = user.department, user__role__role_name = 'E' )
             initiatives = Initiative.objects.filter(userinitiative__user=user )
             goals = StrategicGoal.objects.filter(department = user.department) 
+            # for goal in goals:
+            #     goal.user_initiatives = initiatives.filter(strategic_goal=goal)
             for goal in goals:
-                goal.user_initiatives = initiatives.filter(strategic_goal=goal)
+                goal.user_initiatives = UserInitiative.objects.filter(
+                     initiative__strategic_goal=goal
+                     )
+                initiatives_with_status = []
+                for initiative in goal.initiative_set.all():
+                    initiative.status = calc_initiative_status_by_avg(initiative)
+                    initiatives_with_status.append(initiative)
+                    goal.initiatives_with_status = initiatives_with_status
+
 
             # Donut Chart ( حالة المبادرات  ) : count of all user initiatives grouped by status
             initiative_id = self.request.GET.get('initiative')  # if there is filter
@@ -349,9 +366,18 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             userinitiatives = UserInitiative.objects.filter(user = user)
             goals = StrategicGoal.objects.filter(initiative__userinitiative__user=user).distinct().prefetch_related('initiative_set__userinitiative_set')
 
+            # for goal in goals:
+            #     goal.user_initiatives = initiatives.filter(strategic_goal=goal)
             for goal in goals:
-                goal.user_initiatives = initiatives.filter(strategic_goal=goal)
-                
+                goal.user_initiatives = UserInitiative.objects.filter(
+                     initiative__strategic_goal=goal
+                     )
+                initiatives_with_status = []
+                for initiative in goal.initiative_set.all():
+                    initiative.status = calc_initiative_status_by_avg(initiative)
+                    initiatives_with_status.append(initiative)
+                    goal.initiatives_with_status = initiatives_with_status
+
             # Donut Chart ( حالة المبادرات  ) : count of all user initiatives grouped by status
             if userinitiatives.exists():
                 count = status_count(userinitiatives)                
@@ -812,7 +838,7 @@ def add_progress(request, initiative_id):
 
             # ===== Update goal status =====
             goal = initiative.strategic_goal
-            new_status = calc_goal_status(goal,user)
+            new_status = calc_goal_status(goal)
             goal.goal_status = new_status
             goal.save()
    
@@ -1074,11 +1100,10 @@ class PlanDetailsview(LoginRequiredMixin, RoleRequiredMixin, DetailView):
      def get_context_data(self, **kwargs):
       context = super().get_context_data(**kwargs)
       dashboard_data = get_plan_dashboard(self.object, self.request.user)
-      context.update(dashboard_data)
-
       user = self.request.user
       role = user.role.role_name
       goals_qs = StrategicGoal.objects.filter(strategicplan=self.object)
+      
 
     # search & filter
       goals_qs = filter_queryset(
@@ -1090,26 +1115,35 @@ class PlanDetailsview(LoginRequiredMixin, RoleRequiredMixin, DetailView):
     )
 
       if role in ['M', 'CM']:
-        goals_qs = goals_qs.prefetch_related(
-            Prefetch(
-                'initiative_set',
-                queryset=Initiative.objects.prefetch_related(
-                    Prefetch(
-                        'userinitiative_set',
-                        queryset=UserInitiative.objects.filter(user=user),
-                        to_attr='user_initiative'
-                    )
-                )
-            )
-        )
+        goals_qs = goals_qs.filter(department=user.department)
+        # goals_qs.prefetch_related(
+        #     Prefetch(
+        #         'initiative_set',
+        #         queryset=Initiative.objects.prefetch_related(
+        #             Prefetch(
+        #                 'userinitiative_set',
+        #                 queryset=UserInitiative.objects.filter(user=user),
+        #                 to_attr='user_initiative'
+        #             )
+        #         )
+        #     )
+        # )
 
       per_page = 5
       goal_list, page_obj, paginator = paginate_queryset(goals_qs, self.request, per_page)
+      context.update(dashboard_data)
+     
+
+
 
       # Add status attribute for each initiative
       for goal in goal_list:
-         for initiative in goal.initiative_set.all():
-             initiative.status = calc_initiative_status_by_avg(initiative)
+            initiatives = []
+            for initiative in goal.initiative_set.all():
+                initiative.status = calc_initiative_status_by_avg(initiative)
+                initiatives.append(initiative)
+
+            goal.initiatives_with_status = initiatives
 
       context['goals'] = goal_list
       context['page_obj'] = page_obj
@@ -1119,7 +1153,7 @@ class PlanDetailsview(LoginRequiredMixin, RoleRequiredMixin, DetailView):
       context['page_numbers'] = get_page_numbers(page_obj, paginator)
  
       return context
-     
+      
      def render_to_response(self, context, **response_kwargs):
          if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
              html = render_to_string('partials/goals_table_rows.html', context, request=self.request)
@@ -1225,7 +1259,9 @@ class AllGoalsView(LoginRequiredMixin, ListView):
         elif role in ['M','CM']:
             qs = StrategicGoal.objects.filter(department = user.department)
         elif role == 'E':
-            qs = StrategicGoal.objects.all().prefetch_related('initiative_set__userinitiative_set')
+            qs = StrategicGoal.objects.filter(initiative__userinitiative__user=user).distinct()
+        else:
+            qs = StrategicGoal.objects.none()
 
         #search & filter function
         qs = filter_queryset(
@@ -1247,22 +1283,24 @@ class AllGoalsView(LoginRequiredMixin, ListView):
 
       # Add status attribute for each initiative
       for goal in goal_list:
-         for initiative in goal.initiative_set.all():
-             initiative.status = calc_initiative_status_by_avg(initiative)
-    
-     # ====== Get plan from the first goal ======
-      plan = None
-      if goal_list:
-        plan = goal_list[0].strategicplan
+            initiatives = []
+            for initiative in goal.initiative_set.all():
+                initiative.status = calc_initiative_status_by_avg(initiative)
+                initiatives.append(initiative)
 
+            goal.initiatives_with_status = initiatives
+    
+     # ====== Get active plan ======
+      active_plan = StrategicPlan.objects.filter(is_active=True).first()
+
+      context['active_plan'] = active_plan
+      context['active_plan_exists'] = bool(active_plan)
       context['goals'] = goal_list
       context['page_obj'] = page_obj
       context['paginator'] = paginator
       context['per_page'] = per_page
       context['is_paginated'] = True if paginator.num_pages > 1 else False
       context['page_numbers'] = get_page_numbers(page_obj, paginator)
-      context['plan_is_active'] = plan.is_active if plan else False
-
       return context
     
     
@@ -1306,7 +1344,7 @@ class CreateGoalView(LoginRequiredMixin, RoleRequiredMixin, LogMixin, CreateView
         return redirect(self.get_success_url())
     
     def get_success_url(self):
-        return reverse('plan_detail', kwargs={'pk': self.kwargs['plan_id']})
+        return reverse('goals_list')
 
 
 class UpdateGoalView(LoginRequiredMixin, RoleRequiredMixin, LogMixin, UpdateView):

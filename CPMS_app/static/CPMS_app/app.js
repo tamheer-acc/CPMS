@@ -763,7 +763,7 @@ if (document.getElementById('line-chart-data')){
 //                 },
 //                 {
 //                     label: 'المبادرات',
-//                     data: { initiativesData },
+//                     data: { initiativesData },'#166b70'
 //                     backgroundColor: ['#D1D5DB', '#93C5FD', '#6EE7B7', '#FCA5A5'],
 //                     borderWidth: 0,
 //                     weight: 1

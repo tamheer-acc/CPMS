@@ -8,16 +8,30 @@ from .models import Department, Initiative, KPI, Note, StrategicPlan, StrategicG
 # ============== Base Form =================
 # Base form with shared clean and save logic
 class BaseForm(forms.ModelForm):
-    def clean(self):
-        cleaned_data = super().clean()
-        start = cleaned_data.get('start_date')
-        end = cleaned_data.get('end_date')
-        if start and end and end <= start:
-            self.add_error('end_date', "تاريخ النهاية يجب أن يكون بعد تاريخ البداية")
+     def clean(self):
+       cleaned_data = super().clean()
+       start = cleaned_data.get('start_date')
+       end = cleaned_data.get('end_date')
 
-        return cleaned_data
+     # validate the end date
+       if start and end and end < start:
+           self.add_error('end_date', "تاريخ الانتهاء لا يمكن أن يسبق تاريخ البدء")
 
-    def save(self, user=None, sender=None, plan_id=None, commit=True):
+     # validate goal or initiative date
+       active_plan = StrategicPlan.objects.filter(is_active=True).first()
+
+       if active_plan and start and end:
+          plan_start = active_plan.start_date
+          plan_end = active_plan.end_date
+
+       if active_plan and start and end:
+          if start < plan_start or end > plan_end:
+             self.add_error('end_date',"يجب أن تكون التواريخ ضمن الفترة الزمنية للخطة الحالية")
+
+       return cleaned_data
+
+
+     def save(self, user=None, sender=None, plan_id=None, commit=True):
         obj = super().save(commit=False)
 
         if user and hasattr(obj, 'created_by'):
@@ -74,14 +88,14 @@ class StrategicPlanForm(BaseForm):
 class StrategicGoalForm(BaseForm):
     class Meta:
         model = StrategicGoal
-        fields = ['goal_title', 'description', 'start_date', 'end_date', 'goal_status', 'goal_priority']
+        fields = ['goal_title', 'description', 'start_date', 'end_date', 'goal_priority']
         labels = {
             'goal_title': 'عنوان الهدف',
             'description': 'وصف الهدف',
             'start_date': 'تاريخ بداية الهدف',
             'end_date': 'تاريخ نهاية الهدف',
-            'goal_status': 'حالة الهدف',
-            'goal_priority': 'أهمية الهدف',
+            # 'goal_status': 'حالة الهدف',
+            'goal_priority': 'الأهمية',
         }
         error_messages = {
             'goal_title': {
@@ -98,9 +112,9 @@ class StrategicGoalForm(BaseForm):
             'end_date': {
                 'required': 'يرجى تحديد تاريخ النهاية',
             },
-            'goal_status': {
-                'required': 'يرجى تحديد حالة الهدف',
-            },
+            # 'goal_status': {
+            #     'required': 'يرجى تحديد حالة الهدف',
+            # },
             'goal_priority': {
                 'required': 'يرجى تحديد أهمية الهدف',
             },
@@ -111,10 +125,9 @@ class StrategicGoalForm(BaseForm):
             'description': forms.Textarea(attrs={'rows': 1, 'class': 'textarea'}),
             'start_date': forms.DateInput(attrs={'type': 'date', 'class': 'input'}),
             'end_date': forms.DateInput(attrs={'type': 'date', 'class': 'input'}),
-            'goal_status': forms.Select(attrs={'class':'rounded-xl border px-12 py-2 text-sm text-gray-900 bg-gray-50 hover:border-gray-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-500'}),
-            'goal_priority': forms.Select(attrs={'class':'rounded-xl border px-12 py-2 text-sm text-gray-900 bg-gray-50 hover:border-gray-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-500'}),
+            # 'goal_status': forms.Select(attrs={'class':'rounded-xl border px-12 py-2 text-sm text-gray-900 bg-gray-50 hover:border-gray-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-500'}),
+           'goal_priority': forms.Select(attrs={'class': 'rounded-xl w-full border px-12 py-2 text-sm text-gray-900 text-center bg-gray-50 hover:border-gray-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-800'}),
         }
-
 
 # ===== Note Form =====
 class NoteForm(BaseForm):

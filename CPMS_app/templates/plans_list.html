@@ -74,9 +74,8 @@
             </div>
 
             <!-- Add Plan Button chanege style -->
-            {% if request.user.role.role_name == 'M' %}
+            {% if request.user.role.role_name == 'CM' %}
             <div class="relative inline-block group">
-
                 <a href="{% if not active_plan_exists %}{% url 'plan_create' %}{% else %}#{% endif %}"
                     onclick="{% if active_plan_exists %}return false;{% endif %}" class="bg-[#00A399] text-white px-4 py-2 rounded-md text-sm font-semibold
               {% if active_plan_exists %}
@@ -84,7 +83,7 @@
               {% else %}
                   hover:bg-[#018077]
               {% endif %}">
-                    إضافة خطة
+                    إنشاء خطة
                 </a>
 
                 {% if active_plan_exists %}

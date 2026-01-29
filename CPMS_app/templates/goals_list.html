@@ -83,14 +83,18 @@
             <!-- Add goal Button chanege style -->
             {% if request.user.role.role_name in 'CM M' %}
             <div class="relative inline-block group">
-
-                <a href="{% if not active_plan_exists %}{% url 'plan_create' %}{% else %}#{% endif %}"
+               
+            </div>
+            {% if active_plan_exists %}
+                <a href="{% if active_plan_exists %}{% url 'goal_create' active_plan.id %}{% else %}#{% endif %}"
                   class="bg-[#00A399] text-white px-4 py-2 rounded-md text-sm font-semibold">
                     إضافة هدف
                 </a>
-
-            </div>
-
+             {% else %}
+               <a href="{% url 'plan_create' %}" class="bg-gray-400 text-white px-4 py-2 rounded-md text-sm font-semibold">
+                لا توجد خطة نشطة حاليًا، أنشئ خطة!
+               </a>
+             {% endif %}
             {% endif %}
 
         </div>
