@@ -825,7 +825,7 @@ def add_progress(request, initiative_id):
 
             # ===== Update goal status =====
             goal = initiative.strategic_goal
-            new_status = calc_goal_status(goal,user)
+            new_status = calc_goal_status(goal)
             goal.goal_status = new_status
             goal.save()
    
