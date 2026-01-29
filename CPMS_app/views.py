@@ -1,6 +1,9 @@
+import ast, decimal,  json, re, math
 from itertools import groupby
+from datetime import datetime
 from django import forms
 from django.utils import timezone
+from django.utils.safestring import mark_safe
 from django.utils.timezone import now, timedelta
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy, reverse
@@ -12,6 +15,7 @@ from django.forms.models import model_to_dict
 from django.template.loader import render_to_string
 from django.db.models import Q,F, Case,Exists, When, Value, IntegerField, OuterRef, Subquery, BooleanField,CharField, Avg, Count
 from django.db.models.functions import Concat, Coalesce
+from django.db.models.query import QuerySet
 from django.contrib import messages
 from django.contrib.auth import login, get_user_model
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
@@ -24,8 +28,8 @@ from .forms import InitiativeForm, KPIForm, NoteForm, StrategicGoalForm, Strateg
 from .models import ( STATUS, Role, Department, User, StrategicPlan, StrategicGoal,
                         Initiative, UserInitiative, KPI, Note, Log, ProgressLog)
 from .services import ( calc_goal_status, calc_initiative_status_by_avg, generate_KPIs,  create_log, get_plan_dashboard, calc_user_initiative_status, 
-                        filter_queryset, get_page_numbers, get_timeline_data, model_to_dict_with_usernames, paginate_queryset, status_count, avg_calculator, 
-                        calc_delayed, kpi_filter, weight_initiative, get_unread_notes_count, departments_progress_over_time)
+                        filter_queryset, get_page_numbers,get_timeline_data, model_to_dict_with_usernames, paginate_queryset, status_count, avg_calculator, 
+                        calc_delayed, kpi_filter, weight_initiative, get_unread_notes_count, departments_progress_over_time, calc_goal_progress, calculate_goal_timeline)
 
 from django.db.models import Count
 from django.utils.safestring import mark_safe
@@ -64,6 +68,7 @@ class LogMixin:
         )
 
 
+
 #Helper class that acts like UserPassesTestMixin:
 class RoleRequiredMixin(UserPassesTestMixin):
     allowed_roles = []
@@ -72,7 +77,7 @@ class RoleRequiredMixin(UserPassesTestMixin):
         return self.request.user.role.role_name in self.allowed_roles
 
     def handle_no_permission(self):
-        return redirect('access_denied')
+        raise PermissionDenied("ليست لديك صلاحية لرؤية هذه الصفحة")
 
 
 
@@ -139,6 +144,8 @@ class InitiativePermissionMixin:
 #                                                    RENAD's Views                                                      #
 #########################################################################################################################
 
+
+
 # ---------------------------
 #  Access Denied View
 # ---------------------------
@@ -148,7 +155,7 @@ def access_denied_view(request, exception=None):
 
 
 # ---------------------------
-#  Access Denied View
+#  Page not Found View
 # ---------------------------
 def page_not_found_view(request, exception=None):
     return render(request, 'page_not_found.html', status=404)
@@ -527,6 +534,10 @@ class AllInitiativeView(LoginRequiredMixin, InitiativePermissionMixin, ListView)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        context['search'] = self.request.GET.get('search', '')
+        context['action'] = self.request.GET.get('action', '')
+        context['per_page'] = self.request.GET.get('per_page', 25)
+
         page_obj = context['page_obj']
         total_pages = context['paginator'].num_pages
         current = page_obj.number
@@ -685,7 +696,7 @@ class UpdateInitiativeView(LoginRequiredMixin, RoleRequiredMixin, InitiativePerm
     '''
     model = Initiative
     template_name = 'initiative_form.html'
-    fields = ['title', 'description', 'start_date', 'end_date', 'priority', 'category']
+    form_class = InitiativeForm
     allowed_roles = ['M', 'CM']
 
     def get_queryset(self):
@@ -746,7 +757,7 @@ class DeleteInitiativeView(LoginRequiredMixin, RoleRequiredMixin, InitiativePerm
 
         messages.success( self.request, f"تم حذف المبادرة: {obj.title} بنجاح", extra_tags="delete")
         return redirect(success_url)
-    
+
 
 
 
@@ -756,7 +767,6 @@ def is_manager(user):
 
 
 @login_required
-
 @user_passes_test(is_manager)
 def assign_employee_to_initiative(request, pk):
     initiative = get_object_or_404(Initiative, id=pk)
@@ -823,13 +833,15 @@ def assign_employee_to_initiative(request, pk):
     })
 
 
+
+@login_required
 def add_progress(request, initiative_id):
     user = request.user
     initiative = get_object_or_404(Initiative, id=initiative_id)
     user_initiative = get_object_or_404(UserInitiative, initiative=initiative, user=user)
     
     if request.method == 'POST':
-          # ===== OLD DATA  =====
+        # ===== OLD DATA  =====
         old_data = model_to_dict_with_usernames(user_initiative)
 
         form = UserInitiativeForm(request.POST, instance=user_initiative)
@@ -842,6 +854,17 @@ def add_progress(request, initiative_id):
             goal.goal_status = new_status
             goal.save()
    
+
+        #    # ===== Update Initiative Status =====
+        #     old_status = initiative.initiative_status
+        #     new_status = calc_initiative_status_by_avg(initiative)
+        #     print("OLD STATUS:", old_status)
+        #     print("NEW STATUS:", new_status)
+        #     if old_status != new_status:
+        #         initiative.initiative_status = new_status
+        #         initiative.save()
+        #         print("Status updated ✔")
+
             logger = LogMixin(request=request)
             logger.log_update(old_instance=old_data, new_instance=obj)
 
@@ -870,7 +893,6 @@ def add_progress(request, initiative_id):
 
 
 
-
 # ---------------------------
 #  KPI Views
 # ---------------------------
@@ -881,6 +903,7 @@ class KPIDetailsView(DetailView):
     model = KPI
     template_name = "KPI_detail.html"
     context_object_name = "KPI"
+
 
 
 @user_passes_test(is_manager)
@@ -958,7 +981,6 @@ class DeleteKPIView(RoleRequiredMixin, LogMixin, DeleteView):
 
         messages.success( self.request, f"تم حذف مؤشر القياس: {obj.kpi} بنجاح", extra_tags="delete")
         return redirect(success_url)
-    
 
 
 
@@ -1013,6 +1035,8 @@ class AllKPIsView(ListView): #not needed but here we go
 #                                                    WALAA's Views                                                      #
 #########################################################################################################################
 
+
+
 # ---------------------------
 #  Department View
 # ---------------------------
@@ -1026,6 +1050,8 @@ class AllDepartmentsView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         return Department.objects.all()
+
+
 
 # ---------------------------
 #  StrategicPlan View
@@ -1057,22 +1083,22 @@ class AllPlansView(LoginRequiredMixin, RoleRequiredMixin, ListView):
         return queryset
 
     def get_context_data(self, **kwargs):
-      context = super().get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
 
-      queryset = self.get_queryset()
-      per_page = 5
+        queryset = self.get_queryset()
+        per_page = 5
 
-      page_list, page_obj, paginator = paginate_queryset(queryset, self.request, per_page)
+        page_list, page_obj, paginator = paginate_queryset(queryset, self.request, per_page)
 
-      context['plans'] = page_list               
-      context['page_obj'] = page_obj
-      context['paginator'] = paginator
-      context['page_numbers'] = get_page_numbers(page_obj, paginator)
-      context['per_page'] = per_page
-      context['is_paginated'] = True if paginator.num_pages > 1 else False
-      context['active_plan_exists'] = StrategicPlan.objects.filter(is_active=True).exists()
+        context['plans'] = page_list               
+        context['page_obj'] = page_obj
+        context['paginator'] = paginator
+        context['page_numbers'] = get_page_numbers(page_obj, paginator)
+        context['per_page'] = per_page
+        context['is_paginated'] = True if paginator.num_pages > 1 else False
+        context['active_plan_exists'] = StrategicPlan.objects.filter(is_active=True).exists()
 
-      return context
+        return context
 
 
     def render_to_response(self, context, **response_kwargs):
@@ -1161,7 +1187,6 @@ class PlanDetailsview(LoginRequiredMixin, RoleRequiredMixin, DetailView):
                  'html': html
              })
 
-         return super().render_to_response(context, **response_kwargs)
 
 
 class CreatePlanView(LoginRequiredMixin, LogMixin, CreateView):
@@ -1186,7 +1211,6 @@ class CreatePlanView(LoginRequiredMixin, LogMixin, CreateView):
         messages.success(self.request, "تم إنشاء الخطة بنجاح", extra_tags="create")
         return redirect(self.get_success_url())
 
-    
 
 
 class UpdatePlanView(LoginRequiredMixin, LogMixin, UpdateView):
@@ -1216,6 +1240,7 @@ class UpdatePlanView(LoginRequiredMixin, LogMixin, UpdateView):
         return response
 
 
+
 class DeletePlanView(LoginRequiredMixin, RoleRequiredMixin, LogMixin, DeleteView):
     '''
     - Only Committee Manager can delete a plan
@@ -1232,6 +1257,7 @@ class DeletePlanView(LoginRequiredMixin, RoleRequiredMixin, LogMixin, DeleteView
         response = super().form_valid(form)
         messages.success(self.request, "تم حذف الخطة بنجاح", extra_tags="delete")
         return response
+
 
 
 # ---------------------------
@@ -1317,6 +1343,7 @@ class AllGoalsView(LoginRequiredMixin, ListView):
         return super().render_to_response(context, **response_kwargs)
 
 
+
 class GoalDetailsview(LoginRequiredMixin, DetailView):
     '''
     - Shows details of a single goal
@@ -1324,6 +1351,43 @@ class GoalDetailsview(LoginRequiredMixin, DetailView):
     model = StrategicGoal
     template_name = 'goal_detail.html'
     context_object_name = 'goal'
+    def get_context_data(self, **kwargs):
+        user = self.request.user 
+        strategic_goal = self.get_object() 
+        context = super().get_context_data(**kwargs)
+        
+        initiatives = Initiative.objects.filter(strategic_goal = strategic_goal)
+        initiatives_count = initiatives.count()
+        context['initiatives'] = initiatives
+        context['initiatives_count'] = initiatives_count
+        context['goal'] = strategic_goal
+        
+        goal_progress = calc_goal_progress(strategic_goal)
+        context['progress'] = goal_progress
+        
+        status_value = calc_goal_status(strategic_goal,'')
+        status_display = {
+            'NS': 'لم يبدأ بعد',
+            'IP': 'قيد التنفيذ',
+            'D': 'متأخر',
+            'C': 'مكتمل'
+        }.get(status_value, '')
+        context['status'] = status_display
+
+        timeline = calculate_goal_timeline(strategic_goal)
+        context['passed'] = timeline['passed']
+        context['duration'] = timeline['duration']
+        context["remaining_duration"] = timeline["remaining_duration"]
+        context["passed_duration_percent"] = timeline["passed_duration_percent"]
+        # svg_size = 48  # in px
+        # radius = 0.45 * svg_size
+        # circumference = 2 * math.pi * radius
+        # context["circumference"] = circumference
+        # context["circle_offset"] = round(circumference * (1 - timeline["passed_duration_percent"]/100), 2)
+        # context["circle_offset_for_progress"] = round(circumference * (1 - goal_progress/100), 2)
+
+        return context
+        
 
 
 class CreateGoalView(LoginRequiredMixin, RoleRequiredMixin, LogMixin, CreateView):
@@ -1347,6 +1411,7 @@ class CreateGoalView(LoginRequiredMixin, RoleRequiredMixin, LogMixin, CreateView
         return reverse('goals_list')
 
 
+
 class UpdateGoalView(LoginRequiredMixin, RoleRequiredMixin, LogMixin, UpdateView):
     '''
     - Managers and Committee Managers can update goals in their department
@@ -1356,7 +1421,7 @@ class UpdateGoalView(LoginRequiredMixin, RoleRequiredMixin, LogMixin, UpdateView
     model = StrategicGoal
     form_class = StrategicGoalForm
     template_name = 'goal_form.html'
-    success_url = reverse_lazy('plan_goals_list')
+    success_url = reverse_lazy('goals_list') # changed this from plan_goals_list to goals list <3
     allowed_roles = ['M', 'CM']  # Roles allowed to access this view
 
     def form_valid(self, form):
@@ -1367,6 +1432,7 @@ class UpdateGoalView(LoginRequiredMixin, RoleRequiredMixin, LogMixin, UpdateView
         return response
 
 
+
 class DeleteGoalView(LoginRequiredMixin, RoleRequiredMixin, LogMixin, DeleteView):
     '''
     - Managers and Committee Managers can delete goals in their department
@@ -1374,7 +1440,7 @@ class DeleteGoalView(LoginRequiredMixin, RoleRequiredMixin, LogMixin, DeleteView
     - Redirects to goals list
     '''
     model = StrategicGoal
-    success_url = reverse_lazy('plan_goals_list')
+    success_url = reverse_lazy('goals_list') # changed this from plan_goals_list to goals list <3
     allowed_roles = ['M', 'CM']  # Roles allowed to access this view
 
     def form_valid(self, form):
@@ -1384,6 +1450,8 @@ class DeleteGoalView(LoginRequiredMixin, RoleRequiredMixin, LogMixin, DeleteView
         response = super().form_valid(form)
         messages.success(self.request, "تم حذف الهدف بنجاح", extra_tags="delete")
         return response
+
+
 
 # ---------------------------
 #  Note View
@@ -1432,7 +1500,7 @@ class AllNotesView(LoginRequiredMixin, ListView):
         else:
             qs = Note.objects.none()
 
-       
+
         # annotate last sender (for unread)
         last_note_qs = Note.objects.filter(
            Q(parent_note=OuterRef('pk')) | Q(pk=OuterRef('pk'))).order_by('-created_at')
@@ -1657,7 +1725,6 @@ class AllNotesView(LoginRequiredMixin, ListView):
 
 
 
-
 class NoteDetailsview(LoginRequiredMixin, LogMixin, DetailView):
     model = Note
     template_name = 'partials/note_detail.html'
@@ -1787,6 +1854,7 @@ class NoteDetailsview(LoginRequiredMixin, LogMixin, DetailView):
      return HttpResponse(status=204)
 
 
+
 class CreateNoteView(LoginRequiredMixin, LogMixin, CreateView):
     model = Note
     form_class = NoteForm
@@ -1894,6 +1962,7 @@ class CreateNoteView(LoginRequiredMixin, LogMixin, CreateView):
         return super().form_valid(form)
 
 
+
 class UpdateNoteView(LoginRequiredMixin, LogMixin, UpdateView):
     '''
     - Allows updating a note
@@ -1922,6 +1991,7 @@ class UpdateNoteView(LoginRequiredMixin, LogMixin, UpdateView):
         return response
 
 
+
 class DeleteNoteView(LoginRequiredMixin, LogMixin, DeleteView):
     '''
     - Allows deleting a note
@@ -1948,22 +2018,355 @@ class DeleteNoteView(LoginRequiredMixin, LogMixin, DeleteView):
         messages.success(self.request, "تم حذف الملاحظة بنجاح", extra_tags="delete")
         return response
 
+
+
 # ---------------------------
 #  Log View
 # ---------------------------
-class AllLogsView(ListView):
+class AllLogsView(LoginRequiredMixin,ListView):
     model = Log
     template_name = 'log.html'
     context_object_name = 'logs'
-    # paginate_by = 20  # لو تبي تقسيم صفحات
+    
+    def get_paginate_by(self, queryset):
+        return int(self.request.GET.get('per_page', 25))  # default 25
+
+
+    ACTION_MAP = {
+        'CREATE': 'إنشاء',
+        'UPDATE': 'تعديل',
+        'DELETE': 'حذف',
+        'LOGIN': 'تسجيل الدخول',
+        'LOGOUT': 'تسجيل الخروج',
+        }
+    TABLE_MAP = {
+        'User':'نشاط المستخدم',
+        'Role': 'المنصب',
+        'Department': 'الإدارة',
+        'StrategicPlan': 'الخطة الاستراتيجية',
+        'StrategicGoal': 'الهدف الاستراتيجي',
+        'Initiative': 'المبادرة',
+        'UserInitiative': 'تقدم المبادرة',
+        'KPI': 'مؤشر الأداء الرئيسي',
+        'Note': 'الملاحظات'
+    }
+    NOTE_FIELD_MAP = {
+        'title': 'عنوان الملاحظة',
+        'content': 'المحتوى',
+        'sender': 'المرسل',
+        'receiver': 'المستلم',
+        'initiative': 'المبادرة',
+        'strategic_goal': 'الهدف الاستراتيجي',
+        'parent_note': 'نوع الملاحظة',
+        'created_at': 'تاريخ الإنشاء',
+        'read_by': 'مقروء من قبل',
+        'is_starred': 'مميزة بنجمة',
+    }
+    KPI_FIELD_MAP = {
+        'kpi': 'مؤشر الأداء',
+        'unit': 'الوحدة',
+        'target_value': 'القيمة المستهدفة',
+        'actual_value': 'القيمة الفعلية',
+        'start_value': 'قيمة البداية',
+        'initiative': 'المبادرة',
+    }
+    INITIATIVE_FIELD_MAP = {
+        # Initiative fields
+        'title': 'عنوان المبادرة',
+        'description': 'وصف المبادرة',
+        'start_date': 'تاريخ البداية',
+        'end_date': 'تاريخ النهاية',
+        'priority': 'الأولوية',
+        'category': 'الفئة',
+        'strategic_goal': 'الهدف الاستراتيجي المرتبط',
+        
+        # UserInitiative fields
+        'status': 'حالة المبادرة للموظف',
+        'progress': 'نسبة التقدم',
+        'initiative': 'المبادرة',
+        'user': 'الموظف',
+    }
+    STRATEGIC_GOAL_FIELD_MAP = {
+        'strategicplan': 'الخطة الاستراتيجية',
+        'department': 'الإدارة',
+        'goal_title': 'عنوان الهدف الاستراتيجي',
+        'description': 'وصف الهدف الاستراتيجي',
+        'start_date': 'تاريخ بداية الهدف',
+        'end_date': 'تاريخ نهاية الهدف',
+        'goal_status': 'حالة الهدف',
+        'goal_priority': 'أهمية الهدف',
+    }
+    STRATEGIC_PLAN_FIELD_MAP = {
+        'plan_name': 'اسم الخطة الاستراتيجية',
+        'vision': 'الرؤية',
+        'mission': 'الرسالة',
+        'start_date': 'تاريخ بداية الخطة',
+        'end_date': 'تاريخ نهاية الخطة',
+        'created_by': 'أنشئ بواسطة',
+        'is_active': 'نشطة',
+    }
+    USER_DEPARTMENT_ROLE_FIELD_MAP = {
+        'username': 'اسم المستخدم',
+        'first_name': 'الاسم الأول',
+        'last_name': 'اسم العائلة',
+        'email': 'البريد الإلكتروني',
+        'employee_number': 'رقم الموظف',
+        'role': 'المنصب',
+        'department': 'الإدارة',
+        'is_staff': 'موظف إداري',
+        'is_active': 'نشط',
+        'date_joined': 'تاريخ الانضمام',
+    }
+    STATUS_VALUE_MAP = {
+        'NS': 'لم يبدأ بعد',
+        'IP': 'قيد التنفيذ',
+        'D' : 'متأخر',
+        'C': 'مكتمل'
+    }
+    PRIORITY_VALUE_MAP = {
+        'L': 'منخفضة',
+        'M': 'متوسطة',
+        'H': 'عالية',
+        'C': 'حرجة'
+    }
+
+
+
+    def safe_eval(self, value):
+        if not value:
+            return {}
+        # value = value.replace('""', '"')
+
+        # replace Decimal(...) to float
+        value = value.replace("Decimal('", "").replace("')", "")
+
+        # replace datetime.date(...) to string
+        value = re.sub(r"datetime\.date\((\d+),\s*(\d+),\s*(\d+)\)", r"'\1-\2-\3'", value)
+
+        # replace <User: ...> with string
+        value = re.sub(r"<User: ([^>]+)>", r'"\1"', value)
+
+        # try JSON first
+        try:
+            return json.loads(value)
+        except Exception:
+            pass
+
+        # fallback to ast.literal_eval
+        try:
+            return ast.literal_eval(value)
+        except Exception:
+            return {}
+
+
+
+    def map_value(self, field, value):
+        if value is None:
+            return None
+
+        if isinstance(value, (dict, list, tuple)):
+            return value
+
+        if field in ['status', 'goal_status']:
+            return self.STATUS_VALUE_MAP.get(value, value)
+
+        if field in ['priority', 'goal_priority']:
+            return self.PRIORITY_VALUE_MAP.get(value, value)
+
+        return value
+
+
+
+    def make_friendly_details(self, log):
+        """
+        Returns a list of friendly strings for a log record:
+        - CREATE/DELETE: show all fields as "Field: Value"
+        - UPDATE: show only changed fields as "Field: Old → New"
+        """
+        import ast
+        import decimal
+        from datetime import datetime
+
+        if not log.old_value and not log.new_value:
+            return []
+
+        old_dict = self.safe_eval(log.old_value)
+        new_dict = self.safe_eval(log.new_value)
+
+        if log.table_name == 'User':
+            field_map = self.USER_DEPARTMENT_ROLE_FIELD_MAP
+        elif log.table_name in ['Initiative', 'UserInitiative']:
+            field_map = self.INITIATIVE_FIELD_MAP
+        elif log.table_name == 'KPI':
+            field_map = self.KPI_FIELD_MAP
+        elif log.table_name == 'Note':
+            field_map = self.NOTE_FIELD_MAP
+        elif log.table_name == 'StrategicGoal':
+            field_map = self.STRATEGIC_GOAL_FIELD_MAP
+        elif log.table_name == 'StrategicPlan':
+            field_map = self.STRATEGIC_PLAN_FIELD_MAP
+        else:
+            field_map = {}
+
+        details = []
+
+        if log.action.upper() in ['إضافة', 'حذف','CREATE', 'DELETE']:
+            source = new_dict if log.action == 'إضافة' or log.action.upper() == 'CREATE'  else old_dict
+            for key, val in source.items():
+                val = self.map_value(key, val)
+                # handle types
+                if key == 'id': #skip id
+                    continue
+                if key == 'read_by':
+                    if len(val) == 0:
+                        val = 'لم تُقرأ بعد'
+                    else:
+                        val = '، '.join(str(v) for v in val)
+
+                if key == 'initiative':
+                    if val:
+                        initiative = Initiative.objects.filter(id=val).first()
+                        val = initiative.title if initiative else 'مبادرة'
+                    else:
+                        val = 'لا يوجد'
+
+                if key == 'strategic_goal':
+                    if val:
+                        strategic_goal = StrategicGoal.objects.filter(id=val).first()
+                        val = strategic_goal.goal_title if strategic_goal else 'هدف استراتيجي'
+                    else:
+                        val = 'لا يوجد'
+
+                if key == 'parent_note':
+                    if val is None:
+                        val = 'ملاحظة رئيسية'
+                    else:
+                        parent = Note.objects.filter(id=val).first()
+                        if parent:
+                            val = f"رد على ملاحظة: {parent.title or f'#{parent.id}'}"
+                        else:
+                            val = "رد على ملاحظة"
+                if val is None:
+                    val = 'لا يوجد'
+                if val is False:
+                    val = 'لا'
+                if val is True:
+                    val = 'نعم'
+                if isinstance(val, decimal.Decimal):
+                    val = float(val)
+                if isinstance(val, datetime):
+                    val = val.strftime("%Y-%m-%d %H:%M")
+                if hasattr(val, '__str__'):
+                    try:
+                        val = str(val)
+                    except:
+                        pass
+                arabic_name = field_map.get(key, key)
+                details.append(f"{arabic_name}: {val}")
+
+
+        elif log.action.upper() == 'UPDATE' or log.action == 'تعديل' :
+            for key in set(old_dict.keys()).union(new_dict.keys()):
+                old_val = self.map_value(key, old_dict.get(key))
+                new_val = self.map_value(key, new_dict.get(key))
+
+                # handle read_by
+                if isinstance(old_val, (list, tuple, QuerySet)):
+                    old_val = '، '.join(str(u) for u in old_val) if old_val else 'لم تُقرأ بعد'
+                if isinstance(new_val, (list, tuple, QuerySet)):
+                    new_val = '، '.join(str(u) for u in new_val) if new_val else 'لم تُقرأ بعد'
+
+                # booleans
+                if old_val is True:
+                    old_val = 'نعم'
+                elif old_val is False:
+                    old_val = 'لا'
+                if new_val is True:
+                    new_val = 'نعم'
+                elif new_val is False:
+                    new_val = 'لا'
+
+                if old_val != new_val:
+                    arabic_name = field_map.get(key, key)
+                    arrow_svg = """<svg xmlns="http://www.w3.org/2000/svg" fill="none"
+                        viewBox="0 0 24 24" stroke-width="1.5"
+                        stroke="currentColor" class="size-6 inline mx-1">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M6.75 15.75 3 12m0 0 3.75-3.75M3 12h18" />
+                    </svg>"""
+                    details.append(mark_safe(f"{arabic_name}: {old_val} {arrow_svg} {new_val}"))
+
+        return details
+
+
+
+    def render_to_response(self, context, **response_kwargs):
+        if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            html = render_to_string(
+                'partials/logs_table_rows.html',
+                context,
+                request=self.request
+            )
+            return JsonResponse({'html': html})
+        return super().render_to_response(context, **response_kwargs)
+
+
 
     def get_queryset(self):
-        return Log.objects.all().order_by('-created_at')
+        qs = Log.objects.filter(table_name__in=self.TABLE_MAP.keys()).order_by('-created_at')        
+        user_id = self.request.GET.get('user','')
+        search = self.request.GET.get('search', '')
+        action = self.request.GET.get('action', '')
+        log_date = self.request.GET.get('log_date','')
+        
+        if user_id:
+            qs = qs.filter(user_id=user_id)
+        if search: 
+            qs = qs.filter(
+                Q(user__first_name__icontains=search) |
+                Q(user__last_name__icontains=search) |
+                Q(action__icontains=search) |
+                Q(table_name__icontains=search)
+            )
+        if action:
+            qs = qs.filter(action=action)
+        if log_date:
+            try:
+                date_obj = datetime.strptime(log_date, "%Y-%m-%d").date()
+                qs = qs.filter(created_at__date=date_obj)
+            except ValueError:
+                pass  # invalid date input, ignore filter
+
+        for log in qs:
+            log.user_friendly_action = self.ACTION_MAP.get(log.action.upper(), log.action)
+            log.user_friendly_table_name = self.TABLE_MAP.get(log.table_name, log.table_name)
+            log.details = self.make_friendly_details(log)
+
+        return qs
 
 
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['users'] = User.objects.all()
+        context['search'] = self.request.GET.get('search', '')
+        context['action'] = self.request.GET.get('action', '')
 
+        context['action_map'] = self.ACTION_MAP
+        context['current_filters'] = self.request.GET
+        context['per_page'] = self.request.GET.get('per_page', 25)
+        page_obj = context['page_obj']
+        total_pages = context['paginator'].num_pages
+        current = page_obj.number
 
+        page_numbers = []
+        for num in range(1, total_pages + 1):
+            if num == 1 or num == total_pages or abs(num - current) <= 2:
+                page_numbers.append(num)
+            elif page_numbers[-1] != '...':
+                page_numbers.append('...')
+        context['page_numbers'] = page_numbers
+        return context
 
 
 

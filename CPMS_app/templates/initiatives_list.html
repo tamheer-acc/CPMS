@@ -6,10 +6,9 @@
 </li>
 {% endblock %}
 {% block content %}
-<!-- ##add notes  -->
 
 
-<div class="max-w-5xl mx-auto px-6 mt-10" dir="rtl">
+<div class="max-w-6xl mx-auto px-6 my-10" dir="rtl">
     <div class="bg-white shadow-sm rounded-lg border border-gray-200">
         
         <!-- Container for Search, Filter, and pages number  -->
@@ -125,14 +124,15 @@
             <thead class="text-xs bg-gray-50 border-b text-center">
                 <tr>
                     <th class="py-3 font-semibold">عنوان المبادرة</th>
-                    <th class="px-0 py-3 font-semibold text-right">وصف المبادرة</th>
-                    <th class="px-0 py-3 font-semibold flex flex-row-reverse items-center justify-between text-body ">
-                        <span>الأهمية</span>
-                        <a href="?{% if request.GET.sort == 'priority' %}{% else %}sort=priority{% endif %}&per_page={{ request.GET.per_page|default:25 }}&page=1">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="size-4">
-                                <path fill-rule="evenodd" d="M5.22 10.22a.75.75 0 0 1 1.06 0L8 11.94l1.72-1.72a.75.75 0 1 1 1.06 1.06l-2.25 2.25a.75.75 0 0 1-1.06 0l-2.25-2.25a.75.75 0 0 1 0-1.06ZM10.78 5.78a.75.75 0 0 1-1.06 0L8 4.06 6.28 5.78a.75.75 0 0 1-1.06-1.06l2.25-2.25a.75.75 0 0 1 1.06 0l2.25 2.25a.75.75 0 0 1 0 1.06Z" clip-rule="evenodd" />
-                            </svg>
-                        </a>
+                    <th class="px-0 py-3 font-semibold text-body ">
+                        <div class="flex items-center justify-center gap-1">
+                            <span>الأهمية</span>
+                            <a href="?{% if request.GET.sort == 'priority' %}{% else %}sort=priority{% endif %}&per_page={{ request.GET.per_page|default:25 }}&page=1">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="size-4">
+                                    <path fill-rule="evenodd" d="M5.22 10.22a.75.75 0 0 1 1.06 0L8 11.94l1.72-1.72a.75.75 0 1 1 1.06 1.06l-2.25 2.25a.75.75 0 0 1-1.06 0l-2.25-2.25a.75.75 0 0 1 0-1.06ZM10.78 5.78a.75.75 0 0 1-1.06 0L8 4.06 6.28 5.78a.75.75 0 0 1-1.06-1.06l2.25-2.25a.75.75 0 0 1 1.06 0l2.25 2.25a.75.75 0 0 1 0 1.06Z" clip-rule="evenodd" />
+                                </svg>
+                            </a>
+                        </div>
                     </th>
 
                     <th class="px-0 py-3 font-semibold">مدة المبادرة</th>
@@ -149,11 +149,6 @@
                 {% include 'partials/initiatives_table_rows.html' %}
             </tbody>
             
-            
-            
-
-
-
         </table>
 
     <!-- Pagination -->
@@ -167,18 +162,17 @@
                 من
                 <span class="font-semibold text-gray-900">{{ paginator.num_pages }}</span>
             </span>
-            <ul class="flex -space-x-px text-sm ">
+            <ul class="flex gap-5 text-sm items-center border rounded-full py-2 px-5 flex-start">
+
                 <!-- Previous button -->
                 <li>
                     {% if page_obj.has_previous %}
                         <a href="?page={{ page_obj.previous_page_number }}&per_page={{ request.GET.per_page|default:25 }}&search={{ search }}&priority={{ priority }}"
-                        class="flex items-center justify-center text-body bg-neutral-secondary-medium border border-default-medium rounded-s-full text-sm px-3 h-9 hover:bg-gray-200 transition-colors duration-200 bg-gray-50">
+                        class="text-[#00685E] hover:text-[#00A399] transition-colors duration-200 text-lg">
                             ‹
                         </a>
                     {% else %}
-                        <span class="flex items-center justify-center text-gray-400 bg-gray-100 border border-default-medium rounded-s-full text-sm px-3 h-9 cursor-not-allowed bg-gray-50">
-                            ‹
-                        </span>
+                        <span class="text-gray-400 text-lg cursor-not-allowed">‹</span>
                     {% endif %}
                 </li>
 
@@ -186,21 +180,18 @@
                 {% for num in page_numbers %}
                     {% if num == '...' %}
                         <li>
-                            <span class="flex items-center justify-center text-body bg-neutral-secondary-medium border border-default-medium font-medium text-sm w-9 h-9 bg-gray-50">
-                                ...
-                            </span>
+                            <span class="text-gray-400">…</span>
                         </li>
                     {% elif num == page_obj.number %}
                         <li>
-                            <span aria-current="page"
-                                class="flex items-center justify-center text-blue-100 bg-blue-300 bg-neutral-secondary-medium border border-default-medium font-medium text-sm w-9 h-9 hover:bg-gray-200 hover:text-gray-400 duration-200">
+                            <span class="flex items-center justify-center w-8 h-8 bg-[#00A399] text-white rounded-full">
                                 {{ num }}
                             </span>
                         </li>
                     {% else %}
                         <li>
                             <a href="?page={{ num }}&per_page={{ request.GET.per_page|default:25 }}&search={{ search }}&priority={{ priority }}"
-                            class="flex items-center justify-center text-body bg-neutral-secondary-medium border border-default-medium font-medium text-sm w-9 h-9 hover:bg-gray-200 bg-gray-50">
+                            class="text-[#00685E] hover:text-[#00A399] transition-colors duration-200">
                                 {{ num }}
                             </a>
                         </li>
@@ -211,15 +202,14 @@
                 <li>
                     {% if page_obj.has_next %}
                         <a href="?page={{ page_obj.next_page_number }}&per_page={{ request.GET.per_page|default:25 }}&search={{ search }}&priority={{ priority }}"
-                        class="flex items-center justify-center text-body bg-neutral-secondary-medium border border-default-medium rounded-e-full text-sm px-3 h-9 hover:bg-gray-200 transition-colors duration-200 bg-gray-50">
+                        class="text-[#00685E] hover:text-[#00A399] transition-colors duration-200 text-lg">
                             ›
                         </a>
                     {% else %}
-                        <span class="flex items-center justify-center text-gray-400 bg-gray-100 border border-default-medium rounded-e-full text-sm px-3 h-9 cursor-not-allowed">
-                            ›
-                        </span>
+                        <span class="text-gray-400 text-lg cursor-not-allowed">›</span>
                     {% endif %}
                 </li>
+
             </ul>
         </div>
         {% endif %}

@@ -1,0 +1,223 @@
+{% extends 'base.html' %}
+{% load l10n %}
+
+{% block breadcrumb %}
+<li class="flex items-center">
+    <span class="mx-2">/</span>
+    <a href="{% url 'goals_list' %}" class="hover:text-gray-700">الأهداف الاستراتيجية</a>
+</li>
+<li class="flex items-center">
+    <span class="mx-2">/</span>
+    <span class="text-gray-800 font-semibold">تفاصيل {{ goal.goal_title }}</span>
+</li>
+{% endblock %}
+
+{% block content %}
+{% include "partials/confirm_delete.html" %}
+<!-- header -->
+<div class="max-w-5xl mx-auto bg-white rounded-2xl shadow-lg border border-gray-200 p-6 mb-6 flex flex-col  
+            md:flex-row items-center justify-between gap-4">
+    <div class="flex items-center gap-3">
+        <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-target-arrow text-[#00675B]">
+            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+            <path d="M11 12a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" />
+            <path d="M12 7a5 5 0 1 0 5 5" />
+            <path d="M13 3.055a9 9 0 1 0 7.941 7.945" />
+            <path d="M15 6v3h3l3 -3h-3v-3l-3 3" />
+            <path d="M15 9l-3 3" />
+        </svg>              
+        <div>
+            <h1 class="text-3xl font-bold text-gray-800">{{ goal.goal_title }}</h1>
+            <p class="text-sm text-gray-500 mt-1">هدف استراتيجي</p>
+        </div>
+    </div>
+    <div class="flex gap-3">
+        <!-- status -->
+        <span class="px-3 py-1  rounded-full text-sm font-medium 
+            {% if status == 'قيد التنفيذ' %}bg-yellow-100 text-yellow-800
+            {% elif status == 'مكتمل' %}bg-green-100 text-green-800
+            {% elif status == 'متأخر' %}bg-red-100 text-red-800
+            {% else %}bg-gray-100 text-gray-800{% endif %}">
+            {{ status }}
+        </span>
+
+        <!-- priority -->
+        <span class="px-3 py-1 rounded-full text-sm font-medium
+            {% if goal.goal_priority == 'H' %}bg-red-100 text-red-800
+            {% elif goal.goal_priority == 'M' %}bg-yellow-100 text-yellow-800
+            {% elif goal.goal_priority == 'L' %}bg-green-100 text-green-800
+            {% else %}bg-gray-100 text-gray-800{% endif %}">
+            {{ goal.get_goal_priority_display }}
+        </span>
+    </div>
+</div>
+
+<!-- dates, department -->
+<div class="max-w-5xl mx-auto bg-[#00675B]/30 rounded-full shadow-lg border border-gray-200 p-1 mb-6 flex flex-col md:flex-row items-center justify-center ">
+
+    <div class="inline-flex justify-center items-center gap-9  text-base">
+
+        <span class="flex items-center  justify-center gap-3 text-sm">
+            <h1 class="font-medium"> تاريخ البداية </h1>
+            <h1 class="rounded-full items-center inline-flex gap-1 px-3 border bg-gray-100">
+                {{ goal.start_date|date:"d/m/Y" }}
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"
+                    class="size-5">
+                    <path
+                        d="M5.75 7.5a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5ZM5 10.25a.75.75 0 1 1 1.5 0 .75.75 0 0 1-1.5 0ZM10.25 7.5a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5ZM7.25 8.25a.75.75 0 1 1 1.5 0 .75.75 0 0 1-1.5 0ZM8 9.5A.75.75 0 1 0 8 11a.75.75 0 0 0 0-1.5Z" />
+                    <path fill-rule="evenodd"
+                        d="M4.75 1a.75.75 0 0 0-.75.75V3a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2V1.75a.75.75 0 0 0-1.5 0V3h-5V1.75A.75.75 0 0 0 4.75 1ZM3.5 7a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1v4.5a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1V7Z"
+                        clip-rule="evenodd" />
+                </svg>
+            </h1>
+        </span>
+
+        <span class="flex items-center justify-center gap-3 text-sm">
+            <h1 class="font-medium"> تاريخ النهاية </h1>
+            <h1 class="rounded-full items-center inline-flex gap-1 px-3 border bg-gray-100">
+                {{ goal.end_date|date:"d/m/Y" }}
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"
+                    class="size-5">
+                    <path
+                        d="M5.75 7.5a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5ZM5 10.25a.75.75 0 1 1 1.5 0 .75.75 0 0 1-1.5 0ZM10.25 7.5a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5ZM7.25 8.25a.75.75 0 1 1 1.5 0 .75.75 0 0 1-1.5 0ZM8 9.5A.75.75 0 1 0 8 11a.75.75 0 0 0 0-1.5Z" />
+                    <path fill-rule="evenodd"
+                        d="M4.75 1a.75.75 0 0 0-.75.75V3a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2V1.75a.75.75 0 0 0-1.5 0V3h-5V1.75A.75.75 0 0 0 4.75 1ZM3.5 7a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1v4.5a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1V7Z"
+                        clip-rule="evenodd" />
+                </svg>
+            </h1>
+        </span>
+
+        <span class="flex items-center  justify-center gap-3 text-sm">
+            <h1 class="font-medium"> الإدارة </h1>
+            <h1 class="rounded-full items-center inline-flex gap-1 px-3 border bg-gray-100">
+                {{ goal.department.department_name }}
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#182f2e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-building-skyscraper">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                    <path d="M3 21l18 0" />
+                    <path d="M5 21v-14l8 -4v18" />
+                    <path d="M19 21v-10l-6 -4" />
+                    <path d="M9 9l0 .01" />
+                    <path d="M9 12l0 .01" />
+                    <path d="M9 15l0 .01" />
+                    <path d="M9 18l0 .01" />
+                </svg>
+            </h1>
+        </span>
+
+    </div>
+
+</div>
+
+<!-- charts -->
+<div class="max-w-5xl mx-auto flex flex-wrap gap-6 justify-around mb-6">
+    <!-- initiatives -->
+    <div class="w-48 h-48 rounded-full bg-[#00675B]/10 border border-[#00675B]/30 flex flex-col items-center justify-center">
+        <span class="text-[#00675B] font-bold text-lg leading-tight text-center">
+            {% if initiatives_count == 0%}
+                لا توجد مبادرات
+            {% elif initiatives_count == 1 %}
+                مبادرة واحدة
+            {% elif initiatives_count == 2 %}
+                مبادرتان
+            {% elif initiatives_count <= 10 %}
+                {{initiatives_count}} مبادرات
+            {% else %}
+                {{initiatives_count}} مبادرة
+            {% endif %}
+        </span>
+    </div>
+
+    <!-- progress -->
+    <div class="w-48 h-48 rounded-full bg-white shadow-lg flex items-center justify-center relative">
+        <svg class="w-48 h-48 transform -rotate-90">
+            <circle cx="50%" cy="50%" r="45%" stroke="#e5e7eb" stroke-width="10" fill="none"/>
+            <circle cx="50%" cy="50%" r="45%" stroke="#00675B" stroke-width="10" fill="none"
+                stroke-dasharray="542.9"
+                stroke-linecap="round"
+                style="stroke-dashoffset: calc(542.9 - (542.9 * {{ progress|unlocalize }} / 100));" />
+        </svg>
+
+        <div class="absolute text-center">
+            <div class="text-2xl font-bold text-[#00675B]">
+                {{ progress|unlocalize }}%
+            </div>
+            <div class="text-xs text-gray-500 mt-1">
+                التقدم الكلي
+            </div>
+        </div>    
+    </div>
+
+    <!-- time remaininf -->
+    <div class="w-48 h-48 rounded-full bg-white shadow flex items-center justify-center relative">
+            <svg class="w-48 h-48 transform -rotate-90">
+                <circle cx="50%" cy="50%" r="45%" stroke="#e5e7eb" stroke-width="8" fill="none"/>
+                <circle cx="50%" cy="50%" r="45%" stroke="#00675B" stroke-width="8" fill="none"
+                    stroke-dasharray="542.9"  stroke-linecap="round"
+                    style=" stroke-dashoffset: calc( 542.9 - (542.9 * {{ passed_duration_percent|unlocalize }} / 100));"
+                />
+            </svg>
+            <div class="absolute text-center">
+                <span dir="ltr" class="text-lg font-bold">{{passed}} <span class=" text-gray-400 text-sm"> /{{duration}}</span></span>
+                <div class="text-xs text-gray-500">عدد الأيام المنقضية</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- description -->
+<div class="bg-white shadow rounded-lg border p-6 mb-6">
+    <h3 class="font-semibold text-gray-800 mb-2">الوصف</h3>
+    <p class="text-gray-700 whitespace-pre-line">{{ goal.description }}</p>
+</div>
+
+<!-- initiatives -->
+<div class="bg-white shadow-lg rounded-xl border border-gray-200 p-6 mb-6">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-5 gap-3">
+        <h3 class="text-xl font-semibold text-gray-800">
+            <span class="inline-flex mt-3 ml-3">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-badges">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                    <path d="M17 17v-4l-5 3l-5 -3v4l5 3l5 -3" />
+                    <path d="M17 8v-4l-5 3l-5 -3v4l5 3l5 -3" />
+                </svg>
+            </span>
+            <span class="mb-2">
+                المبادرات المرتبطة
+            </span>
+            
+        </h3>
+        <a href="{% url 'initiative_create' goal.id %}" 
+            class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition">
+            إضافة مبادرة جديدة
+        </a>        
+    </div>
+
+    <div class="grid grid-cols-1 gap-4">
+        {% for initiative in initiatives %}
+            <a href="{% url 'initiative_detail' initiative.id %}"
+                class="flex flex-col justify-center items-center p-4 bg-[#F9FAFB] border border-gray-200 rounded-lg shadow-sm hover:shadow-md hover:border-[#00675B] transition group">
+                <p class="text-gray-700 font-medium text-center">{{ initiative.title }}</p>
+            </a>
+        {% empty %}
+            <p class="text-gray-500 text-center col-span-full">لا توجد مبادرات مرتبطة بهذا الهدف بعد.</p>
+        {% endfor %}
+    </div>
+
+</div>
+
+<!-- buttons -->
+<div class="flex flex-col sm:flex-row gap-3 mb-6">
+    <a href="{% url 'goal_update' goal.id %}" 
+        class="flex-1 sm:flex-none px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-800 transition transition-colors text-center">
+        تعديل
+    </a>                             
+
+
+    <button class="flex-1 sm:flex-none bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-800 transition transition-colors text-center"
+            onclick="openDeleteModal('/goals/{{ goal.id }}/delete/', 'هل أنت متأكد؟')">
+        حذف الهدف
+    </button>
+</div>
+
+
+{% endblock %}

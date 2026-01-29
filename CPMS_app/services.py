@@ -1,4 +1,5 @@
 import json
+from statistics import mean
 from datetime import date, timedelta
 from statistics import mean
 from django.utils import timezone
@@ -7,8 +8,7 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.contrib.auth import get_user_model
 from django.forms.models import model_to_dict
-from django.db.models import Count, Q, Case, When, Value, IntegerField, Avg, Prefetch
-from django.db.models import Prefetch
+from django.db.models import Count, Q, Case, When, Value, IntegerField, Avg, Prefetch,OuterRef, Subquery
 from django.db.models.functions import TruncMonth
 from .models import Note, StrategicGoal, Initiative, Log, StrategicPlan, User, UserInitiative, ProgressLog
 from django.db.models import OuterRef, Subquery, Q
@@ -72,7 +72,6 @@ def format_log_values(old_value, new_value, action, instance=None):
 
 
 
-
 def model_to_dict_with_usernames(instance):
     """
     Convert model to dict and convert FK user to username/full name.
@@ -100,6 +99,7 @@ def model_to_dict_with_usernames(instance):
 
 
     return data
+
 
 
 def create_log(user, action, instance=None, old_data=None, table_name=None, record_id=None):
@@ -207,11 +207,15 @@ def get_unread_notes_count(user):
     )
 
 
+
 def generate_KPIs(initiative):
     pass
 
+
+
 def donutChart_data():
     return
+
 
 
 # def build_donut_data(not_started, in_progress, completed, delayed, total):
@@ -802,6 +806,34 @@ def calc_goal_progress(goal):
         initiatives_average_list.append(avg_calculator(UserInitiative.objects.filter(initiative = initiative, user__role__role_name = 'E')))
     goal_progress= mean(initiatives_average_list) if initiatives_average_list else 0
     return round(goal_progress, 2)
+#=====================================================================
+# def calc_goal_progress(goal, user):
+#     qs = goal.initiative_set.all()
+
+#     if user.role.role_name == 'E':
+#         qs = qs.filter(userinitiative__user=user)
+
+#     if not qs.exists():
+#         return 0
+
+#     avg = qs.aggregate(
+#         avg=Avg('userinitiative__progress')
+#     )['avg'] or 0
+
+#     return round(float(avg), 2)
+
+def calc_goal_progress(goal):
+    initiatives = goal.initiative_set.all()
+
+    initiatives_average_list = []
+    for initiative in initiatives:
+        initiatives_average_list.append(avg_calculator(UserInitiative.objects.filter(initiative = initiative, user__role__role_name = 'E')))
+
+    goal_progress = mean(initiatives_average_list) if initiatives_average_list else 0
+    
+
+    return round(goal_progress, 2)
+
 
 #==============================goal status=======================================
 def calc_goal_status(goal):
@@ -1089,6 +1121,7 @@ def weight_initiative(initiative):
 
     weighted_score = (total_weight / user_initiatives.count()) * 100
     return round(weighted_score, 2)
+
 
 
 def departments_progress_over_time(departments, days_count=30):
