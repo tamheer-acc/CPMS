@@ -30,11 +30,11 @@ from .models import ( STATUS, Role, Department, User, StrategicPlan, StrategicGo
 from .services import ( calc_goal_status, calc_initiative_status_by_avg, generate_KPIs,  create_log, get_plan_dashboard, calc_user_initiative_status, 
                         filter_queryset, get_page_numbers, model_to_dict_with_usernames, paginate_queryset, status_count, avg_calculator, 
                         calc_delayed, kpi_filter, weight_initiative, get_unread_notes_count, departments_progress_over_time, calc_goal_progress, calculate_goal_timeline)
-
-
 from django.db.models import Count
 from django.utils.safestring import mark_safe
 import json
+
+
 
 class LogMixin:
     def __init__(self, request=None):
@@ -97,22 +97,24 @@ class InitiativePermissionMixin:
         qs = Initiative.objects.none()
         user = self.request.user
         role = user.role.role_name
+        active_plan = StrategicPlan.objects.filter(is_active = True).first()
         goal_id = self.kwargs.get('goal_id')
 
         if goal_id:
             goal = get_object_or_404(StrategicGoal, id=goal_id)
 
             if role == 'GM':
-                return Initiative.objects.filter(strategic_goal = goal)
+                return Initiative.objects.filter(strategic_goal__strategicplan = active_plan, strategic_goal = goal)
 
             elif user.department != goal.department:
                 raise PermissionDenied("ليست لديك صلاحية لرؤية هذه الصفحة")
 
             elif role in ['CM','M']:
-                qs = Initiative.objects.filter( strategic_goal = goal , strategic_goal__department = user.department)
+                
+                qs = Initiative.objects.filter( strategic_goal__strategicplan = active_plan, strategic_goal = goal , strategic_goal__department = user.department)
 
             elif role == 'E':
-                qs = Initiative.objects.filter( strategic_goal = goal , userinitiative__user = user )
+                qs = Initiative.objects.filter(strategic_goal__strategicplan = active_plan, strategic_goal = goal , userinitiative__user = user )
 
             else:
                 raise PermissionDenied("ليست لديك صلاحية لرؤية هذه الصفحة")
@@ -120,10 +122,10 @@ class InitiativePermissionMixin:
         else: # No goal id
 
             if role == 'GM' and not goal_id:
-                return Initiative.objects.all()
+                return Initiative.objects.filter(strategic_goal__strategicplan = active_plan)
 
             elif role in ['CM','M','E']:
-                qs = Initiative.objects.filter(userinitiative__user=user)
+                qs = Initiative.objects.filter(strategic_goal__strategicplan = active_plan,userinitiative__user=user)
 
             else:
                 raise PermissionDenied("ليست لديك صلاحية لرؤية هذه الصفحة")
@@ -148,7 +150,7 @@ class InitiativePermissionMixin:
 
 
 # ---------------------------
-#  Access Denied View
+#  Access Denied View done
 # ---------------------------
 def access_denied_view(request, exception=None):
     return render(request, 'access_denied.html', status=403)
@@ -156,7 +158,7 @@ def access_denied_view(request, exception=None):
 
 
 # ---------------------------
-#  Page not Found View
+#  Page not Found View done
 # ---------------------------
 def page_not_found_view(request, exception=None):
     return render(request, 'page_not_found.html', status=404)
@@ -164,7 +166,7 @@ def page_not_found_view(request, exception=None):
 
 
 # ---------------------------
-#  Dashboard View
+#  Dashboard View done
 # ---------------------------
 class DashboardView(LoginRequiredMixin, TemplateView):
     '''
@@ -183,20 +185,20 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         user = self.request.user
         status_order = [s[0] for s in STATUS]
-
+        active_plan = StrategicPlan.objects.filter(is_active = True).first()
 
         # GENERAL MANAGER #
         if user.role.role_name == 'GM':
             
-            goals = StrategicGoal.objects.all()
+            goals = StrategicGoal.objects.filter(strategicplan = active_plan)
             departments = Department.objects.all()
-            initiatives = Initiative.objects.all()
-            userinitiatives = UserInitiative.objects.all()
+            initiatives = Initiative.objects.filter(strategic_goal__strategicplan = active_plan)
+            userinitiatives = UserInitiative.objects.filter(initiative__strategic_goal__strategicplan = active_plan)
             for goal in goals:
                 goal.user_initiatives = initiatives.filter(strategic_goal=goal)
 
             # Bar Chart ( مدى اكتمال الأهداف ) : avg of progress for each goal
-            goals_with_avg = StrategicGoal.objects.annotate( avg_progress=Avg('initiative__userinitiative__progress', filter=Q(initiative__userinitiative__user__role__role_name='E')))
+            goals_with_avg = goals.annotate(avg_progress=Avg('initiative__userinitiative__progress', filter=Q(initiative__userinitiative__user__role__role_name='E')))
             bar_chart_labels = [goal.goal_title for goal in goals_with_avg]
             bar_chart_data = [round(goal.avg_progress or 0) for goal in goals_with_avg]
             context['bar_chart_labels'] = bar_chart_labels
@@ -215,9 +217,9 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             achieved_data = []
             for goal in goals:
                 goal_labels.append(goal.goal_title)                
-                initiatives = Initiative.objects.filter(strategic_goal=goal)
+                goal_initiatives = Initiative.objects.filter(strategic_goal=goal)
                 ns_count, ip_count, a_count = 0, 0, 0
-                for initiative in initiatives:
+                for initiative in goal_initiatives:
                     kpis_for_initiative = KPI.objects.filter(initiative=initiative)
                     achieved, in_progress, not_started = kpi_filter(kpis_for_initiative)
                     ns_count += len(not_started)
@@ -251,19 +253,20 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             }
             context['stacked_bar_chart_data'] = stacked_bar_chart_data
             
-            context['plans'] = StrategicPlan.objects.all()      #  Plans
-            context['goals'] = goals                            #  Goals
-            context['initiatives'] = Initiative.objects.all()   #  initiative
-            context['kpis'] = KPI.objects.all()                 #  KPIs
+            context['plans'] = StrategicPlan.objects.all()                                              #  Plans
+            context['goals'] = goals                                                                    #  Goals
+            context['initiatives'] = initiatives                                                        #  initiative
+            context['kpis'] = KPI.objects.filter(initiative__strategic_goal__strategicplan=active_plan) #  KPIs
 
 
 
 
         # MANAGERS #
         elif user.role.role_name in ['M', 'CM']:
-            userinitiatives = UserInitiative.objects.filter(user__department = user.department, user__role__role_name = 'E' )
-            initiatives = Initiative.objects.filter(userinitiative__user=user )
-            goals = StrategicGoal.objects.filter(department = user.department) 
+            userinitiatives = UserInitiative.objects.filter(initiative__strategic_goal__strategicplan = active_plan, 
+                                                            user__department = user.department, user__role__role_name = 'E' )
+            initiatives = Initiative.objects.filter(strategic_goal__strategicplan = active_plan, userinitiative__user=user ).distinct()
+            goals = StrategicGoal.objects.filter(strategicplan = active_plan, department = user.department) 
             for goal in goals:
                 goal.user_initiatives = initiatives.filter(strategic_goal=goal)
 
@@ -281,7 +284,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             bar_chart_labels = []
             bar_chart_data = []
             for goal in goals:
-                avrage_goal_progress = avg_calculator(UserInitiative.objects.filter(initiative__strategic_goal = goal, user__role__role_name = 'E' ))
+                avrage_goal_progress = avg_calculator(userinitiatives.filter(initiative__strategic_goal = goal, user__role__role_name = 'E' ))
                 bar_chart_labels.append(goal.goal_title)
                 bar_chart_data.append(avrage_goal_progress or 0)
             context['bar_chart_labels'] = bar_chart_labels
@@ -300,7 +303,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             
             
             # Stacked Bar Chart ( مؤشرات الأداء الرئيسية ) : KPIs based on status, grouped by initiatives 
-            kpis = KPI.objects.filter(initiative__strategic_goal__department = user.department)
+            kpis = KPI.objects.filter(initiative__strategic_goal__strategicplan=active_plan,initiative__strategic_goal__department = user.department)
             achieved, in_progress, not_started = kpi_filter(kpis)
             initiative_labels = [initiative.title for initiative in (Initiative.objects.filter(userinitiative__user=user))]
             
@@ -342,20 +345,20 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             }
             context['stacked_bar_chart_data'] = stacked_bar_chart_data
 
-            context['plans'] = StrategicPlan.objects.all()                              #  Plans
-            context['goals'] = goals                                                    #  Goals
-            context['initiatives'] = initiatives                                        #  Initiative
-            context['kpis'] = KPI.objects.filter(initiative__userinitiative__user=user) #  KPIs
+            context['plans'] = StrategicPlan.objects.all()                                                                                     #  Plans
+            context['goals'] = goals                                                                                                           #  Goals
+            context['initiatives'] = initiatives                                                                                               #  Initiative
+            context['kpis'] = KPI.objects.filter(initiative__strategic_goal__strategicplan=active_plan, initiative__userinitiative__user=user) #  KPIs
 
 
 
 
         # EMPLOYEES #
         else: 
-            
-            initiatives = Initiative.objects.filter(userinitiative__user=user)
-            userinitiatives = UserInitiative.objects.filter(user = user)
-            goals = StrategicGoal.objects.filter(initiative__userinitiative__user=user).distinct().prefetch_related('initiative_set__userinitiative_set')
+
+            initiatives = Initiative.objects.filter(strategic_goal__strategicplan = active_plan, userinitiative__user=user)
+            userinitiatives = UserInitiative.objects.filter(initiative__strategic_goal__strategicplan = active_plan,user = user)
+            goals = StrategicGoal.objects.filter(strategicplan = active_plan, initiative__userinitiative__user=user).distinct().prefetch_related('initiative_set__userinitiative_set')
 
             for goal in goals:
                 goal.user_initiatives = initiatives.filter(strategic_goal=goal)
@@ -370,7 +373,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             bar_chart_data = []
             bar_chart_labels = []
             for initiative in initiatives:
-                ui = UserInitiative.objects.filter(initiative = initiative)
+                ui = userinitiatives.filter(initiative = initiative)
                 bar_chart_data.append(avg_calculator(ui))
                 bar_chart_labels.append(initiative.title)
             context['bar_chart_data'] = bar_chart_data
@@ -381,21 +384,21 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             context['avrage_progress'] = avrage_progress
             
             # Card ( المبادرات الموشكة على الانتهاء & المبادرات المنتهية ) : Overdue and Delayed Initiatives 
-            overdue, late = calc_delayed(Initiative.objects.filter(userinitiative__user=user))
+            overdue, late = calc_delayed(initiatives)
             context['overdue'] = overdue
             context['late'] = late
 
             # Stacked Bar Chart ( مؤشرات الأداء الرئيسية ) : KPIs based on status, grouped by users initiatives 
-            kpis = KPI.objects.filter(initiative__userinitiative__user = user)
+            kpis = KPI.objects.filter(initiative__strategic_goal__strategicplan=active_plan, initiative__userinitiative__user = user)
             achieved, in_progress, not_started = kpi_filter(kpis)
-            initiative_labels = [initiative.title for initiative in (Initiative.objects.filter(userinitiative__user=user))]
+            initiative_labels = [initiative.title for initiative in (initiatives)]
             
             not_started_data = []
             in_progress_data = []
             achieved_data = []
 
             for initiative in initiatives:
-                kpis_for_initiative = KPI.objects.filter(initiative=initiative)
+                kpis_for_initiative = KPI.objects.filter(initiative__strategic_goal__strategicplan=active_plan,initiative=initiative)
                 achieved, in_progress, not_started = kpi_filter(kpis_for_initiative)
                 not_started_data.append(len(not_started))
                 in_progress_data.append(len(in_progress))
@@ -428,10 +431,10 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             }
             context['stacked_bar_chart_data'] = stacked_bar_chart_data
             
-            context['plans'] = StrategicPlan.objects.filter(is_active = True)  #  plans
-            context['goals'] = goals
-            context['initiatives'] = Initiative.objects.filter(userinitiative__user=user)  #  initiative
-            context['kpis'] = KPI.objects.filter(initiative__userinitiative__user=user)  #  KPIs
+            context['plans'] = StrategicPlan.objects.filter(is_active = True)                                                                   #  plans
+            context['goals'] = goals                                                                                                            #  goals
+            context['initiatives'] = initiatives                                                                                                #  initiative
+            context['kpis'] = KPI.objects.filter(initiative__strategic_goal__strategicplan=active_plan, initiative__userinitiative__user=user)  #  KPIs
 
 
 
@@ -439,7 +442,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         
         # List ( ترتيب أداء الإدارات ) : list of all departments ordered by performance  
         departments = Department.objects.all()
-        goals = StrategicGoal.objects.all()
+        goals = StrategicGoal.objects.filter(strategicplan = active_plan)
         departments_performance_dict = {dep.department_name: [] for dep in departments}            
         for goal in goals:
             goal_average = avg_calculator(UserInitiative.objects.filter(initiative__strategic_goal = goal, user__role__role_name = 'E' ))
@@ -462,7 +465,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
 
 
 # ---------------------------
-#  Initiative Views
+#  Initiative Views done
 # ---------------------------
 class AllInitiativeView(LoginRequiredMixin, InitiativePermissionMixin, ListView): 
     '''
@@ -510,7 +513,7 @@ class AllInitiativeView(LoginRequiredMixin, InitiativePermissionMixin, ListView)
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['search'] = self.request.GET.get('search', '')
-        context['action'] = self.request.GET.get('action', '')
+        context['priority'] = self.request.GET.get('priority', '')
         context['per_page'] = self.request.GET.get('per_page', 25)
 
         page_obj = context['page_obj']
@@ -594,6 +597,7 @@ class InitiativeDetailsView(LoginRequiredMixin, InitiativePermissionMixin, Detai
             except UserInitiative.DoesNotExist:
                 context['form'] = UserInitiativeForm()
         elif user.role.role_name in ['M', 'CM'] and initiative.strategic_goal.department == user.department: 
+            # context['suggestions'] = generate_KPIs(initiative.strategic_goal,initiative, initiative.strategic_goal.department)
             context['form'] = KPIForm()
             context['unassigned_employees'] = unassigned_employees 
         elif user.role.role_name == 'GM':
@@ -661,6 +665,10 @@ class CreateInitiativeView(LoginRequiredMixin, RoleRequiredMixin, InitiativePerm
             return redirect('login')
         raise PermissionDenied("ليست لديك صلاحية لرؤية هذه الصفحة")
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['goal'] = get_object_or_404(StrategicGoal, id=self.kwargs['goal_id'])
+        return kwargs
 
 
 class UpdateInitiativeView(LoginRequiredMixin, RoleRequiredMixin, InitiativePermissionMixin, LogMixin, UpdateView):  #managers only
@@ -828,7 +836,7 @@ def add_progress(request, initiative_id):
             new_status = calc_goal_status(goal)
             goal.goal_status = new_status
             goal.save()
-   
+
 
         #    # ===== Update Initiative Status =====
         #     old_status = initiative.initiative_status
@@ -871,7 +879,7 @@ def add_progress(request, initiative_id):
 # ---------------------------
 #  KPI Views
 # ---------------------------
-class KPIDetailsView(DetailView):
+class KPIDetailsView(LoginRequiredMixin, DetailView):
     '''
     - Shows details of a single KPI
     '''
@@ -881,6 +889,7 @@ class KPIDetailsView(DetailView):
 
 
 
+@login_required
 @user_passes_test(is_manager)
 def create_kpi_view(request, initiative_id):
     '''
@@ -923,7 +932,7 @@ def create_kpi_view(request, initiative_id):
 
 
 
-class DeleteKPIView(RoleRequiredMixin, LogMixin, DeleteView):
+class DeleteKPIView(LoginRequiredMixin, RoleRequiredMixin, LogMixin, DeleteView):
     '''
     - Allows users to delete a KPI
     - Confirms deletion using a template
@@ -959,6 +968,7 @@ class DeleteKPIView(RoleRequiredMixin, LogMixin, DeleteView):
 
 
 
+@login_required
 def edit_kpi_view(request, initiative_id, kpi_id):
     kpi = get_object_or_404(KPI, id=kpi_id, initiative_id=initiative_id)
     
@@ -985,7 +995,7 @@ def edit_kpi_view(request, initiative_id, kpi_id):
 
 
 
-class AllKPIsView(ListView): #not needed but here we go
+class AllKPIsView(LoginRequiredMixin,ListView): #not needed but here we go
     '''
     - Displays a list of KPIs related to initiatives assigned to the current user
     - Filters KPIs based on the user's assigned initiatives
@@ -997,12 +1007,6 @@ class AllKPIsView(ListView): #not needed but here we go
 
     def get_queryset(self):
         return KPI.objects.filter(initiative__userinitiative__user=self.request.user)
-
-
-
-# Paths and URLs [done]
-# conditioning (depending on Role) [done]
-# AI Model Handling
 
 
 
@@ -2280,8 +2284,7 @@ class AllLogsView(LoginRequiredMixin,ListView):
         user_id = self.request.GET.get('user','')
         search = self.request.GET.get('search', '')
         action = self.request.GET.get('action', '')
-        log_date = self.request.GET.get('log_date','')
-        
+        log_date = self.request.GET.get('log_date','')        
         if user_id:
             qs = qs.filter(user_id=user_id)
         if search: 

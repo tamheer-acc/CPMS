@@ -77,8 +77,14 @@ document.addEventListener("DOMContentLoaded", function() {
             .then(res => res.json())
             .then(data => {
                 if (isPlansPage) plansBody.innerHTML = data.html;
-                if (isInitiativesPage) initiativesBody.innerHTML = data.html;
-                if (isLogsBodyPage) logsBody.innerHTML = data.html;
+                if (isInitiativesPage){ 
+                    initiativesBody.innerHTML = data.html;
+                    window.history.replaceState({}, "", url.toString());
+                }
+                if (isLogsBodyPage){ 
+                    logsBody.innerHTML = data.html;
+                    window.history.replaceState({}, "", url.toString());
+                }
                 if (isPlanDetailsPage) goalsBody.innerHTML = data.html;
             });
     }
@@ -196,6 +202,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 // full reload
                 window.location.href = url.toString(); 
             } 
+            else if (isLogsBodyPage) {
+                // full reload
+                window.location.href = url.toString(); 
+            } 
             else {
                 // AJAX 
                 fetch(url, { headers: { "X-Requested-With": "XMLHttpRequest" } })
@@ -203,7 +213,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     .then(data => {
                         if (isPlansPage) plansBody.innerHTML = data.html;
                         if (isPlanDetailsPage) goalsBody.innerHTML = data.html;
-                        if (isLogsBodyPage) logsBody.innerHTML = data.html;
                     });
             }
 
@@ -586,7 +595,6 @@ function barChart(labels, data, id, background='#AAC2BF', ticksDisplay=true, max
         }
     });
 }                      
-
 
 
 
