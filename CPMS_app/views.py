@@ -597,7 +597,7 @@ class InitiativeDetailsView(LoginRequiredMixin, InitiativePermissionMixin, Detai
             except UserInitiative.DoesNotExist:
                 context['form'] = UserInitiativeForm()
         elif user.role.role_name in ['M', 'CM'] and initiative.strategic_goal.department == user.department: 
-            # context['suggestions'] = generate_KPIs(initiative.strategic_goal,initiative, initiative.strategic_goal.department)
+            context['suggestions'] = generate_KPIs(initiative.strategic_goal,initiative, initiative.strategic_goal.department)
             context['form'] = KPIForm()
             context['unassigned_employees'] = unassigned_employees 
         elif user.role.role_name == 'GM':

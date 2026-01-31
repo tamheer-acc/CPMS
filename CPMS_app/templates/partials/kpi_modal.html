@@ -7,6 +7,17 @@
         <form id="kpiForm" method="post" {% if object %} data-is-update="true" {% endif %}
             action="{% if is_update %}{% url 'edit_kpi' initiative.id object.id %}{% else %}{% url 'kpi_create' initiative.id %}{% endif %}">
             {% csrf_token %}
+            <div id="kpi-suggestions" class="flex gap-3 m-3 overflow-x">
+                <p class="text-sm">اقتراحات نموذج الذكاء الاصطناعي:</p>
+
+                {% for suggestion in suggestions %}
+                    <p class="rounded-full bg-blue-100 p-2 text-xs suggestions">
+                        {{ suggestion }}
+                    </p>
+                {% empty %}
+                    <p class="text-sm">لا توجد اقتراحات</p>
+                {% endfor %}
+            </div>
             <div class="mb-4">
                 {{ form.kpi.label_tag }}<br>
                 {{ form.kpi }}
