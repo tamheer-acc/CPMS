@@ -92,6 +92,7 @@
     </div>
 
     <!-- Reply Box -->
+    {% if not plan_ended %}
     {% if can_reply %}
     <form hx-post="{% url 'note_detail' note.pk %}" hx-target="#replies-container"  hx-swap="beforeend"
     class="flex items-center gap-2 px-2 sticky bottom-0">
@@ -106,6 +107,22 @@
         إرسال
       </button>
     </form>
+    {% endif %}
+    {% else %}
+   <div id="notif" class="relative flex items-center gap-2 bg-[#fff3dc] border-r-4 border-[#faa912] px-3 py-2 mt-2 rounded-md text-sm font-semibold text-[0.8em] text-yellow-800 shadow-sm animate-slideDown  transform -translate-y-5 opacity-0 transition-all duration-500">
+  <svg class="size-4" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0">
+    <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+    <path d="M12 9v4" />
+    <path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0" />
+    <path d="M12 16h.01" />
+  </svg>
+  <span>
+     عذرًا، لا يمكنك الرد على هذه الملاحظة، نظرًا لانتهاء الخطة الحالية.
+  </span>
+</div>
+
+
+
     {% endif %}
 
 
@@ -132,6 +149,13 @@
       const textarea = document.querySelector("textarea[name='reply_content']");
       if (textarea) textarea.value = "";
     }
+  const notif = document.getElementById('notif');
+
+  // إظهار الإشعار
+  setTimeout(() => {
+    notif.classList.remove('-translate-y-5', 'opacity-0');
+    notif.classList.add('translate-y-0', 'opacity-100');
+  }, 100);
 
   }); 
 
@@ -168,4 +192,30 @@
   .chat-scroll::-webkit-scrollbar-track {
     background: transparent;
   }
+
+.reply-blocked-notice {
+  position: relative;
+  background-color: #fff3dc;        
+    border-right: 4px solid #faa912; 
+  padding: 8px 12px;              
+  margin-top: 6px;
+  border-radius: 6px;
+  font-family: Arial, sans-serif;                
+  color: #333;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+
 </style>

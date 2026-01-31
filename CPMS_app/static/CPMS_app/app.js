@@ -754,36 +754,187 @@ if (document.getElementById('line-chart-data')){
 }
 
 // //====================== Plan Detail Dashboard =============================
-// function GoalsInitiativesDonut(labels, goalsData, initiativesData, elementId) {
-//     const donutCtx = document.getElementById(elementId);
-//     if (!donutCtx) return;
 
-//     new Chart(donutCtx, {
-//         type: 'doughnut',
-//         data: {
-//             labels: labels,
-//             datasets: [
-//                 {
-//                     label: 'الأهداف',
-//                     data: { goalsData },
-//                     backgroundColor: ['#F2C75C', '#E59256', '#A13525', ' #00685E'],
-//                     borderWidth: 0,
-//                     weight: 2
-//                 },
-//                 {
-//                     label: 'المبادرات',
-//                     data: { initiativesData },'#166b70'
-//                     backgroundColor: ['#D1D5DB', '#93C5FD', '#6EE7B7', '#FCA5A5'],
-//                     borderWidth: 0,
-//                     weight: 1
-//                 }
-//             ]
-//         },
-//         options: {
-//             cutout: '55%',
-//             plugins: {
-//                 legend: { position: 'right' }
-//             }
-//         }
-//     });
-// }
+///////// DONUT CHART \\\\\\\\\
+function planDetailsDonutChart(labels, goals, initiatives, chartId) {
+
+    const canvas = document.getElementById(chartId);
+    if (!canvas) return;
+
+    new Chart(canvas, {
+        type: 'doughnut',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'الأهداف',
+                    data: goals,
+                    backgroundColor: ['#F2C75C','#E59256','#A13525','#00685E']
+                },
+                {
+                    label: 'المبادرات',
+                    data: initiatives,
+                    backgroundColor: ['#F7E3A9','#E8B8A0','#C77C7A','#166b70']
+                }
+            ]
+        },
+        options: { cutout: '55%' }
+    });
+}
+
+
+if (document.getElementById('donut-chart-labels')) {
+
+    const labels = JSON.parse(document.getElementById('donut-chart-labels').textContent);
+    const goals = JSON.parse(document.getElementById('donut-chart-goals').textContent);
+    const initiatives = JSON.parse(document.getElementById('donut-chart-initiatives').textContent);
+
+    planDetailsDonutChart(labels, goals, initiatives, 'donutChart');
+}
+
+
+
+///////// GAUGE CHART \\\\\\\\\
+function planDetailsGaugeChart(value, chartId) {
+
+    const gauge = document.getElementById(chartId);
+    if (!gauge) return;
+
+    gauge.setAttribute('stroke-dasharray', `${value} 100`);
+}
+
+
+if (document.getElementById('plan-gauge-value')) {
+
+    const value = parseFloat(document.getElementById('plan-gauge-value').textContent);
+
+    planDetailsGaugeChart(value, 'plan-gauge');
+}
+
+
+
+///////// PRIORITY PIE \\\\\\\\\
+function planDetailsPriorityPie(data, chartId) {
+
+    const canvas = document.getElementById(chartId);
+    if (!canvas) return;
+
+    new Chart(canvas, {
+        type: 'pie',
+        data: {
+            labels: data.map(x => x.priority_label),
+            datasets: [{
+                data: data.map(x => x.avg_progress),
+                backgroundColor: data.map(x => x.color)
+            }]
+        }
+    });
+}
+
+
+if (document.getElementById('priority-chart-data')) {
+
+    const data = JSON.parse(document.getElementById('priority-chart-data').textContent);
+
+    planDetailsPriorityPie(data, 'priorityProgressChart');
+}
+
+
+
+///////// KPI BAR CHART \\\\\\\\\
+function planDetailsKpiBar(data, chartId) {
+
+    const canvas = document.getElementById(chartId);
+    if (!canvas) return;
+
+    new Chart(canvas, {
+        type: 'bar',
+        data: {
+            labels: data.map(x => `${x.kpi_name} (${x.initiative_title})`),
+            datasets: [
+                {
+                    label: 'المستهدف',
+                    data: data.map(x => x.target),
+                    backgroundColor: 'rgba(128,128,128,0.3)'
+                },
+                {
+                    label: 'الفعلي',
+                    data: data.map(x => x.actual),
+                    backgroundColor: data.map(x => x.color)
+                }
+            ]
+        },
+        options: { indexAxis: 'y' }
+    });
+}
+
+
+if (document.getElementById('kpi-chart-data')) {
+
+    const data = JSON.parse(document.getElementById('kpi-chart-data').textContent);
+
+    planDetailsKpiBar(data, 'kpiChart');
+}
+
+
+
+///////// TOP 5 BAR CHART \\\\\\\\\
+function planDetailsTop5Bar(labels, progress, role, chartId, noDataId) {
+
+    const canvas = document.getElementById(chartId);
+    const noData = document.getElementById(noDataId);
+
+    if (!labels?.length || !progress?.length) {
+        canvas?.style.setProperty('display','none');
+        noData?.classList.remove('hidden');
+        return;
+    }
+
+    new Chart(canvas, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: progress,
+                backgroundColor: progress.map(p =>
+                    p >= 80 ? '#10b981' :
+                    p >= 50 ? '#f59e0b' :
+                    '#ef4444'
+                )
+            }]
+        }
+    });
+}
+
+
+if (document.getElementById('top5-labels')) {
+
+    const labels = JSON.parse(document.getElementById('top5-labels').textContent);
+    const progress = JSON.parse(document.getElementById('top5-progress').textContent);
+    const role = document.getElementById('top5-role').textContent;
+
+    planDetailsTop5Bar(labels, progress, role, 'top5Chart', 'no-data-msg');
+}
+
+
+
+///////// TIMELINE CHART \\\\\\\\\
+function planDetailsTimelineChart(data, chartId) {
+
+    const canvas = document.getElementById(chartId);
+    if (!canvas || !data?.length) return;
+
+    new Chart(canvas, {
+        type: 'bar',
+        data: { labels: data.map(x => x.title) },
+        options: { indexAxis: 'y' }
+    });
+}
+
+
+if (document.getElementById('timeline-data')) {
+
+    const data = JSON.parse(document.getElementById('timeline-data').textContent);
+
+    planDetailsTimelineChart(data, 'timelineChart');
+}

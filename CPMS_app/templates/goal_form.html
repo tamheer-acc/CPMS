@@ -99,27 +99,24 @@
                     </label>
                     <div class="grid grid-cols-[1fr_auto_1fr] items-center gap-4">
                         <!--Satrt Date-->
-                        <input type="date" name="{{ form.start_date.name }}"
+                        <!-- <input type="date" name="{{ form.start_date.name }}"
                             value="{% if form.start_date.value %}{{ form.start_date.value }}{% endif %}" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm
                                    rounded-xl shadow-sm block w-full p-2.5
                                    focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-800
-                                   hover:border-gray-400 transition-all duration-200">
-                        {% if form.start_date.errors %}
+                                   hover:border-gray-400 transition-all duration-200"> -->
+                                     
+                        <!-- {% if form.start_date.errors %}
                         <div class="flex items-center text-center gap-1 text-red-600 text-xs mt-1  whitespace-nowrap"> ⚠ {{ form.start_date.errors }}
                         </div>
-                        {% endif %}
+                        {% endif %} -->
+                        
+                         <!--Satrt Date-->
+                         {{ form.start_date.as_widget }}
 
                         <span class="text-sm font-medium text-gray-600">إلى</span>
 
                         <!--End Date-->
-                        <input type="date" name="{{ form.end_date.name }}"
-                            value="{% if form.end_date.value %}{{ form.end_date.value|date:'Y-m-d' }}{% endif %}" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm
-                                   rounded-xl shadow-sm block w-full p-2.5
-                                   focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-800
-                                   hover:border-gray-400 transition-all duration-200">
-                        {% if form.end_date.errors %}
-                        <div class="flex items-center text-center gap-1 text-red-600 text-xs mt-1  whitespace-nowrap"> ⚠ {{ form.end_date.errors }}</div>
-                        {% endif %}
+                         {{ form.end_date.as_widget }}
                     </div>
                 </div>
 

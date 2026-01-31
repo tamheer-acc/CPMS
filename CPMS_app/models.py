@@ -87,8 +87,8 @@ class StrategicPlan (models.Model):
     plan_name = models.CharField(max_length=200,unique=True, null=False, blank=False, help_text="اسم الخطة الاستراتيجية")
     vision = models.TextField(null=False, blank=False, help_text="الرؤية")
     mission = models.TextField(null=False, blank=False, help_text="الرسالة")
-    start_date = models.DateField(null=True, blank=True, default=date.today, help_text="تاريخ بداية الخطة")
-    end_date = models.DateField(null=True, blank=True, help_text="تاريخ نهاية الخطة")
+    start_date = models.DateField()
+    end_date = models.DateField()
     created_by = models.CharField(max_length=200, blank=True, null=True)
     is_active = models.BooleanField(default=True)
 
@@ -110,8 +110,8 @@ class StrategicGoal (models.Model):
     department = models.ForeignKey(Department, on_delete=models.CASCADE, related_name="goals")
     goal_title = models.CharField(max_length=200, null=False, blank=False, help_text="عنوان الهدف الاستراتيجي")
     description = models.TextField(null=False, blank=False, help_text="وصف الهدف الاستراتيجي")
-    start_date = models.DateField(null=True, blank=True, default=date.today, help_text="تاريخ بداية الهدف")
-    end_date = models.DateField(null=True, blank=True, help_text="تاريخ نهاية الهدف")
+    start_date = models.DateField()
+    end_date = models.DateField()
     goal_status = models.CharField(max_length=2, choices=STATUS, default=STATUS[0][0], help_text="حالة الهدف")
     goal_priority = models.CharField(max_length=1, choices=PRIORITY, default=PRIORITY[0][0], help_text="أهمية الهدف")
     
@@ -122,6 +122,16 @@ class StrategicGoal (models.Model):
 
     def __str__(self):
         return f"{self.goal_title} ({self.department.department_name})"
+    
+    @property
+    def initiatives_with_status(self):
+       from CPMS_app.services import calc_initiative_status_by_avg
+       initiatives = getattr(self, '_prefetched_initiatives', None)
+       if initiatives is None:
+            initiatives = self.initiative_set.all()
+       for i in initiatives:
+            i.status = calc_initiative_status_by_avg(i)
+       return initiatives
 
 
 
@@ -141,6 +151,7 @@ class Initiative(models.Model):  # 1 : M Relationship with StrategicGoal (Many S
     class Meta:
         verbose_name = "Initiative"
         verbose_name_plural = "Initiatives"
+        ordering = ['-start_date']  
 
     def __str__(self):
         return self.title
@@ -229,11 +240,11 @@ class Log (models.Model):
         except Exception:
             return None
 
-    @property
-    def formatted_details(self):
-        from .services import format_log_values
-        instance = self.get_instance()
-        return format_log_values(self.old_value, self.new_value, self.action, instance)
+    # @property
+    # def formatted_details(self):
+    #     from .services import format_log_values
+    #     instance = self.get_instance()
+    #     return format_log_values(self.old_value, self.new_value, self.action, instance)
 
 # ---------------------------
 #     ProgressLog Model

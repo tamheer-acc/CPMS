@@ -8,28 +8,6 @@ from .models import Department, Initiative, KPI, Note, StrategicPlan, StrategicG
 # ============== Base Form =================
 # Base form with shared clean and save logic
 class BaseForm(forms.ModelForm):
-     def clean(self):
-       cleaned_data = super().clean()
-       start = cleaned_data.get('start_date')
-       end = cleaned_data.get('end_date')
-
-     # validate the end date
-       if start and end and end < start:
-           self.add_error('end_date', "تاريخ الانتهاء لا يمكن أن يسبق تاريخ البدء")
-
-     # validate goal or initiative date
-       active_plan = StrategicPlan.objects.filter(is_active=True).first()
-
-       if active_plan and start and end:
-          plan_start = active_plan.start_date
-          plan_end = active_plan.end_date
-
-       if active_plan and start and end:
-          if start < plan_start or end > plan_end:
-             self.add_error('end_date',"يجب أن تكون التواريخ ضمن الفترة الزمنية للخطة الحالية")
-
-       return cleaned_data
-
 
      def save(self, user=None, sender=None, plan_id=None, commit=True):
         obj = super().save(commit=False)
@@ -83,6 +61,15 @@ class StrategicPlanForm(BaseForm):
             }
         }
 
+    def clean(self):
+        cleaned_data = super().clean()
+        start = cleaned_data.get('start_date')
+        end = cleaned_data.get('end_date')
+
+        if start and end:
+            if end < start:
+                self.add_error('end_date', "تاريخ النهاية لا يمكن أن يسبق تاريخ البداية.")
+
 
 # ===== Strategic Goal Form =====
 class StrategicGoalForm(BaseForm):
@@ -123,11 +110,36 @@ class StrategicGoalForm(BaseForm):
         widgets = {
             'goal_title': forms.TextInput(attrs={'class': 'input'}),
             'description': forms.Textarea(attrs={'rows': 1, 'class': 'textarea'}),
-            'start_date': forms.DateInput(attrs={'type': 'date', 'class': 'input'}),
-            'end_date': forms.DateInput(attrs={'type': 'date', 'class': 'input'}),
+            'start_date': forms.DateInput(attrs={'type': 'date', 'class':'bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-xl shadow-sm block w-full p-2.5 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-800 hover:border-gray-400 transition-all duration-200'}),
+            'end_date':forms.DateInput(attrs={'type': 'date', 'class':'bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-xl shadow-sm block w-full p-2.5 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-800 hover:border-gray-400 transition-all duration-200'}),
             # 'goal_status': forms.Select(attrs={'class':'rounded-xl border px-12 py-2 text-sm text-gray-900 bg-gray-50 hover:border-gray-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-500'}),
            'goal_priority': forms.Select(attrs={'class': 'rounded-xl w-full border px-12 py-2 text-sm text-gray-900 text-center bg-gray-50 hover:border-gray-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-800'}),
         }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        start = cleaned_data.get('start_date')
+        end = cleaned_data.get('end_date')
+        active_plan = StrategicPlan.objects.filter(is_active = True).first()
+
+        if start and end:
+          if end < start:
+            self.add_error('end_date', "تاريخ النهاية لا يمكن أن يسبق تاريخ البداية.")
+
+          elif active_plan and active_plan.start_date and active_plan.end_date:
+              if start < active_plan.start_date:
+                self.add_error(
+                    'start_date',
+                    f"تاريخ الهدف يجب أن يكون ضمن فترة الخطة: "
+                    f"{active_plan.start_date} إلى {active_plan.end_date}"
+                )
+              if end > active_plan.end_date: 
+                    self.add_error(
+                    'end_date',
+                    f"تاريخ الهدف يجب أن يكون ضمن فترة الخطة: "
+                    f"{active_plan.start_date} إلى {active_plan.end_date}"
+                )
+
 
 # ===== Note Form =====
 class NoteForm(BaseForm):
@@ -324,7 +336,22 @@ class InitiativeForm(BaseForm):
             }),
         }
 
-
+    # def clean(self):
+    #     cleaned_data = super().clean()
+    #     start = cleaned_data.get('start_date')
+    #     end = cleaned_data.get('end_date')
+    #     goal = cleaned_data.get('strategic_goal')
+    #     if start and end:
+    #         if end < start:
+    #             self.add_error('end_date', "تاريخ النهاية لا يمكن أن يسبق تاريخ البداية.")
+          
+    #         elif goal:
+    #             if start < goal.start_date or end > goal.end_date:
+    #                 self.add_error(
+    #                     'end_date',
+    #                     f"تاريخ المبادرة يجب أن يكون ضمن فترة الهدف: {goal.start_date} إلى {goal.end_date}"
+    #                 )
+       
 
 # ===== UserInitiativeForm Form =====
 class UserInitiativeForm(BaseForm):

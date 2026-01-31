@@ -12,6 +12,7 @@
 <div class="max-w-7xl mx-auto p-6" dir="rtl">
 
     <h2 class="text-2xl font-semibold mb-6">سجل النظام</h2>
+    <div class="bg-white shadow-sm rounded-lg border border-gray-200">
     <!-- Container for Search, Filter, and pages number  -->
     <div class="p-4 flex items-center justify-between gap-4"> 
 
@@ -20,7 +21,7 @@
 
             <!-- Search Input -->
             <div class="relative">
-                <div class="absolute inset-y-0 end-0 flex items-center pe-3 pointer-events-none">
+                <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
                     <!-- Search icon -->
                     <svg class="w-4 h-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none"
                         viewBox="0 0 24 24" stroke="currentColor">
@@ -29,13 +30,13 @@
                     </svg>
                 </div>
                 <input type="text" id="search"
-                    class="block w-80 pe-9 ps-3 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="البحث عن سجل...">
+                     class="block w-80 ps-9 pe-3 py-2 border rounded-xl focus:ring-blue-500 focus:border-blue-500"
+                       placeholder="البحث عن سجل...">
             </div>
             <!-- Filter Button -->
             <div class="relative">
                 <button id="dropdownDefaultButton"
-                    class="flex flex-row-reverse items-center justify-between text-body bg-neutral-secondary-medium border rounded text-gray-500 hover:text-gray-800 hover:bg-neutral-tertiary-medium shadow-xs font-medium leading-5 rounded-base text-sm px-3 py-2 focus:outline-none gap-2 "
+                    class="flex flex-row-reverse items-center justify-between text-body bg-neutral-secondary-medium border rounded text-gray-500 hover:text-gray-800 hover:bg-neutral-tertiary-medium shadow-xs font-medium leading-5 rounded-lg text-sm px-3 py-2 focus:outline-none gap-2 "
                     type="button">
                     <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none"
                         viewBox="0 0 24 24" stroke="currentColor">
@@ -52,7 +53,7 @@
 
                 <!-- Dropdown Menu -->
                 <div id="dropdown"
-                    class="absolute right-0 z-10 hidden bg-neutral-primary-medium border border-default-medium rounded-base shadow-lg w-32 overflow-hidden">
+                    class="absolute right-0 z-10 hidden bg-white border border-default-medium rounded-lg shadow-lg w-32 overflow-hidden">
                     <ul class="p-2 text-sm text-body font-medium">
                         <li>
                             <button type="button" data-action=""
@@ -88,7 +89,7 @@
         <!-- dropdown page number -->
             <div class="relative"> 
                 <button id="page-dropdown-button"
-                    class="flex flex-row-reverse items-center justify-between text-body bg-neutral-secondary-medium border rounded text-gray-500 hover:text-gray-800 hover:bg-neutral-tertiary-medium shadow-xs font-medium leading-5 rounded-base text-sm px-3 py-2 focus:outline-none gap-2 "
+                    class="flex flex-row-reverse items-center justify-between text-body bg-neutral-secondary-medium border rounded text-gray-500 hover:text-gray-800 hover:bg-neutral-tertiary-medium shadow-xs font-medium leading-5 rounded-lg text-sm px-3 py-2 focus:outline-none gap-2 "
                     type="button">
                     <span id="page-dropdown-text" class="ml-1">عدد الصفوف</span> 
                     <svg id="page-dropdown-icon" class="w-4 h-4 transition-transform duration-200" 
@@ -100,7 +101,7 @@
 
                 <!-- Dropdown Menu --> 
                 <div id="page-dropdown" 
-                    class="absolute right-0 z-10 hidden bg-neutral-primary-medium border border-default-medium rounded-base shadow-lg w-32 overflow-hidden">
+                    class="absolute right-0 z-10 hidden bg-neutral-primary-medium border border-default-medium rounded-lg shadow-lg w-32 overflow-hidden">
                     <ul class="p-2 text-sm text-body font-medium">
                         <li>
                             <button type="button" data-number="25"
@@ -127,7 +128,7 @@
             </div>
     </div>
 
-    <div class="overflow-x-auto bg-white shadow rounded-lg border border-gray-200">
+    <!-- <div class="overflow-x-auto bg-white shadow rounded-lg border border-gray-200"> -->
         <table class="min-w-full text-sm text-gray-700">
             <thead class="bg-gray-50 border-b text-gray-600">
                 <tr>
@@ -143,20 +144,19 @@
                 {% include 'partials/logs_table_rows.html' %}
             </tbody>
         </table>
-    </div>
+    <!-- </div> -->
 
 <!-- Pagination -->
 {% if is_paginated %}
-    <div class="relative flex items-center justify-center p-4 w-full" aria-label="Table navigation" dir="rtl">
-        <!-- Page info on the right -->
-        <div class="absolute right-0 text-right">
-            <span class="text-sm font-normal text-gray-600">
+    <div class="flex items-center flex-column flex-wrap md:flex-row justify-between p-4 mt-4 border-t" aria-label="Table navigation" dir="rtl">
+
+            <!-- Shows the range of results currently displayed and total number of pages -->
+            <span class="text-sm font-normal text-gray-600 mb-4 md:mb-0 block w-full md:inline md:w-auto">
                 عرض
-                <span class="font-semibold text-gray-900">{{ page_obj.number }}</span>
+                <span class="font-semibold text-gray-900">{{page_obj.number}}</span>
                 من
                 <span class="font-semibold text-gray-900">{{ paginator.num_pages }}</span>
             </span>
-        </div>
 
         <ul class="flex gap-8 items-center justify-center border rounded-full py-2 px-5">
             
@@ -209,7 +209,7 @@
         </ul>
     </div>
 {% endif %}
-
+</div>
 </div>
 
 {% endblock %}

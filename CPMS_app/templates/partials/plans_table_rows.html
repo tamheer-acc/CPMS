@@ -18,7 +18,7 @@
   <td class="px-6 py-4 text-center flex justify-between gap-3">
 
     <!-- View Button -->
-    <a href="{% if not plan.is_active %}{% url 'dashboard' %}{% else %} {% url 'plan_detail' plan.id %} {% endif %}" class="text-blue-600 hover:text-blue-800 p-1">
+    <a href="{% if plan.is_active %}{% url 'dashboard' %}{% else %} {% url 'plan_detail' plan.id %} {% endif %}" class="text-blue-600 hover:text-blue-800 p-1">
       <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2"
         stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
         <path stroke="none" d="M0 0h24v24H0z" fill="none" />
@@ -46,7 +46,7 @@
     {% if user.role.role_name == 'CM' %}
     <!-- Delete Button -->
     <button class="text-red-600 hover:text-red-800 p-1"
-      onclick="openDeleteModal(`{% url 'plan_delete' plan.id %}`, ` هل أنت متأكد أنك تريد حذف هذه الخطة؟`)"><!--ممكن اغير الكلام-->
+      onclick="openDeleteModal(`{% url 'plan_delete' plan.id %}`, ` هل أنت متأكد أنك تريد حذف هذه الخطة؟`)">
       <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2"
         stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
         <path stroke="none" d="M0 0h24v24H0z" fill="none" />
@@ -63,6 +63,6 @@
 </tr>
 {% empty %}
 <tr>
-  <td colspan="4" class="text-center py-4 text-gray-500 font-medium">لا توجد خطط</td><!--ممكن اغير الكلام-->
+  <td colspan="4" class="text-center py-4 text-gray-500 font-medium">لا توجد خطط</td>
 </tr>
 {% endfor %}

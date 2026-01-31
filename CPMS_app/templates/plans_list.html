@@ -11,7 +11,7 @@
 {% include 'partials/confirm_delete.html' %}
 
 <div class="max-w-6xl mx-auto px-6 mt-10 mb-10" dir="rtl">
-    <div class="bg-white shadow-sm rounded-lg border border-gray-200 max-h-[500px] ">
+    <div class="bg-white shadow-sm rounded-lg border border-gray-200">
 
         <!-- Container for Search, Filter, and Add Button -->
         <div class="p-4 flex items-center justify-between gap-4">
@@ -138,7 +138,7 @@
                 <!-- Previous Button -->
                 <li>
                     {% if page_obj.has_previous %}
-                    <a href="?page={{ page_obj.previous_page_number }}&per_page={{ request.GET.per_page|default:5 }}&search={{ search }}&status={{ status }}"
+                    <a href="?page={{ page_obj.previous_page_number }}&per_page={{ per_page }}&search={{ search }}&status={{ status }}"
                         class="flex items-center justify-center text-body bg-neutral-secondary-medium border border-default-medium rounded-s-full text-sm px-3 h-9
                               hover:bg-gray-200 transition-colors duration-200 bg-gray-50">
                         ‹
@@ -169,7 +169,7 @@
                 </li>
                 {% else %}
                 <li>
-                    <a href="?page={{ num }}&per_page={{ request.GET.per_page|default:5 }}&search={{ search }}&status={{ status }}"
+                    <a href="?page={{ num }}&per_page={{ per_page }}&search={{ search }}&status={{ status }}"
                         class="flex items-center justify-center text-body bg-neutral-secondary-medium border border-default-medium font-medium text-sm w-9 h-9
                                       hover:bg-gray-200 transition-colors duration-200 bg-gray-50">
                         {{ num }}
@@ -181,7 +181,7 @@
                 <!-- Next Button -->
                 <li>
                     {% if page_obj.has_next %}
-                    <a href="?page={{ page_obj.next_page_number }}&per_page={{ request.GET.per_page|default:5 }}&search={{ search }}&status={{ status }}"
+                    <a href="?page={{ page_obj.next_page_number }}&per_page={{ per_page }}&search={{ search }}&status={{ status }}"
                         class="flex items-center justify-center text-body bg-neutral-secondary-medium border border-default-medium rounded-e-full text-sm px-3 h-9
                               hover:bg-gray-200 transition-colors duration-200 bg-gray-50">
                         ›
