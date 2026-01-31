@@ -18,7 +18,7 @@
             <div class="flex items-center gap-2">
 
                 <!-- Search Input -->
-                <div class="relative">
+                <div class="relative w-full">
                     <div class="absolute inset-y-0 end-0 flex items-center pe-3 pointer-events-none">
                         <!-- Search icon -->
                         <svg class="w-4 h-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none"
@@ -28,13 +28,13 @@
                         </svg>
                     </div>
                     <input type="text" id="search"
-                        class="block w-80 pe-9 ps-3 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                        class="block w-[48rem] h-10 pe-9 ps-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00A399]/10 focus:border-[#00685E]/20 "
                         placeholder="البحث عن مبادرة...">
                 </div>
                 <!-- Filter Button -->
                 <div class="relative">
                     <button id="dropdownDefaultButton"
-                        class="flex flex-row-reverse items-center justify-between text-body bg-neutral-secondary-medium border rounded text-gray-500 hover:text-gray-800 hover:bg-neutral-tertiary-medium shadow-xs font-medium leading-5 rounded-base text-sm px-3 py-2 focus:outline-none gap-2 "
+                        class="flex flex-row-reverse items-center h-10 justify-between text-body bg-neutral-secondary-medium border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00A399]/10 focus:border-[#00685E]/20  text-gray-500 hover:text-gray-800 hover:bg-neutral-tertiary-medium shadow-xs font-medium leading-5  text-sm px-3 py-2 gap-2 "
                         type="button">
                         <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none"
                             viewBox="0 0 24 24" stroke="currentColor">
@@ -55,23 +55,23 @@
                         <ul class="p-2 text-sm text-body font-medium">
                             <li>
                                 <button type="button" data-priority=""
-                                    class="filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">الكل</button>
+                                    class="bg-white filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">الكل</button>
                             </li>
                             <li>
                                 <button type="button" data-priority="C"
-                                    class="filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">حرجة</button>
+                                    class="bg-white filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">حرجة</button>
                             </li>
                             <li>
                                 <button type="button" data-priority="H"
-                                    class="filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">عالية</button>
+                                    class="bg-white filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">عالية</button>
                             </li>
                             <li>
                                 <button type="button" data-priority="M"
-                                    class="filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">متوسطة</button>
+                                    class="bg-white filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">متوسطة</button>
                             </li>
                             <li>
                                 <button type="button" data-priority="L"
-                                    class="filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">منخفضة</button>
+                                    class="bg-white filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">منخفضة</button>
                             </li>
                         </ul>
                     </div>
@@ -80,7 +80,7 @@
             <!-- dropdown page number -->
                 <div class="relative"> 
                     <button id="page-dropdown-button"
-                        class="flex flex-row-reverse items-center justify-between text-body bg-neutral-secondary-medium border rounded text-gray-500 hover:text-gray-800 hover:bg-neutral-tertiary-medium shadow-xs font-medium leading-5 rounded-base text-sm px-3 py-2 focus:outline-none gap-2 "
+                        class="flex flex-row-reverse h-10 items-center justify-between text-body bg-neutral-secondary-medium border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00A399]/10 focus:border-[#00685E]/20  text-gray-500 hover:text-gray-800 hover:bg-neutral-tertiary-medium shadow-xs font-medium leading-5 text-sm px-3 py-2 gap-2 "
                         type="button">
                         <span id="page-dropdown-text" class="ml-1">عدد الصفوف</span> 
                         <svg id="page-dropdown-icon" class="w-4 h-4 transition-transform duration-200" 
@@ -96,23 +96,23 @@
                         <ul class="p-2 text-sm text-body font-medium">
                             <li>
                                 <button type="button" data-number="25"
-                                    class="page-filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">عدد الصفوف</button>
+                                    class="bg-white page-filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">عدد الصفوف</button>
                             </li>
                             <li>
                                 <button type="button" data-number="5"
-                                    class="page-filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">5</button>
+                                    class="bg-white page-filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">5</button>
                             </li>
                             <li>
                                 <button type="button" data-number="10"
-                                    class="page-filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">10</button>
+                                    class="bg-white page-filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">10</button>
                             </li>
                             <li>
                                 <button type="button" data-number="50"
-                                    class="page-filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">50</button>
+                                    class="bg-white page-filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">50</button>
                             </li>
                             <li>
                                 <button type="button" data-number="100"
-                                    class="page-filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">100</button>
+                                    class="bg-white page-filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">100</button>
                             </li>
                         </ul>
                     </div>
@@ -167,7 +167,7 @@
                 <!-- Previous button -->
                 <li>
                     {% if page_obj.has_previous %}
-                        <a href="?page={{ page_obj.previous_page_number }}&per_page={{ request.GET.per_page|default:25 }}&search={{ search }}&priority={{ priority }}"
+                        <a href="?page={{ page_obj.previous_page_number }}&per_page={{ request.GET.per_page|default:25 }}&search={{ search }}&priority={{ request.GET.priority|default:'' }}"
                         class="text-[#00685E] hover:text-[#00A399] transition-colors duration-200 text-lg">
                             ‹
                         </a>
@@ -190,7 +190,7 @@
                         </li>
                     {% else %}
                         <li>
-                            <a href="?page={{ num }}&per_page={{ request.GET.per_page|default:25 }}&search={{ search }}&priority={{ priority }}"
+                            <a href="?page={{ num }}&per_page={{ request.GET.per_page|default:25 }}&search={{ search }}&priority={{ request.GET.priority|default:'' }}"
                             class="text-[#00685E] hover:text-[#00A399] transition-colors duration-200">
                                 {{ num }}
                             </a>
@@ -201,7 +201,7 @@
                 <!-- Next button -->
                 <li>
                     {% if page_obj.has_next %}
-                        <a href="?page={{ page_obj.next_page_number }}&per_page={{ request.GET.per_page|default:25 }}&search={{ search }}&priority={{ priority }}"
+                        <a href="?page={{ page_obj.next_page_number }}&per_page={{ request.GET.per_page|default:25 }}&search={{ search }}&priority={{ request.GET.priority|default:'' }}"
                         class="text-[#00685E] hover:text-[#00A399] transition-colors duration-200 text-lg">
                             ›
                         </a>

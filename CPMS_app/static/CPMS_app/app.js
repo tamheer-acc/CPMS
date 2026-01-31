@@ -77,8 +77,14 @@ document.addEventListener("DOMContentLoaded", function() {
             .then(res => res.json())
             .then(data => {
                 if (isPlansPage) plansBody.innerHTML = data.html;
-                if (isInitiativesPage) initiativesBody.innerHTML = data.html;
-                if (isLogsBodyPage) logsBody.innerHTML = data.html;
+                if (isInitiativesPage){ 
+                    initiativesBody.innerHTML = data.html;
+                    window.history.replaceState({}, "", url.toString());
+                }
+                if (isLogsBodyPage){ 
+                    logsBody.innerHTML = data.html;
+                    window.history.replaceState({}, "", url.toString());
+                }
                 if (isPlanDetailsPage) goalsBody.innerHTML = data.html;
             });
     }
@@ -196,6 +202,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 // full reload
                 window.location.href = url.toString(); 
             } 
+            else if (isLogsBodyPage) {
+                // full reload
+                window.location.href = url.toString(); 
+            } 
             else {
                 // AJAX 
                 fetch(url, { headers: { "X-Requested-With": "XMLHttpRequest" } })
@@ -203,7 +213,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     .then(data => {
                         if (isPlansPage) plansBody.innerHTML = data.html;
                         if (isPlanDetailsPage) goalsBody.innerHTML = data.html;
-                        if (isLogsBodyPage) logsBody.innerHTML = data.html;
                     });
             }
 
@@ -371,9 +380,27 @@ function closeAssignPopup() {
 // ---------------------------
 //           KPI js     
 // ---------------------------
+const suggestions = document.getElementById('kpi-suggestions');
+if (suggestions) {
+    suggestions.classList.add('hidden');
+}
+document.querySelectorAll('.suggestions').forEach(suggestion => {
+    suggestion.addEventListener('click', function() {
+        const kpiInput = document.querySelector('#id_kpi'); // Django default id for the form field
+        if (kpiInput) {
+            kpiInput.value = this.textContent.trim(); 
+        }
+    });
+});
+
+
 document.querySelectorAll('.edit-kpi-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
         e.preventDefault(); // don't follow href
+        const suggestions = document.getElementById('kpi-suggestions');
+        if (suggestions) {
+            suggestions.classList.add('hidden');
+        }
 
         const kpiId = btn.dataset.kpiId;
         const initiativeId = btn.dataset.initiativeId;
@@ -409,6 +436,10 @@ if (addKpiBtn){
     addKpiBtn.addEventListener('click', () => {
         const form = document.getElementById('kpiForm');
         const title = document.getElementById('kpi-modal-title');
+        const suggestions = document.getElementById('kpi-suggestions');
+        if (suggestions) {
+            suggestions.classList.remove('hidden');
+        }
 
         form.reset(); // clear any old values from previous update
         delete form.dataset.isUpdate; // remove update flag
@@ -433,7 +464,6 @@ if (cancelBtnKpi){
     });
 
 }
-
 
 
 // ---------------------------
@@ -586,7 +616,6 @@ function barChart(labels, data, id, background='#AAC2BF', ticksDisplay=true, max
         }
     });
 }                      
-
 
 
 
