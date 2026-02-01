@@ -245,15 +245,12 @@
         </div>
     </div>
 </div>
+
 <script>
-    /* ===============================
-       فتح الملاحظة عند الضغط
-    ================================ */
     document.body.addEventListener('click', function (e) {
         const row = e.target.closest('.note-row');
         if (!row) return;
-
-        // منع الفتح إذا ضغط على زر النجمة
+        
         if (e.target.closest('.star-btn')) return;
 
         const noteId = row.dataset.id;
