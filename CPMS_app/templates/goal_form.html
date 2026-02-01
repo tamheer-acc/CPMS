@@ -58,21 +58,6 @@
                     {% endif %}
                 </div>
 
-                <!-- <div class="grid grid-cols-[1fr_auto_1fr] items-center gap-14 px-2"> -->
-
-                    <!-- Goal Status
-                    <div class="flex items-center">
-                        <label for="{{ form.goal_status.id_for_label }}"
-                            class="text-sm font-semibold text-gray-800 w-24 ">
-                            {{form.goal_status.label}}<span class="text-red-500"> *</span>
-                        </label>
-                        {{ form.goal_status }}
-                    </div>
-                    {% if form.goal_status.errors %}
-                    <div class="flex items-center gap-1 text-red-600 text-xs mt-1"> ⚠ {{ form.goal_status.errors }}
-                    </div>
-                    {% endif %} -->
-
                     <!--Goal Priority-->
                     
                     <div class="flex items-center gap-2">
@@ -98,17 +83,6 @@
                         مدة تنفيذ الهدف <span class="text-red-500">*</span>
                     </label>
                     <div class="grid grid-cols-[1fr_auto_1fr] items-center gap-4">
-                        <!--Satrt Date-->
-                        <!-- <input type="date" name="{{ form.start_date.name }}"
-                            value="{% if form.start_date.value %}{{ form.start_date.value }}{% endif %}" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm
-                                   rounded-xl shadow-sm block w-full p-2.5
-                                   focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-800
-                                   hover:border-gray-400 transition-all duration-200"> -->
-                                     
-                        <!-- {% if form.start_date.errors %}
-                        <div class="flex items-center text-center gap-1 text-red-600 text-xs mt-1  whitespace-nowrap"> ⚠ {{ form.start_date.errors }}
-                        </div>
-                        {% endif %} -->
                         
                          <!--Satrt Date-->
                          {{ form.start_date.as_widget }}

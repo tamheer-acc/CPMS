@@ -398,9 +398,9 @@
         {% if user.role.role_name == 'CM' or user.role.role_name == 'M' %}
         <div class="flex justify-start gap-3">
             <button
-                class="bg-yellow-600 rounded-lg p-3  hover:bg-yellow-800 text-white rounded-lg transition-colors flex gap-1"
+                class="bg-yellow-600 rounded-lg p-3 items-center  hover:bg-yellow-800 text-white rounded-lg transition-colors flex gap-1"
                 onclick="window.open(
-                '/initiatives/{{initiative.id}}/update/','_blank');"> تعديل المبادرة
+                '/initiatives/{{initiative.id}}/update/','_blank');">
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" stroke="currentColor"
                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
                     <path stroke="none" d="M0 0h24v24H0z" fill="none" />
@@ -408,15 +408,15 @@
                     <path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415" />
                     <path d="M16 5l3 3" />
                 </svg>
+                 تعديل المبادرة
             </button>
 
             <button
-                class="bg-red-600 rounded-lg p-3  hover:bg-red-800 text-white rounded-lg transition-colors flex gap-1"
+                class="bg-red-600 rounded-lg p-3 items-center  hover:bg-red-800 text-white rounded-lg transition-colors flex gap-1"
                 onclick="openDeleteModal( 
                         '/initiatives/{{ initiative.id }}/delete/',
                         'هل أنت متأكد أنك تريد حذف هذه المبادرة؟'
                     )">
-                حذف المبادرة
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" stroke="currentColor"
                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
                     <path stroke="none" d="M0 0h24v24H0z" fill="none" />
@@ -426,6 +426,7 @@
                     <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" />
                     <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" />
                 </svg>
+                 حذف المبادرة
             </button>
         </div>
         {% endif %}

@@ -38,7 +38,7 @@
 
             <div class="flex-1 flex items-center gap-4 flex-wrap shrink-0">
                 {% if request.GET.goal_id %}
-                <!-- إذا جينا من الهدف -->
+                <!-- from specific goal -->
                 <div class="flex gap-4 items-center shrink-0">
                     <span class="font-semibold text-gray-800">
                         {{ selected_goal.goal_title }}
@@ -46,7 +46,7 @@
                 </div>
 
                 {% elif request.GET.initiative_id %}
-                <!-- إذا جينا من initiative -->
+                <!-- from specific initiative -->
                 <div class="flex gap-4 items-center shrink-0">
                     <span class="font-semibold text-gray-800">
                         {{ selected_initiative.title }}
@@ -82,14 +82,6 @@
                 {% endif %}
                 {% endif %}
 
-
-
-                <!-- Receiver -->
-                <!-- <div id="receiver-field" class="hidden flex gap-4 items-center shrink-0">
-                    <span class="text-sm font-medium text-gray-600 whitespace-nowrap">{{form.receiver.label}}<span
-                            class="text-red-500"> *</span></span>
-                    {{ form.receiver }}
-                </div> -->
                 <div id="receiver-field" class="hidden flex gap-4 items-center shrink-0">
                     <label class="text-sm font-medium text-gray-600 whitespace-nowrap">
                         {{ form.receiver.label }} <span class="text-red-500">*</span>
@@ -104,15 +96,6 @@
                         {% endfor %}
                     </select>
                 </div>
-
-
-                <!-- Initiative -->
-                <!-- <div id="initiative-field" class="hidden flex gap-4 items-center shrink-0">
-                    <span
-                        class="{% if user.role.role_name == 'E' %} hidden {% else %} text-sm font-medium text-gray-600 whitespace-nowrap {% endif %}">{{form.initiative.label}}<span
-                            class="text-red-500"> *</span></span>
-                    {{ form.initiative }}
-                </div> -->
 
                 <div id="initiative-field" class="hidden flex gap-4 items-center shrink-0">
                     <label
@@ -129,14 +112,6 @@
                         {% endfor %}
                     </select>
                 </div>
-
-
-                <!-- Goal -->
-                <!-- <div id="goal-field" class="hidden flex gap-4 items-center shrink-0">
-                    <span class="text-sm font-medium text-gray-600 whitespace-nowrap">{{form.strategic_goal.label}}<span
-                            class="text-red-500"> *</span></span>
-                    {{ form.strategic_goal }}
-                </div> -->
 
                 <div id="goal-field" class="hidden flex gap-4 items-center shrink-0">
                     <label class="text-sm font-medium text-gray-600 whitespace-nowrap">{{form.strategic_goal.label}}
@@ -177,12 +152,6 @@
         {{ form.content }}
     </div>
 
-    <!--Buttons container-->
-    <!-- <div class="px-6 py-4 flex justify-start">
-        <button type="submit" class="flex items-center gap-2 mb-2 px-6 py-2.5 text-sm font-medium rounded-lg
-                            text-blue-600 border border-blue-600 hover:bg-blue-600 hover:text-white
-                            shadow-sm hover:shadow-md transform hover:-translate-y-0.5
-                            transition-all duration-200 focus:ring-4 focus:ring-blue-200"> -->
     <div class="px-6 py-4 flex justify-start">
         <button type="submit" class="flex items-center gap-2 mb-2 px-6 py-2.5 text-sm font-medium rounded-lg
                             text-[#00A399]/100 border border-[#00A399] hover:bg-[#00A399]/100 hover:text-white

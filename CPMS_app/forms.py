@@ -81,7 +81,6 @@ class StrategicGoalForm(BaseForm):
             'description': 'وصف الهدف',
             'start_date': 'تاريخ بداية الهدف',
             'end_date': 'تاريخ نهاية الهدف',
-            # 'goal_status': 'حالة الهدف',
             'goal_priority': 'الأهمية',
         }
         error_messages = {
@@ -99,9 +98,6 @@ class StrategicGoalForm(BaseForm):
             'end_date': {
                 'required': 'يرجى تحديد تاريخ النهاية',
             },
-            # 'goal_status': {
-            #     'required': 'يرجى تحديد حالة الهدف',
-            # },
             'goal_priority': {
                 'required': 'يرجى تحديد أهمية الهدف',
             },
@@ -112,8 +108,7 @@ class StrategicGoalForm(BaseForm):
             'description': forms.Textarea(attrs={'rows': 1, 'class': 'textarea'}),
             'start_date': forms.DateInput(attrs={'type': 'date', 'class':'bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-xl shadow-sm block w-full p-2.5 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-800 hover:border-gray-400 transition-all duration-200'}),
             'end_date':forms.DateInput(attrs={'type': 'date', 'class':'bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-xl shadow-sm block w-full p-2.5 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-800 hover:border-gray-400 transition-all duration-200'}),
-            # 'goal_status': forms.Select(attrs={'class':'rounded-xl border px-12 py-2 text-sm text-gray-900 bg-gray-50 hover:border-gray-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-500'}),
-           'goal_priority': forms.Select(attrs={'class': 'rounded-xl w-full border px-12 py-2 text-sm text-gray-900 text-center bg-gray-50 hover:border-gray-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-800'}),
+            'goal_priority': forms.Select(attrs={'class': 'rounded-xl w-full border px-12 py-2 text-sm text-gray-900 text-center bg-gray-50 hover:border-gray-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-800'}),
         }
 
     def clean(self):

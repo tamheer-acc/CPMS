@@ -200,21 +200,5 @@
 
     </div>
 </div>
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-        const addPlanBtn = document.getElementById("add-plan-btn");
 
-        if (addPlanBtn) {
-            addPlanBtn.addEventListener("click", function (e) {
-                const disabled = addPlanBtn.dataset.disabled === "true";
-
-                if (disabled) {
-                    e.preventDefault(); // يمنع الانتقال للصفحة
-                    alert("غير مسموح. يوجد خطة نشطة بالفعل.");
-                }
-            });
-        }
-    });
-
-</script>
 {% endblock %}

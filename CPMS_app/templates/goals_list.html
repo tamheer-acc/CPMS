@@ -60,13 +60,11 @@
                             </li>
                             <li>
                                 <button type="button" data-status="NS"
-                                    class="filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">لم يبدأ
-                                    بعد</button>
+                                    class="filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">لم يبدأ بعد</button>
                             </li>
                             <li>
                                 <button type="button" data-status="IP"
-                                    class="filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">قيد
-                                    التنفيذ</button>
+                                    class="filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">قيد التنفيذ</button>
                             </li>
                             <li>
                                 <button type="button" data-status="C"
@@ -110,7 +108,6 @@
         </div>
         
 
-
         <table class="w-full text-right text-gray-700 border border-gray-200">
             <thead class="text-sm bg-gray-50 border-b text-center items-center">
                 <tr>
@@ -118,7 +115,6 @@
                     {% if request.user.role.role_name == 'GM' %}
                     <th class="py-3 font-semibold">الإدارة</th>
                     {% endif %}
-                    <!-- <th class="py-3 font-semibold">وصف الهدف</th> -->
                     <th class="py-3 font-semibold">الحالة</th>
                     <th class="py-3 font-semibold">
                         <span class="inline-flex items-center gap-1 font-semibold">
@@ -134,7 +130,6 @@
                             الأهمية
                         </span>
                     </th>
-                    <!-- <th class="py-3 font-semibold"></th> -->
                     <th class="py-3 font-semibold">
                         <span class="inline-flex items-center gap-1 font-semibold">
                             <a class="text-gray-400 hover:text-gray-700 transition" title="فرز حسب المدة"

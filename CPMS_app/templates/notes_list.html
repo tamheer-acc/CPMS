@@ -9,19 +9,16 @@
 {% endblock %}
 {% block content %}
 
-<div class="flex h-[85vh] min-h-0 bg-white rounded-lg shadow">
+<div class="flex h-[85vh] min-h-0 bg-white rounded-lg shadow mt-6">
 
     <!-- Sidebar -->
-    <aside class="group w-16 hover:w-64 transition-all duration-300 border-r bg-gray-50 p-3 mt-2">
+    <aside class="group w-16 hover:w-64 transition-all duration-300 border-r bg-gray-50 p-3 ">
 
-        <!-- <a href="{% url 'note_create_modal' %}" hx-get="{% url 'note_create_modal' %}" hx-target="#note-form-container"
-            hx-swap="innerHTML" onclick="document.getElementById('note-modal-toggle').checked = true;" class="flex items-center justify-center gap-3 bg-blue-500 text-white py-2 rounded-lg mb-6 font-semibold hover:bg-blue-600
-                            shadow-md hover:shadow-lg transform hover:-translate-y-0.5
-                            transition duration-200 focus:ring-4 focus:ring-blue-200"> -->
         <a href="{% url 'note_create_modal' %}" hx-get="{% url 'note_create_modal' %}" hx-target="#note-form-container"
-            hx-swap="innerHTML" class="flex items-center justify-center gap-3 bg-[#00A399] text-white py-2 rounded-lg mb-6 font-semibold hover:bg-[#018077]
+            hx-swap="innerHTML" class="flex items-center justify-center gap-3 bg-[#00A399] text-white py-2 mt-2 rounded-lg mb-6 font-semibold hover:bg-[#018077]
                             shadow-md hover:shadow-lg transform hover:-translate-y-0.5
                             transition duration-200 focus:ring-4 focus:ring-[#018077]/30">
+
             <!-- chat plus icon -->
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
@@ -182,15 +179,13 @@
                             <button type="button" data-filter="starred"
                                 class="filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100"
                                 hx-get="{% url 'notes_list' %}?box={{ current_box }}&filter=starred"
-                                hx-target="#notes-tbody" hx-swap="innerHTML" hx-push-url="true">مميزة
-                                بنجمة</button>
+                                hx-target="#notes-tbody" hx-swap="innerHTML" hx-push-url="true">مميزة  بنجمة</button>
                         </li>
                         <li>
                             <button type="button" data-filter="unstarred"
                                 class="filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100"
                                 hx-get="{% url 'notes_list' %}?box={{ current_box }}&filter=unstarred"
-                                hx-target="#notes-tbody" hx-swap="innerHTML" hx-push-url="true">غير مميزة
-                                بنجمة</button>
+                                hx-target="#notes-tbody" hx-swap="innerHTML" hx-push-url="true">غير مميزة بنجمة</button>
                         </li>
                         {% if request.user.role.role_name != "E" %}
                         <li>
@@ -226,7 +221,7 @@
         </div>
     </section>
 
-    <!-- Notes Preview -->
+    <!-- Notes details -->
     <section id="note-preview"
         class="hidden relative w-[55%] flex flex-col min-h-0 overflow-hidden border-l transition-all duration-300">
 

@@ -1066,7 +1066,6 @@ class AllPlansView(LoginRequiredMixin, RoleRequiredMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-
         queryset = self.get_queryset()
         per_page = 25
 
@@ -1107,11 +1106,12 @@ class PlanDetailsview(LoginRequiredMixin, RoleRequiredMixin, DetailView):
 
      def get_context_data(self, **kwargs):
       context = super().get_context_data(**kwargs)
-      dashboard_data = get_plan_dashboard(self.object, self.request.user)
       user = self.request.user
       role = user.role.role_name
       goals_qs = StrategicGoal.objects.filter(strategicplan=self.object)
       per_page = 10
+      dashboard_data = get_plan_dashboard(self.object, self.request.user)
+      context.update(dashboard_data)
 
     # search & filter
       goals_qs = filter_queryset(
@@ -1139,15 +1139,6 @@ class PlanDetailsview(LoginRequiredMixin, RoleRequiredMixin, DetailView):
 
       goal_list, page_obj, paginator = paginate_queryset(goals_qs, self.request, per_page)
       
-      # Add status attribute for each initiative
-    #   for goal in goal_list:
-    #         initiatives = []
-    #         for initiative in goal.initiative_set.all():
-    #             initiative.status = calc_initiative_status_by_avg(initiative)
-    #             initiatives.append(initiative)
-
-    #         goal.initiatives_with_status = initiatives
-      
       context['show_initiatives'] = True
       context['goals'] = goal_list
       context['page_obj'] = page_obj
@@ -1155,7 +1146,6 @@ class PlanDetailsview(LoginRequiredMixin, RoleRequiredMixin, DetailView):
       context['per_page'] = per_page
       context['is_paginated'] = True if paginator.num_pages > 1 else False
       context['page_numbers'] = get_page_numbers(page_obj, paginator)
-      context.update(dashboard_data)
       return context
       
      def render_to_response(self, context, **response_kwargs):
@@ -1165,7 +1155,6 @@ class PlanDetailsview(LoginRequiredMixin, RoleRequiredMixin, DetailView):
                  'html': html
              })
          return super().render_to_response(context, **response_kwargs)
-
 
 
 class CreatePlanView(LoginRequiredMixin, LogMixin, CreateView):
@@ -1272,15 +1261,6 @@ class AllGoalsView(LoginRequiredMixin, ListView):
         user = self.request.user
         role = user.role.role_name
         plan = StrategicPlan.objects.filter(is_active = True).first()
-
-        # if role == 'GM':
-        #     qs = StrategicGoal.objects.all()
-        # elif role in ['M','CM']:
-        #     qs = StrategicGoal.objects.filter(department = user.department)
-        # elif role == 'E':
-        #     qs = StrategicGoal.objects.filter(initiative__userinitiative__user=user).distinct()
-        # else:
-        #     qs = StrategicGoal.objects.none()
 
         if role == 'GM':
             qs = StrategicGoal.objects.filter(strategicplan=plan)
@@ -1458,7 +1438,7 @@ class DeleteGoalView(LoginRequiredMixin, RoleRequiredMixin, LogMixin, DeleteView
     - Redirects to goals list
     '''
     model = StrategicGoal
-    success_url = reverse_lazy('goals_list') # changed this from plan_goals_list to goals list <3
+    success_url = reverse_lazy('goals_list') 
     allowed_roles = ['M', 'CM']  # Roles allowed to access this view
 
     def form_valid(self, form):
@@ -1535,6 +1515,7 @@ class AllNotesView(LoginRequiredMixin, ListView):
             user=user
          )
         
+        # Check if the user is a participant (sender, receiver, department member, or linked initiative)
         qs = qs.annotate(
             is_user_participant=Case(
                 When(sender=user, then=Value(True)),
@@ -1545,7 +1526,8 @@ class AllNotesView(LoginRequiredMixin, ListView):
                 output_field=BooleanField(),
                 )
         )
-
+        
+        # Determine if the message belongs to the user's inbox (they are a participant and not the last sender)
         qs = qs.annotate(
         is_inbox=Case(
             When(
@@ -1557,7 +1539,8 @@ class AllNotesView(LoginRequiredMixin, ListView):
             output_field=BooleanField(),
         )
     )
-
+        
+        # Determine if the message was sent by the user (they are a participant and the last sender)
         qs = qs.annotate(
         is_sent=Case(
             When(
@@ -1567,6 +1550,8 @@ class AllNotesView(LoginRequiredMixin, ListView):
             output_field=BooleanField(),
         )
     )
+        
+        # Set which user ID should be displayed (sender for inbox, current user for sent, or original sender)
         qs = qs.annotate(
            display_user_id=Case(
            When(is_inbox=True, then=F('last_sender_id')),
@@ -1575,6 +1560,8 @@ class AllNotesView(LoginRequiredMixin, ListView):
           output_field=IntegerField()
           )
     )
+        
+        # Get the full name of the display user, falling back to first name or username if needed
         qs = qs.annotate(
              display_user_name=Subquery(
                  User.objects.filter(
@@ -1588,7 +1575,8 @@ class AllNotesView(LoginRequiredMixin, ListView):
                  ).values('full_name')[:1]
              )
         )
-
+       
+        # Mark if the message is a reply (sent by user, but original sender is someone else)
         qs = qs.annotate(
              is_reply=Case(
                  When(
@@ -1608,12 +1596,6 @@ class AllNotesView(LoginRequiredMixin, ListView):
         # Received notes
         if current_box == 'received-notes': 
             qs = qs.filter(is_inbox=True)
-
-            # if current_filter == "read":
-            #     qs = qs.filter(read_by=user)  # read notes
-
-            # elif current_filter == "unread":
-            #     qs = qs.exclude(read_by=user)  # unread notes
 
         # Sent notes
         if current_box == 'sent-notes':
@@ -1830,25 +1812,7 @@ class NoteDetailsview(LoginRequiredMixin, LogMixin, DetailView):
         unread_count = get_unread_notes_count(user)
         return HttpResponse(unread_count)
 
-        # if unread_count == 0:
-        #   return HttpResponse("""
-        #     <span id="unread-dot" class="hidden"></span>
-        #     <span id="unread-badge" class="hidden"></span>""")
-
-        # return HttpResponse(f"""
-        #   <span id="unread-dot"
-        #       class="absolute top-[10px] right-[10px]
-        #              w-2 h-2 bg-red-500 rounded-full group-hover:hidden">
-        #   </span>
-        #   <span id="unread-badge"
-        #       class="hidden group-hover:inline whitespace-nowrap
-        #              ml-2 text-xs font-semibold text-red-500
-        #              bg-red-100 px-2 py-1 rounded-full">
-        #      {unread_count}
-        #   </span> """)
-
     # Add a reply (HTMX)
-
      if action == "reply" and self.can_reply(note, user) and request.headers.get("HX-Request"):
         content = request.POST.get("reply_content", "").strip()
         receiver = None
