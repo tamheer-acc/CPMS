@@ -29,6 +29,7 @@ class BaseForm(forms.ModelForm):
         return obj
 
 
+
 # ===== Strategic Plan Form =====
 class StrategicPlanForm(BaseForm):
     class Meta:
@@ -69,6 +70,7 @@ class StrategicPlanForm(BaseForm):
         if start and end:
             if end < start:
                 self.add_error('end_date', "تاريخ النهاية لا يمكن أن يسبق تاريخ البداية.")
+
 
 
 # ===== Strategic Goal Form =====
@@ -136,6 +138,7 @@ class StrategicGoalForm(BaseForm):
                 )
 
 
+
 # ===== Note Form =====
 class NoteForm(BaseForm):
     class Meta:
@@ -182,7 +185,6 @@ class NoteForm(BaseForm):
             elif role in ['M', 'CM']:
                 self.fields['receiver'].label = 'اسم الموظف:'
                 self.fields['receiver'].empty_label = "اختر اسم الموظف"
-           
 
 
 
@@ -261,6 +263,31 @@ class KPIForm(BaseForm):
 
 # ===== Initiative Form =====
 class InitiativeForm(BaseForm):
+    def __init__(self, *args, **kwargs):
+        self.goal = kwargs.pop('goal', None)
+        super().__init__(*args, **kwargs)
+
+    def clean(self):
+        cleaned_data = super().clean()
+        start = cleaned_data.get('start_date')
+        end = cleaned_data.get('end_date')
+
+        goal = self.goal or getattr(self.instance, 'strategic_goal', None)
+
+        if start and end:
+            if end < start:
+                self.add_error('end_date', "تاريخ النهاية لا يمكن أن يسبق تاريخ البداية.")
+            elif goal:
+                if start < goal.start_date:
+                    self.add_error(
+                        'start_date',
+                        f"تاريخ المبادرة يجب أن يكون ضمن فترة الهدف: {goal.start_date} إلى {goal.end_date}"
+                    )
+                elif end > goal.end_date:
+                    self.add_error(
+                        'end_date',
+                        f"تاريخ المبادرة يجب أن يكون ضمن فترة الهدف: {goal.start_date} إلى {goal.end_date}"
+                    )
     class Meta:
         model = Initiative
         fields = ['title', 'description', 'start_date', 'end_date', 'priority', 'category']
@@ -393,4 +420,5 @@ class UserInitiativeForm(BaseForm):
             progress = 100
 
         return progress
+
 

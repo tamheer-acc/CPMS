@@ -55,23 +55,23 @@
                         <ul class="p-2 text-sm text-body font-medium">
                             <li>
                                 <button type="button" data-priority=""
-                                    class="filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">الكل</button>
+                                    class="bg-white filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">الكل</button>
                             </li>
                             <li>
                                 <button type="button" data-priority="C"
-                                    class="filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">حرجة</button>
+                                    class="bg-white filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">حرجة</button>
                             </li>
                             <li>
                                 <button type="button" data-priority="H"
-                                    class="filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">عالية</button>
+                                    class="bg-white filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">عالية</button>
                             </li>
                             <li>
                                 <button type="button" data-priority="M"
-                                    class="filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">متوسطة</button>
+                                    class="bg-white filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">متوسطة</button>
                             </li>
                             <li>
                                 <button type="button" data-priority="L"
-                                    class="filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">منخفضة</button>
+                                    class="bg-white filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">منخفضة</button>
                             </li>
                         </ul>
                     </div>
@@ -96,23 +96,23 @@
                         <ul class="p-2 text-sm text-body font-medium">
                             <li>
                                 <button type="button" data-number="25"
-                                    class="page-filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">عدد الصفوف</button>
+                                    class="bg-white page-filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">عدد الصفوف</button>
                             </li>
                             <li>
                                 <button type="button" data-number="5"
-                                    class="page-filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">5</button>
+                                    class="bg-white page-filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">5</button>
                             </li>
                             <li>
                                 <button type="button" data-number="10"
-                                    class="page-filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">10</button>
+                                    class="bg-white page-filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">10</button>
                             </li>
                             <li>
                                 <button type="button" data-number="50"
-                                    class="page-filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">50</button>
+                                    class="bg-white page-filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">50</button>
                             </li>
                             <li>
                                 <button type="button" data-number="100"
-                                    class="page-filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">100</button>
+                                    class="bg-white page-filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">100</button>
                             </li>
                         </ul>
                     </div>
@@ -167,7 +167,7 @@
                 <!-- Previous button -->
                 <li>
                     {% if page_obj.has_previous %}
-                        <a href="?page={{ page_obj.previous_page_number }}&per_page={{ request.GET.per_page|default:25 }}&search={{ search }}&priority={{ priority }}"
+                        <a href="?page={{ page_obj.previous_page_number }}&per_page={{ request.GET.per_page|default:25 }}&search={{ search }}&priority={{ request.GET.priority|default:'' }}"
                         class="text-[#00685E] hover:text-[#00A399] transition-colors duration-200 text-lg">
                             ‹
                         </a>
@@ -190,7 +190,7 @@
                         </li>
                     {% else %}
                         <li>
-                            <a href="?page={{ num }}&per_page={{ request.GET.per_page|default:25 }}&search={{ search }}&priority={{ priority }}"
+                            <a href="?page={{ num }}&per_page={{ request.GET.per_page|default:25 }}&search={{ search }}&priority={{ request.GET.priority|default:'' }}"
                             class="text-[#00685E] hover:text-[#00A399] transition-colors duration-200">
                                 {{ num }}
                             </a>
@@ -201,7 +201,7 @@
                 <!-- Next button -->
                 <li>
                     {% if page_obj.has_next %}
-                        <a href="?page={{ page_obj.next_page_number }}&per_page={{ request.GET.per_page|default:25 }}&search={{ search }}&priority={{ priority }}"
+                        <a href="?page={{ page_obj.next_page_number }}&per_page={{ request.GET.per_page|default:25 }}&search={{ search }}&priority={{ request.GET.priority|default:'' }}"
                         class="text-[#00685E] hover:text-[#00A399] transition-colors duration-200 text-lg">
                             ›
                         </a>

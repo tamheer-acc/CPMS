@@ -152,8 +152,30 @@ def get_unread_notes_count(user):
 
 
 
-def generate_KPIs(initiative):
-    pass
+def generate_KPIs(goal, initiative, department):
+
+# llm.create_chat_completion(
+# 	messages = [
+# 		{
+# 			"role": "user",
+# 			"content":
+# "انت محلل استراتيجي خبير في وزارة النقل والخدمات اللوجستية في السعودية، اقترح لي كرؤوس أقلام فقط ثلاث
+# مؤشرات قياس الأداء لمبادرة 
+# (initiative.title)، 
+# تحت الهدف الاستراتيجي
+# (goal.title)،
+# لإدارة 
+# (department)
+# 		}
+# 	]
+# )
+    # text = response["choices"][0]["message"]["content"]
+
+    # kpis = text.split("\n")
+    # kpis = [kpi.strip() for kpi in kpis if kpi.strip()]  
+    # print(kpis)
+    return ['kpi suggestion1', 'kpi suggestion2', 'kpi suggestion3']
+
 
 
 
