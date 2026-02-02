@@ -14,6 +14,7 @@
 
 {% block content %}
 <section dir="rtl">
+
     <div class="max-w-6xl mx-auto px-4 py-6 space-y-6">
         <!-- Main Container -->
         <div class="bg-white rounded-xl shadow-sm p-6 space-y-6">
@@ -116,7 +117,7 @@
                 </div>
             </div>
 
-            <!--########################################################################################-->
+            <!-- ===========================================Summray dashboard =================================================== -->
             <div class="flex items-center gap-3 bg-[#00675B]/20 px-4 py-2 rounded-md">
                 <svg class=" text-[#00675B]" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
                     viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -131,129 +132,24 @@
                 </svg>
 
                 <h2 class="text-lg font-semibold text-[#00675B]">
-                    ملخص الخطة
+                   ملخص الأداء العام للخطة
                 </h2>
             </div>
-            <div class="mt-6 grid grid-cols-1 gap-6">
+            <div class="mt-6 space-y-10">
+                <!-- {{ goals_data_json|json_script:"goals-data" }}
+                {{ initiatives_data_json|json_script:"initiatives-data" }}
+                {{ chart_goals_json|json_script:"priority-chart-data" }}
+                {{ kpi_chart_data_json|json_script:"kpi-chart-data" }}
+                {{ top5_labels_json|json_script:"top5-labels" }}
+                {{ top5_progress_json|json_script:"top5-progress" }}
+                {{ role|json_script:"top5-role" }}
+                {{ timeline_json|json_script:"timeline-data" }} -->
 
-                <div class="bg-white rounded-xl shadow p-6 relative">
+               {% include 'partials/plan_detail_charts.html' %}
 
-                    <!-- فلترة -->
-                    <div class="absolute top-4 right-4">
-                        <button class="text-gray-500 hover:text-gray-700" title="فلترة">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                                stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2l-6 6v6l-4 2v-8L3 6V4z" />
-                            </svg>
-                        </button>
-                    </div>
-
-                    <!-- الكاردات -->
-                    <div class="grid grid-cols-2 gap-4 mb-6">
-
-                        <!-- بطاقة عدد الأهداف -->
-                        <div class="bg-white p-4 rounded-lg shadow text-center">
-                            <h3 class="text-sm text-gray-500 mb-1">عدد الأهداف</h3>
-                            <p class="text-3xl font-bold text-gray-800">
-                                {{ goals_total }}
-                            </p>
-                        </div>
-
-                        <!-- بطاقة عدد المبادرات -->
-                        <div class="bg-white p-4 rounded-lg shadow text-center">
-                            <h3 class="text-sm text-gray-500 mb-1">عدد المبادرات</h3>
-                            <p class="text-3xl font-bold text-gray-800">
-                                {{ initiatives_count }}
-                            </p>
-                        </div>
-
-                    </div>
-
-                    <!-- Donut Chart -->
-                    <div class="w-full h-72">
-                         <h3 class="font-semibold mb-3 text-center" id="donut-chart-title">الحالة الإجمالية للأهداف والمبادرات</h3>
-                        <canvas id="goalsInitiativesDonut"></canvas>
-                    </div>
-
-                </div>
-<!-- fخليها اكثر انجازا واقل انجازا بالفلترة -->
-           
-            <!-- <div class="mt-8 bg-white p-4 rounded-lg shadow">
-                <h3 class="font-semibold mb-4 text-center">top 5 based on completed goals</h3>
-                <div class="w-full h-72">
-                    <canvas id="progressBarChart"></canvas>
-                </div>
             </div>
 
-            <script id="progress-data" type="application/json">
-             {% if user.role.role_name == 'GM' %}
-                 {{ departments_progress|safe }}
-             {% elif user.role.role_name == 'M' or user.role.role_name == 'CM' %}
-                 {{ employees_progress|safe }}
-             {% endif %}
-            </script> -->
-            <div class="mt-8 bg-white p-4 rounded-lg shadow">
-    <h3 class="font-semibold mb-4 text-center">
-        {% if progress_data.view_type == 'departments' %}
-            أفضل 5 إدارات حسب التقدم
-        {% else %}
-            أفضل 5 موظفين حسب التقدم
-        {% endif %}
-    </h3>
-
-    <div class="w-full h-72">
-        <canvas id="progressChart" width="400" height="300"></canvas>
-    </div>
-</div>
-<script id="progress-data" type="application/json">
-    {{ progress_data_json|safe }}
-</script>
-
-
-            
-            <script id="delayed-goals-titles" type="application/json">
-                {{ delayed_goals_titles_json|safe }}
-            </script>
-
-            <script id="delayed-goals-delay" type="application/json">
-                  {{ delayed_goals_delay_json|safe }}
-            </script>
-
-            <!-- الاهداف المتأخرة -->
-            <div class="mt-8 bg-white p-4 rounded-lg shadow">
-                <h3 class="font-semibold mb-4 text-center">الأهداف المتأخرة</h3>
-                <div class="w-full h-72">
-                    <canvas id="delayedGoalsChart"></canvas>
-                </div>
-            </div>
-
-
-
-            <!-- مستوى تقدم الخطة -->
-            <div class="relative w-60 h-60 ml-10">
-                <svg class="w-full h-full rotate-180" viewBox="0 0 36 36">
-                    <circle cx="18" cy="18" r="16" fill="none" class="stroke-current text-green-100" stroke-width="3"
-                        stroke-dasharray="50 100" stroke-linecap="round"></circle>
-
-                    <circle id="plan-gauge" cx="18" cy="18" r="16" fill="none" data-value="{{ plan_avg }}"
-                        class="stroke-current text-green-600 transition-all duration-1000 ease-out" stroke-width="1"
-                        stroke-dasharray="0 100" stroke-linecap="round"></circle>
-                </svg>
-
-                <div class="absolute inset-0 flex flex-col items-center justify-start text-center pt-16">
-                    <span class="text-2xl font-bold text-green-600">
-                        {{ plan_avg }}%
-                    </span>
-                    <span class="text-xs text-green-600">تقدم الخطة</span>
-                </div>
-            </div>
-<!-- بحط ترتيب الاداراات -->
-
-</div>
-
-
-            <!-- #################################################################################################### -->
+            <!-- ========================================== Goals & Initiatives ================================================= -->
             <div class="flex items-center gap-3 bg-[#00675B]/20 px-4 py-2 rounded-md">
                 <svg class="text-[#00675B]" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
                     viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -273,7 +169,7 @@
 
             <div class="bg-white w-full">
                 <!-- Container for Search, Filter -->
-                <div class="py-3 flex items-center justify-between gap-4">
+                <div class="px-2 flex items-center gap-2">
 
                     <!-- Search Input -->
                     <div class="relative w-full">
@@ -286,14 +182,14 @@
                             </svg>
                         </div>
                         <input type="text" id="search"
-                            class="block w-full ps-9 pe-3 py-2 border rounded-full hover:border-gray-400 focus:ring-blue-500 focus:border-blue-500"
+                            class="block w-full ps-9 pe-3 py-2 border rounded-xl hover:border-gray-400 focus:ring-blue-500 focus:border-blue-500"
                             placeholder="البحث عن هدف...">
                     </div>
 
                     <!-- Filter Button -->
                     <div class="relative">
                         <button id="dropdownDefaultButton"
-                            class="flex flex-row-reverse items-center justify-between text-body bg-white border rounded
+                            class="flex flex-row-reverse items-center justify-between text-body bg-neutral-secondary-medium border rounded-lg
                          text-gray-500 hover:text-gray-800 hover:bg-neutral-tertiary-medium shadow-xs font-medium leading-5 rounded-lg text-sm px-3 py-2 focus:outline-none gap-2 "
                             type="button">
                             <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
@@ -312,7 +208,7 @@
 
                         <!-- Dropdown Menu -->
                         <div id="dropdown"
-                            class="absolute right-0 z-10 hidden bg-white border border-default-medium rounded-base shadow-lg w-32 overflow-hidden">
+                            class="absolute right-0 z-10 hidden bg-white border border-default-medium rounded-lg shadow-lg w-32 overflow-hidden">
                             <ul class="p-2 text-sm text-body font-medium">
                                 <li>
                                     <button type="button" data-status=""
@@ -320,14 +216,11 @@
                                 </li>
                                 <li>
                                     <button type="button" data-status="NS"
-                                        class="filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">لم
-                                        يبدأ
-                                        بعد</button>
+                                        class="filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">لم يبدأ بعد</button>
                                 </li>
                                 <li>
                                     <button type="button" data-status="IP"
-                                        class="filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">قيد
-                                        التنفيذ</button>
+                                        class="filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">قيد التنفيذ</button>
                                 </li>
                                 <li>
                                     <button type="button" data-status="C"
@@ -342,11 +235,10 @@
                     </div>
                 </div>
 
-                <table class="w-full text-right text-gray-700 border border-gray-200">
+                <table class="w-full text-right text-gray-700 border border-gray-200 mt-3">
                     <thead class="text-sm bg-gray-50 border-b text-center items-center">
                         <tr>
-                            <th class="py-3 font-semibold">عنوان الهدف</th>
-                            <!-- <th class="py-3 font-semibold">وصف الهدف</th> -->
+                            <th class="px-1 py-3 font-semibold">عنوان الهدف</th>
                             {% if request.user.role.role_name == 'GM' %}
                             <th class="py-3 font-semibold">الإدارة</th>
                             {% endif %}
@@ -354,7 +246,7 @@
                             <th class="py-3 font-semibold">
                                 <span class="inline-flex items-center gap-1 font-semibold">
                                     <a class="text-gray-400 hover:text-gray-700 transition" title="فرز حسب الأهمية"
-                                        href="?{% if request.GET.sort == 'priority' %}{% else %}sort=priority{% endif %}&per_page={{ request.GET.per_page|default:5 }}&page=1">
+                                        href="?{% if request.GET.sort == 'priority' %}{% else %}sort=priority{% endif %}&per_page={{ per_page }}&page=1">
                                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"
                                             class="size-4">
                                             <path fill-rule="evenodd"
@@ -365,11 +257,10 @@
                                     الأهمية
                                 </span>
                             </th>
-                            <!-- <th class="py-3 font-semibold"></th> -->
                             <th class="py-3 font-semibold">
                                 <span class="inline-flex items-center gap-1 font-semibold">
                                     <a class="text-gray-400 hover:text-gray-700 transition" title="فرز حسب المدة"
-                                        href="?{% if request.GET.sort == 'date' %}{% else %}sort=date{% endif %}&per_page={{ request.GET.per_page|default:5 }}&page=1">
+                                        href="?{% if request.GET.sort == 'date' %}{% else %}sort=date{% endif %}&per_page={{ per_page }}&page=1">
                                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"
                                             class="size-4">
                                             <path fill-rule="evenodd"
@@ -381,10 +272,10 @@
                                 </span>
 
                             </th>
-                            <th class="px-4 py-3 font-semibold text-right">المبادرات</th>
+                            <th class="px-1 py-3 font-semibold text-right">المبادرات</th>
                         </tr>
                     </thead>
-                    <tbody id="goalsBody">
+                    <tbody id="plangoalsBody">
                         {% include 'partials/goals_table_rows.html' %}
                     </tbody>
                 </table>
@@ -403,7 +294,7 @@
                         <!-- Previous button -->
                         <li>
                             {% if page_obj.has_previous %}
-                            <a href="?page={{ page_obj.previous_page_number }}&per_page={{ request.GET.per_page|default:5 }}&search={{ search }}&priority={{ priority }}"
+                            <a href="?page={{ page_obj.previous_page_number }}&per_page={{ per_page }}&search={{ search }}&status={{ status }}&priority={{ priority }}"
                                 class="flex items-center justify-center text-body bg-neutral-secondary-medium border border-default-medium rounded-s-full text-sm px-3 h-9 hover:bg-gray-200 transition-colors duration-200 bg-gray-50">
                                 ‹
                             </a>
@@ -433,7 +324,7 @@
                         </li>
                         {% else %}
                         <li>
-                            <a href="?page={{ num }}&per_page={{ request.GET.per_page|default:5 }}&search={{ search }}&priority={{ priority }}"
+                            <a href="?page={{ num }}&per_page={{ per_page }}&search={{ search }}&status={{ status }}&priority={{ priority }}"
                                 class="flex items-center justify-center text-body bg-neutral-secondary-medium border border-default-medium font-medium text-sm w-9 h-9 hover:bg-gray-200 bg-gray-50">
                                 {{ num }}
                             </a>
@@ -444,7 +335,7 @@
                         <!-- Next button -->
                         <li>
                             {% if page_obj.has_next %}
-                            <a href="?page={{ page_obj.next_page_number }}&per_page={{ request.GET.per_page|default:5 }}&search={{ search }}&priority={{ priority }}"
+                            <a href="?page={{ page_obj.next_page_number }}&per_page={{ per_page }}&search={{ search }}&status={{ status }}&priority={{ priority }}"
                                 class="flex items-center justify-center text-body bg-neutral-secondary-medium border border-default-medium rounded-e-full text-sm px-3 h-9 hover:bg-gray-200 transition-colors duration-200 bg-gray-50">
                                 ›
                             </a>
@@ -461,141 +352,5 @@
             </div>
         </div>
 </section>
-
-<script>
-    // ====== DONUT ======
-    const donutCtx = document.getElementById('goalsInitiativesDonut');
-
-    new Chart(donutCtx, {
-        type: 'doughnut',
-        data: {
-            labels: ['لم تبدأ', 'قيد التنفيذ', 'متأخرة', 'مكتملة'],
-            datasets: [
-                {
-                    label: 'الأهداف',
-                    data: {{ goals_status_json|safe }},
-                    backgroundColor: ['#F2C75C', '#E59256', '#A13525', ' #00685E'],
-                    borderWidth: 0,
-                    weight: 2
-                },
-                {
-                    label: 'المبادرات',
-                    data: {{ initiative_status_json|safe }},
-                    backgroundColor: ['#F7E3A9', '#E8B8A0', '#C77C7A', '#0D6A63'],
-                    borderWidth: 0,
-                    weight: 1
-                }
-            ]
-        },
-        options: {
-            cutout: '55%',
-            plugins: {
-                legend: { position: 'right' }
-            },
-            responsive:true,
-            maintainAspectRatio:false
-        }
-    });
-
-
-    // // ====== BAR ======
-    // const progressData = JSON.parse(document.getElementById('progress-data').textContent);
-
-    // const barLabels = progressData.map(x => x.department__department_name || x.userinitiative__user__username);
-    // const barData = progressData.map(x => x.completed_goals || x.completed_initiatives);
-
-    // new Chart(document.getElementById("progressBarChart"), {
-    //     type: 'bar',
-    //     data: {
-    //         labels: barLabels,
-    //         datasets: [{
-    //             label: "الأهداف/المبادرات المكتملة",
-    //             data: barData,
-    //             borderWidth: 1
-    //         }]
-    //     },
-    //     options: {
-    //         responsive: true,
-    //         scales: { y: { beginAtZero: true } }
-    //     }
-    // });
-
-    // ====== BAR (Delayed Goals) ======
-    // ====== BAR (Delayed Goals) ======
-// const delayedTitles = JSON.parse(document.getElementById('delayed-goals-titles').textContent);
-// const delayedDelay = JSON.parse(document.getElementById('delayed-goals-delay').textContent);
-
-// const delayedCtx = document.getElementById('delayedGoalsBar');
-
-// if (delayedCtx) {
-//     new Chart(delayedCtx, {
-//         type: 'bar',
-//         data: {
-//             labels: delayedTitles,
-//             datasets: [{
-//                 label: 'أيام التأخير',
-//                 data: delayedDelay,
-//                 borderRadius: 8,
-//                 borderWidth: 0,
-//                 backgroundColor: '#F97316'
-//             }]
-//         },
-//         options: {
-//             indexAxis: 'y',
-//             responsive: true,
-//             maintainAspectRatio: false,
-//             plugins: {
-//                 legend: { display: false },
-//                 tooltip: {
-//                     callbacks: {
-//                         label: function (context) {
-//                             return context.parsed.x + " يوم تأخير";
-//                         }
-//                     }
-//                 }
-//             },
-//             scales: {
-//                 x: { beginAtZero: true }
-//             }
-//         }
-//     });
-// }
-
-
-    // // ====== LINE ======
-    // const delayedData = JSON.parse(document.getElementById('delayed-data').textContent);
-
-    // const lineLabels = delayedData.map(d => new Date(d.month).toLocaleDateString('ar-SA', {
-    //     month: 'short',
-    //     year: 'numeric'
-    // }));
-
-    const lineData = delayedData.map(d => d.count);
-
-    new Chart(document.getElementById("delayedGoalsLineChart"), {
-        type: 'line',
-        data: {
-            labels: lineLabels,
-            datasets: [{
-                label: "الأهداف المتأخرة",
-                data: lineData,
-                fill: false,
-                tension: 0.4,
-                borderWidth: 2
-            }]
-        },
-        options: {
-            responsive: true,
-            scales: { y: { beginAtZero: true } }
-        }
-    });
-    
-
-    const planGauge = document.getElementById('plan-gauge');
-    const value = planGauge.dataset.value;
-    planGauge.setAttribute('stroke-dasharray', `${value} 100`);
-
-</script>
-
 
 {% endblock %}

@@ -9,18 +9,19 @@
 
 {% block content %}
 
-<div class="max-w-7xl mx-auto p-6 bg-white rounded-lg border border-gray-200" dir="rtl">
+<div class="max-w-7xl mx-auto p-6" dir="rtl">
 
-    <h2 class="text-2xl font-semibold mb-6 ">سجل النظام</h2>
+    <h2 class="text-2xl font-semibold mb-6">سجل النظام</h2>
+    <div class="bg-white shadow-sm rounded-lg border border-gray-200">
     <!-- Container for Search, Filter, and pages number  -->
-    <div class="mb-4 mx-1 flex items-center justify-between "> 
+    <div class="p-4 flex items-center justify-between gap-4"> 
 
         <!-- Container for Search and Filter -->
-        <div class="flex items-center gap-2 ">
+        <div class="flex items-center gap-2">
 
             <!-- Search Input -->
-            <div class="relative w-full">
-                <div class="absolute inset-y-0 end-0 flex items-center pe-3 pointer-events-none">
+            <div class="relative">
+                <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
                     <!-- Search icon -->
                     <svg class="w-4 h-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none"
                         viewBox="0 0 24 24" stroke="currentColor">
@@ -28,15 +29,14 @@
                             d="M21 21l-4.35-4.35M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0z" />
                     </svg>
                 </div>
-                <input type="text" id="search" class = 'block w-[50rem] h-10 pe-9 ps-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00A399]/10 focus:border-[#00685E]/20'
-                    placeholder="البحث عن سجل...">
+                <input type="text" id="search"
+                     class="block w-80 ps-9 pe-3 py-2 border rounded-xl focus:ring-blue-500 focus:border-blue-500"
+                       placeholder="البحث عن سجل...">
             </div>
             <!-- Filter Button -->
-            <div class="relative  min-h-9">
+            <div class="relative">
                 <button id="dropdownDefaultButton"
-                    class="flex flex-row-reverse h-10 items-center justify-between text-body bg-neutral-secondary-medium 
-                    border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00A399]/10 focus:border-[#00685E]/20 
-                    text-gray-500 hover:text-gray-800 hover:bg-neutral-tertiary-medium shadow-xs font-medium leading-5 text-sm px-3 py-2 gap-2 "
+                    class="flex flex-row-reverse items-center justify-between text-body bg-neutral-secondary-medium border rounded text-gray-500 hover:text-gray-800 hover:bg-neutral-tertiary-medium shadow-xs font-medium leading-5 rounded-lg text-sm px-3 py-2 focus:outline-none gap-2 "
                     type="button">
                     <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none"
                         viewBox="0 0 24 24" stroke="currentColor">
@@ -44,7 +44,7 @@
                             d="M18.796 4H5.204a1 1 0 0 0-.753 1.659l5.302 6.058a1 1 0 0 1 .247.659v4.874a.5.5 0 0 0 .2.4l3 2.25a.5.5 0 0 0 .8-.4v-7.124a1 1 0 0 1 .247-.659l5.302-6.059c.566-.646.106-1.658-.753-1.658Z" />
                     </svg>
                     <span class="ml-1">الإجراء</span>
-                    <svg id="dropdownIcon" class="w-4 transition-transform duration-200"
+                    <svg id="dropdownIcon" class="w-4 h-4 transition-transform duration-200"
                         xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="m19 9-7 7-7-7" />
@@ -53,31 +53,31 @@
 
                 <!-- Dropdown Menu -->
                 <div id="dropdown"
-                    class="absolute right-0 z-10 hidden bg-neutral-primary-medium border border-default-medium rounded-base shadow-lg w-32 overflow-hidden">
+                    class="absolute right-0 z-10 hidden bg-white border border-default-medium rounded-lg shadow-lg w-32 overflow-hidden">
                     <ul class="p-2 text-sm text-body font-medium">
                         <li>
                             <button type="button" data-action=""
-                                class="filter-btn block w-full bg-white text-right px-4 py-2 hover:bg-gray-100">الكل</button>
+                                class="filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">الكل</button>
                         </li>
                         <li>
                             <button type="button" data-action="إضافة"
-                                class="bg-white filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">إضافة</button>
+                                class="filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">إضافة</button>
                         </li>
                         <li>
                             <button type="button" data-action="تعديل"
-                                class="bg-white filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">تعديل</button>
+                                class="filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">تعديل</button>
                         </li>
                         <li>
                             <button type="button" data-action="حذف"
-                                class="bg-white filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">حذف</button>
+                                class="filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">حذف</button>
                         </li>
                         <li>
                             <button type="button" data-action="تسجيل دخول"
-                                class="bg-white filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">تسجيل دخول</button>
+                                class="filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">تسجيل دخول</button>
                         </li>
                         <li>
                             <button type="button" data-action="تسجيل خروج"
-                                class="bg-white filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">تسجيل خروج</button>
+                                class="filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">تسجيل خروج</button>
                         </li>
                     </ul>
                 </div>
@@ -89,8 +89,7 @@
         <!-- dropdown page number -->
             <div class="relative"> 
                 <button id="page-dropdown-button"
-                    class="h-10 flex border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00A399]/10 focus:border-[#00685E]/20 items-center px-3 text-sm rounded-base flex-row-reverse items-center justify-between text-body bg-neutral-secondary-medium border rounded text-gray-500 hover:text-gray-800 hover:bg-neutral-tertiary-medium shadow-xs font-medium leading-5 rounded-base text-sm px-3 py-2 focus:outline-none gap-2 "
-                    
+                    class="flex flex-row-reverse items-center justify-between text-body bg-neutral-secondary-medium border rounded text-gray-500 hover:text-gray-800 hover:bg-neutral-tertiary-medium shadow-xs font-medium leading-5 rounded-lg text-sm px-3 py-2 focus:outline-none gap-2 "
                     type="button">
                     <span id="page-dropdown-text" class="ml-1">عدد الصفوف</span> 
                     <svg id="page-dropdown-icon" class="w-4 h-4 transition-transform duration-200" 
@@ -102,34 +101,34 @@
 
                 <!-- Dropdown Menu --> 
                 <div id="page-dropdown" 
-                    class="absolute right-0 z-10 hidden bg-neutral-primary-medium border border-default-medium rounded-base shadow-lg w-32 overflow-hidden">
+                    class="absolute right-0 z-10 hidden bg-white border border-default-medium rounded-lg shadow-lg w-32 overflow-hidden">
                     <ul class="p-2 text-sm text-body font-medium">
                         <li>
                             <button type="button" data-number="25"
-                                class="bg-white page-filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">عدد الصفوف</button>
+                                class="page-filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">عدد الصفوف</button>
                         </li>
                         <li>
                             <button type="button" data-number="5"
-                                class="bg-white page-filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">5</button>
+                                class="page-filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">5</button>
                         </li>
                         <li>
                             <button type="button" data-number="10"
-                                class="bg-white page-filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">10</button>
+                                class="page-filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">10</button>
                         </li>
                         <li>
                             <button type="button" data-number="50"
-                                class="bg-white page-filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">50</button>
+                                class="page-filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">50</button>
                         </li>
                         <li>
                             <button type="button" data-number="100"
-                                class="bg-white page-filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">100</button>
+                                class="page-filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">100</button>
                         </li>
                     </ul>
                 </div>
             </div>
     </div>
 
-    <div class="overflow-x-auto bg-white shadow rounded-lg border border-gray-200">
+    <!-- <div class="overflow-x-auto bg-white shadow rounded-lg border border-gray-200"> -->
         <table class="min-w-full text-sm text-gray-700">
             <thead class="bg-gray-50 border-b text-gray-600">
                 <tr>
@@ -145,27 +144,26 @@
                 {% include 'partials/logs_table_rows.html' %}
             </tbody>
         </table>
-    </div>
+    <!-- </div> -->
 
 <!-- Pagination -->
 {% if is_paginated %}
-    <div class="relative flex items-center justify-center p-4 w-full" aria-label="Table navigation" dir="rtl">
-        <!-- Page info on the right -->
-        <div class="absolute right-0 text-right">
-            <span class="text-sm font-normal text-gray-600">
+    <div class="flex items-center flex-column flex-wrap md:flex-row justify-between p-4 mt-4 border-t" aria-label="Table navigation" dir="rtl">
+
+            <!-- Shows the range of results currently displayed and total number of pages -->
+            <span class="text-sm font-normal text-gray-600 mb-4 md:mb-0 block w-full md:inline md:w-auto">
                 عرض
-                <span class="font-semibold text-gray-900">{{ page_obj.number }}</span>
+                <span class="font-semibold text-gray-900">{{page_obj.number}}</span>
                 من
                 <span class="font-semibold text-gray-900">{{ paginator.num_pages }}</span>
             </span>
-        </div>
 
         <ul class="flex gap-8 items-center justify-center border rounded-full py-2 px-5">
             
             <!-- Previous button -->
             <li>
                 {% if page_obj.has_previous %}
-                    <a href="?page={{ page_obj.previous_page_number }}&per_page={{ request.GET.per_page|default:25 }}&search={{ request.GET.search|default:'' }}&action={{ request.GET.action|default:'' }}"
+                    <a href="?page={{ page_obj.previous_page_number }}&per_page={{ per_page }}&search={{ search }}&action={{ action }}"
                         class="text-[#00685E] hover:text-[#00A399] transition-colors duration-200 text-lg">
                         ‹
                     </a>
@@ -188,7 +186,7 @@
                     </li>
                 {% else %}
                     <li>
-                        <a href="?page={{ num }}&per_page={{ request.GET.per_page|default:25 }}&search={{ request.GET.search|default:'' }}&action={{ request.GET.action|default:'' }}"
+                        <a href="?page={{ num }}&per_page={{ per_page }}&search={{ search }}&action={{ action }}"
                             class="text-[#00685E] hover:text-[#00A399] transition-colors duration-200">
                             {{ num }}
                         </a>
@@ -199,7 +197,7 @@
             <!-- Next button -->
             <li>
                 {% if page_obj.has_next %}
-                    <a href="?page={{ page_obj.next_page_number }}&per_page={{ request.GET.per_page|default:25 }}&search={{ request.GET.search|default:'' }}&action={{ request.GET.action|default:'' }}"
+                    <a href="?page={{ page_obj.next_page_number }}&per_page={{ per_page }}&search={{ search }}&action={{ action }}"
                         class="text-[#00685E] hover:text-[#00A399] transition-colors duration-200 text-lg">
                         ›
                     </a>
@@ -211,7 +209,7 @@
         </ul>
     </div>
 {% endif %}
-
+</div>
 </div>
 
 {% endblock %}

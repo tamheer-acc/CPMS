@@ -69,17 +69,17 @@
         <span class="h-px w-1/3 bg-gray-200"></span>
       </div>
       {% if grouped_replies %}
-        {% for group in grouped_replies %}
-        <div class="text-center text-xs text-gray-400 mb-2">
-          {{ group.date|date:"Y/m/d" }}
-        </div>
+      {% for group in grouped_replies %}
+      <div class="text-center text-xs text-gray-400 mb-2">
+        {{ group.date|date:"Y/m/d" }}
+      </div>
 
-        {% for reply in group.notes %}
-        {% include "partials/note_chat_message.html" %}
-        {% endfor %}
+      {% for reply in group.notes %}
+      {% include "partials/note_chat_message.html" %}
+      {% endfor %}
 
-        {% endfor %}
-    
+      {% endfor %}
+
       {% else %}
       <!-- Divider -->
       <p class="text-gray-400 text-center py-4">لا يوجد ردود حتى الآن</p>
@@ -92,9 +92,10 @@
     </div>
 
     <!-- Reply Box -->
+    {% if not plan_ended %}
     {% if can_reply %}
-    <form hx-post="{% url 'note_detail' note.pk %}" hx-target="#replies-container"  hx-swap="beforeend"
-    class="flex items-center gap-2 px-2 sticky bottom-0">
+    <form hx-post="{% url 'note_detail' note.pk %}" hx-target="#replies-container" hx-swap="beforeend"
+      class="flex items-center gap-2 px-2 sticky bottom-0">
       {% csrf_token %}
       <input type="hidden" name="action" value="reply" />
 
@@ -107,10 +108,26 @@
       </button>
     </form>
     {% endif %}
+    {% else %}
+    <div id="notif"
+      class="relative flex items-center gap-2 bg-[#fff3dc] border-r-4 border-[#faa912] px-3 py-2 mt-2 rounded-md text-sm font-semibold text-[0.8em] text-yellow-800 shadow-sm">
+      <svg class="size-4" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0">
+        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+        <path d="M12 9v4" />
+        <path
+          d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0" />
+        <path d="M12 16h.01" />
+      </svg>
+      <span>
+        عذرًا، لا يمكنك الرد على هذه الملاحظة، نظرًا لانتهاء فترة الخطة.
+      </span>
+    </div>
 
-
+    {% endif %}
   </div>
 </div>
+
 <script>
   function scrollToBottom() {
     const container = document.getElementById("replies-container");
@@ -122,50 +139,17 @@
     });
   }
 
-  
+
   document.body.addEventListener("htmx:afterSwap", function (evt) {
-   
+
     if (evt.detail.target.id === "replies-container") {
       scrollToBottom();
     }
     if (evt.target && evt.target.id === "replies-container") {
       const textarea = document.querySelector("textarea[name='reply_content']");
       if (textarea) textarea.value = "";
+
     }
-
-  }); 
-
-
+  })
 
 </script>
-
-<style>
-
-  /* container */
-  .chat-scroll {
-    scrollbar-width: none;
-  }
-
-  .chat-scroll::-webkit-scrollbar {
-    width: 2.5px;
-  }
-
-  .chat-scroll::-webkit-scrollbar-thumb {
-    background-color: transparent;
-    border-radius: 9999px;
-    transition: background-color 0.25s ease;
-  }
-
-  .chat-scroll:hover {
-    scrollbar-width: thin;
-    scrollbar-color: rgba(4, 104, 98, 0.45) transparent;
-  }
-
-  .chat-scroll:hover::-webkit-scrollbar-thumb {
-    background-color: rgba(4, 104, 98, 0.45);
-  }
-
-  .chat-scroll::-webkit-scrollbar-track {
-    background: transparent;
-  }
-</style>

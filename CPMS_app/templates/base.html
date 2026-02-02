@@ -19,7 +19,8 @@
     <script src="https://unpkg.com/htmx.org@1.9.12"></script>
     <!-- Chart JS -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+  
 </head>
 
     <body class="flex bg-gray-50 min-h-screen">
@@ -48,19 +49,25 @@
                         <span>المبادرات</span>
                     </a>
                 </li>
+                <!-- GM, M, CM -->
+                {% if request.user.role.role_name != 'E' %}
                  <li>
                     <a href="{% url 'plans_list' %}"
                         class="flex items-center gap-3 px-6 py-3 text-gray-700 hover:bg-green-100 hover:text-green-700 rounded-lg transition">
                         <span>الخطط</span>
                     </a>
                 </li>
+                {% endif %}
+                <!-- M, CM, E -->
+                {% if request.user.role.role_name != 'GM' %}
                 <li>
                     <a href="{% url 'notes_list' %}"
                         class="flex items-center gap-3 px-6 py-3 text-gray-700 hover:bg-green-100 hover:text-green-700 rounded-lg transition">
                         <span>الملاحظات</span>
                     </a>
                 </li>
-            
+                {% endif %}
+            <!-- Maybe all -->
                 <li>
                     <a href="{% url 'logs_list' %}"
                         class="flex items-center gap-3 px-6 py-3 text-gray-700 hover:bg-green-100 hover:text-green-700 rounded-lg transition">

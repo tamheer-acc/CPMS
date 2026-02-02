@@ -9,19 +9,16 @@
 {% endblock %}
 {% block content %}
 
-<div class="flex h-[85vh] min-h-0 bg-white rounded-lg shadow">
+<div class="flex h-[85vh] min-h-0 bg-white rounded-lg shadow mt-6">
 
     <!-- Sidebar -->
-    <aside class="group w-16 hover:w-64 transition-all duration-300 border-r bg-gray-50 p-3 mt-2">
+    <aside class="group w-16 hover:w-64 transition-all duration-300 border-r bg-gray-50 p-3 ">
 
-        <!-- <a href="{% url 'note_create_modal' %}" hx-get="{% url 'note_create_modal' %}" hx-target="#note-form-container"
-            hx-swap="innerHTML" onclick="document.getElementById('note-modal-toggle').checked = true;" class="flex items-center justify-center gap-3 bg-blue-500 text-white py-2 rounded-lg mb-6 font-semibold hover:bg-blue-600
-                            shadow-md hover:shadow-lg transform hover:-translate-y-0.5
-                            transition duration-200 focus:ring-4 focus:ring-blue-200"> -->
         <a href="{% url 'note_create_modal' %}" hx-get="{% url 'note_create_modal' %}" hx-target="#note-form-container"
-            hx-swap="innerHTML" class="flex items-center justify-center gap-3 bg-[#00A399] text-white py-2 rounded-lg mb-6 font-semibold hover:bg-[#018077]
+            hx-swap="innerHTML" class="flex items-center justify-center gap-3 bg-[#00A399] text-white py-2 mt-2 rounded-lg mb-6 font-semibold hover:bg-[#018077]
                             shadow-md hover:shadow-lg transform hover:-translate-y-0.5
                             transition duration-200 focus:ring-4 focus:ring-[#018077]/30">
+
             <!-- chat plus icon -->
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
@@ -34,7 +31,7 @@
                 <path d="M19 16v6" />
             </svg>
             <span class="hidden group-hover:inline whitespace-nowrap">
-                إنشاء ملاحظة
+                إرسال ملاحظة
             </span>
         </a>
 
@@ -145,7 +142,7 @@
                 <button id="dropdownDefaultButton"
                     class="flex flex-row-reverse items-center justify-between text-body bg-neutral-secondary-medium text-gray-500 hover:text-gray-800 hover:bg-neutral-tertiary-medium shadow-xs font-medium leading-5 rounded-base text-sm px-3 py-2 focus:outline-none gap-2 "
                     type="button">
-                    <svg id="dropdownIconfilter" class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none"
+                    <svg id="dropdownIconfilter" class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none"
                         viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-width="2"
                             d="M18.796 4H5.204a1 1 0 0 0-.753 1.659l5.302 6.058a1 1 0 0 1 .247.659v4.874a.5.5 0 0 0 .2.4l3 2.25a.5.5 0 0 0 .8-.4v-7.124a1 1 0 0 1 .247-.659l5.302-6.059c.566-.646.106-1.658-.753-1.658Z" />
@@ -182,15 +179,13 @@
                             <button type="button" data-filter="starred"
                                 class="filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100"
                                 hx-get="{% url 'notes_list' %}?box={{ current_box }}&filter=starred"
-                                hx-target="#notes-tbody" hx-swap="innerHTML" hx-push-url="true">مميزة
-                                بنجمة</button>
+                                hx-target="#notes-tbody" hx-swap="innerHTML" hx-push-url="true">مميزة  بنجمة</button>
                         </li>
                         <li>
                             <button type="button" data-filter="unstarred"
                                 class="filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100"
                                 hx-get="{% url 'notes_list' %}?box={{ current_box }}&filter=unstarred"
-                                hx-target="#notes-tbody" hx-swap="innerHTML" hx-push-url="true">غير مميزة
-                                بنجمة</button>
+                                hx-target="#notes-tbody" hx-swap="innerHTML" hx-push-url="true">غير مميزة بنجمة</button>
                         </li>
                         {% if request.user.role.role_name != "E" %}
                         <li>
@@ -226,7 +221,7 @@
         </div>
     </section>
 
-    <!-- Notes Preview -->
+    <!-- Notes details -->
     <section id="note-preview"
         class="hidden relative w-[55%] flex flex-col min-h-0 overflow-hidden border-l transition-all duration-300">
 
@@ -250,15 +245,12 @@
         </div>
     </div>
 </div>
+
 <script>
-    /* ===============================
-       فتح الملاحظة عند الضغط
-    ================================ */
     document.body.addEventListener('click', function (e) {
         const row = e.target.closest('.note-row');
         if (!row) return;
-
-        // منع الفتح إذا ضغط على زر النجمة
+        
         if (e.target.closest('.star-btn')) return;
 
         const noteId = row.dataset.id;

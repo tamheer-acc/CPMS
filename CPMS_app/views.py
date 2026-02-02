@@ -1,6 +1,6 @@
 import ast, decimal,  json, re, math
 from itertools import groupby
-from datetime import datetime
+from datetime import datetime, time
 from django import forms
 from django.utils import timezone
 from django.utils.safestring import mark_safe
@@ -270,6 +270,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             for goal in goals:
                 goal.user_initiatives = initiatives.filter(strategic_goal=goal)
 
+
             # Donut Chart ( حالة المبادرات  ) : count of all user initiatives grouped by status
             initiative_id = self.request.GET.get('initiative')  # if there is filter
             if initiative_id:
@@ -362,7 +363,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
 
             for goal in goals:
                 goal.user_initiatives = initiatives.filter(strategic_goal=goal)
-                
+
             # Donut Chart ( حالة المبادرات  ) : count of all user initiatives grouped by status
             if userinitiatives.exists():
                 count = status_count(userinitiatives)                
@@ -456,7 +457,14 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         # Line Chart ( مدى تقدم الإدارات ) -> departments progress over time 
         context['line_chart_data'] = departments_progress_over_time(departments)
 
-        context['notes'] = Note.objects.filter(sender=user)
+        # context['notes'] = Note.objects.filter(sender=user)
+        active_plan = StrategicPlan.objects.get(is_active=True)
+        context['notes'] = Note.objects.filter(sender=user, created_at__date__range=(active_plan.start_date, active_plan.end_date)).filter(
+                                                       Q(receiver__isnull=False)|
+                                                       Q(strategic_goal__strategicplan=active_plan) |
+                                                       Q(initiative__strategic_goal__strategicplan=active_plan)
+                                                       ).distinct()
+
         context['departments'] = departments
         context['department'] = user.department if user.role.role_name != 'GM' else None
 
@@ -1063,9 +1071,8 @@ class AllPlansView(LoginRequiredMixin, RoleRequiredMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-
         queryset = self.get_queryset()
-        per_page = 5
+        per_page = 25
 
         page_list, page_obj, paginator = paginate_queryset(queryset, self.request, per_page)
 
@@ -1104,12 +1111,12 @@ class PlanDetailsview(LoginRequiredMixin, RoleRequiredMixin, DetailView):
 
      def get_context_data(self, **kwargs):
       context = super().get_context_data(**kwargs)
-      dashboard_data = get_plan_dashboard(self.object, self.request.user)
-      context.update(dashboard_data)
-
       user = self.request.user
       role = user.role.role_name
       goals_qs = StrategicGoal.objects.filter(strategicplan=self.object)
+      per_page = 10
+      dashboard_data = get_plan_dashboard(self.object, self.request.user)
+      context.update(dashboard_data)
 
     # search & filter
       goals_qs = filter_queryset(
@@ -1121,7 +1128,8 @@ class PlanDetailsview(LoginRequiredMixin, RoleRequiredMixin, DetailView):
     )
 
       if role in ['M', 'CM']:
-        goals_qs = goals_qs.prefetch_related(
+        goals_qs = goals_qs.filter(department=user.department)
+        goals_qs.prefetch_related(
             Prefetch(
                 'initiative_set',
                 queryset=Initiative.objects.prefetch_related(
@@ -1130,34 +1138,28 @@ class PlanDetailsview(LoginRequiredMixin, RoleRequiredMixin, DetailView):
                         queryset=UserInitiative.objects.filter(user=user),
                         to_attr='user_initiative'
                     )
-                )
+               ), to_attr='_prefetched_initiatives'  
             )
         )
 
-      per_page = 5
       goal_list, page_obj, paginator = paginate_queryset(goals_qs, self.request, per_page)
-
-      # Add status attribute for each initiative
-      for goal in goal_list:
-         for initiative in goal.initiative_set.all():
-             initiative.status = calc_initiative_status_by_avg(initiative)
-
+      
+      context['show_initiatives'] = True
       context['goals'] = goal_list
       context['page_obj'] = page_obj
       context['paginator'] = paginator
       context['per_page'] = per_page
       context['is_paginated'] = True if paginator.num_pages > 1 else False
       context['page_numbers'] = get_page_numbers(page_obj, paginator)
- 
       return context
-     
+      
      def render_to_response(self, context, **response_kwargs):
          if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
              html = render_to_string('partials/goals_table_rows.html', context, request=self.request)
              return JsonResponse({
                  'html': html
              })
-
+         return super().render_to_response(context, **response_kwargs)
 
 
 class CreatePlanView(LoginRequiredMixin, LogMixin, CreateView):
@@ -1181,6 +1183,19 @@ class CreatePlanView(LoginRequiredMixin, LogMixin, CreateView):
         self.log_create(self.object)
         messages.success(self.request, "تم إنشاء الخطة بنجاح", extra_tags="create")
         return redirect(self.get_success_url())
+    
+    def form_invalid(self, form):
+        # Field-specific errors
+        for field, errors in form.errors.items():
+            if field != '__all__':
+                for error in errors:
+                    messages.error(self.request, f"{form.fields[field].label}: {error}", extra_tags="error")
+
+        # Non-field errors
+        for error in form.non_field_errors():
+            messages.error(self.request, error, extra_tags='error')
+
+        return super().form_invalid(form)
 
 
 
@@ -1250,13 +1265,17 @@ class AllGoalsView(LoginRequiredMixin, ListView):
     def get_queryset(self):
         user = self.request.user
         role = user.role.role_name
+        plan = StrategicPlan.objects.filter(is_active = True).first()
 
         if role == 'GM':
-            qs = StrategicGoal.objects.all()
+            qs = StrategicGoal.objects.filter(strategicplan=plan)
         elif role in ['M','CM']:
-            qs = StrategicGoal.objects.filter(department = user.department)
+            qs = StrategicGoal.objects.filter(strategicplan=plan, department = user.department)
         elif role == 'E':
-            qs = StrategicGoal.objects.all().prefetch_related('initiative_set__userinitiative_set')
+            qs = StrategicGoal.objects.filter(strategicplan=plan, initiative__userinitiative__user=user).distinct()
+        else:
+            qs = StrategicGoal.objects.none()
+        
 
         #search & filter function
         qs = filter_queryset(
@@ -1271,29 +1290,24 @@ class AllGoalsView(LoginRequiredMixin, ListView):
       
     def get_context_data(self, **kwargs):
       context = super().get_context_data(**kwargs)
+      context['show_initiatives'] = False
       queryset = self.get_queryset()
-      per_page = 5
+      per_page = 25
 
       goal_list, page_obj, paginator = paginate_queryset(queryset, self.request, per_page)
 
-      # Add status attribute for each initiative
-      for goal in goal_list:
-         for initiative in goal.initiative_set.all():
-             initiative.status = calc_initiative_status_by_avg(initiative)
-    
-     # ====== Get plan from the first goal ======
-      plan = None
-      if goal_list:
-        plan = goal_list[0].strategicplan
+     
+     # ====== Get active plan ======
+      active_plan = StrategicPlan.objects.filter(is_active=True).first()
 
+      context['active_plan'] = active_plan
+      context['active_plan_exists'] = bool(active_plan)
       context['goals'] = goal_list
       context['page_obj'] = page_obj
       context['paginator'] = paginator
       context['per_page'] = per_page
       context['is_paginated'] = True if paginator.num_pages > 1 else False
       context['page_numbers'] = get_page_numbers(page_obj, paginator)
-      context['plan_is_active'] = plan.is_active if plan else False
-
       return context
     
     
@@ -1369,13 +1383,35 @@ class CreateGoalView(LoginRequiredMixin, RoleRequiredMixin, LogMixin, CreateView
     allowed_roles = ['M', 'CM']  # Roles allowed to access this view
 
     def form_valid(self, form):
+        goal = form.instance
+        today = timezone.localdate()
+
+        if goal.end_date:
+         if today > goal.end_date:
+            goal.goal_status = 'D'
+        else:
+            goal.goal_status = 'NS'
+
         self.object = form.save(user=self.request.user, plan_id=self.kwargs['plan_id'])
         self.log_create(self.object)
         messages.success(self.request, "تمت إضافة الهدف بنجاح", extra_tags="create")
         return redirect(self.get_success_url())
     
+    def form_invalid(self, form):
+        # Field-specific errors
+        for field, errors in form.errors.items():
+            if field != '__all__':
+                for error in errors:
+                    messages.error(self.request, f"{form.fields[field].label}: {error}", extra_tags="error")
+
+        # Non-field errors
+        for error in form.non_field_errors():
+            messages.error(self.request, error, extra_tags='error')
+
+        return super().form_invalid(form)
+    
     def get_success_url(self):
-        return reverse('plan_detail', kwargs={'pk': self.kwargs['plan_id']})
+        return reverse('goals_list')
 
 
 
@@ -1388,7 +1424,7 @@ class UpdateGoalView(LoginRequiredMixin, RoleRequiredMixin, LogMixin, UpdateView
     model = StrategicGoal
     form_class = StrategicGoalForm
     template_name = 'goal_form.html'
-    success_url = reverse_lazy('goals_list') # changed this from plan_goals_list to goals list <3
+    success_url = reverse_lazy('goals_list') 
     allowed_roles = ['M', 'CM']  # Roles allowed to access this view
 
     def form_valid(self, form):
@@ -1407,7 +1443,7 @@ class DeleteGoalView(LoginRequiredMixin, RoleRequiredMixin, LogMixin, DeleteView
     - Redirects to goals list
     '''
     model = StrategicGoal
-    success_url = reverse_lazy('goals_list') # changed this from plan_goals_list to goals list <3
+    success_url = reverse_lazy('goals_list') 
     allowed_roles = ['M', 'CM']  # Roles allowed to access this view
 
     def form_valid(self, form):
@@ -1484,6 +1520,7 @@ class AllNotesView(LoginRequiredMixin, ListView):
             user=user
          )
         
+        # Check if the user is a participant (sender, receiver, department member, or linked initiative)
         qs = qs.annotate(
             is_user_participant=Case(
                 When(sender=user, then=Value(True)),
@@ -1494,7 +1531,8 @@ class AllNotesView(LoginRequiredMixin, ListView):
                 output_field=BooleanField(),
                 )
         )
-
+        
+        # Determine if the message belongs to the user's inbox (they are a participant and not the last sender)
         qs = qs.annotate(
         is_inbox=Case(
             When(
@@ -1506,7 +1544,8 @@ class AllNotesView(LoginRequiredMixin, ListView):
             output_field=BooleanField(),
         )
     )
-
+        
+        # Determine if the message was sent by the user (they are a participant and the last sender)
         qs = qs.annotate(
         is_sent=Case(
             When(
@@ -1516,6 +1555,8 @@ class AllNotesView(LoginRequiredMixin, ListView):
             output_field=BooleanField(),
         )
     )
+        
+        # Set which user ID should be displayed (sender for inbox, current user for sent, or original sender)
         qs = qs.annotate(
            display_user_id=Case(
            When(is_inbox=True, then=F('last_sender_id')),
@@ -1524,6 +1565,8 @@ class AllNotesView(LoginRequiredMixin, ListView):
           output_field=IntegerField()
           )
     )
+        
+        # Get the full name of the display user, falling back to first name or username if needed
         qs = qs.annotate(
              display_user_name=Subquery(
                  User.objects.filter(
@@ -1537,7 +1580,8 @@ class AllNotesView(LoginRequiredMixin, ListView):
                  ).values('full_name')[:1]
              )
         )
-
+       
+        # Mark if the message is a reply (sent by user, but original sender is someone else)
         qs = qs.annotate(
              is_reply=Case(
                  When(
@@ -1557,12 +1601,6 @@ class AllNotesView(LoginRequiredMixin, ListView):
         # Received notes
         if current_box == 'received-notes': 
             qs = qs.filter(is_inbox=True)
-
-            # if current_filter == "read":
-            #     qs = qs.filter(read_by=user)  # read notes
-
-            # elif current_filter == "unread":
-            #     qs = qs.exclude(read_by=user)  # unread notes
 
         # Sent notes
         if current_box == 'sent-notes':
@@ -1740,7 +1778,14 @@ class NoteDetailsview(LoginRequiredMixin, LogMixin, DetailView):
            context['is_read_by_receiver'] = note.read_by.filter(id=note.receiver.id).exists()
         else:
            context['is_read_by_receiver'] = False
-
+        
+        plan_ended = False
+        if note.initiative and note.initiative.strategic_goal.strategicplan.is_active is False:
+           plan_ended = True
+        elif note.strategic_goal and note.strategic_goal.strategicplan.is_active is False:
+           plan_ended = True
+        
+        context['plan_ended'] = plan_ended
         context['grouped_replies'] = grouped_replies
         context['can_reply'] = self.can_reply(note, user)
         return context
@@ -1772,25 +1817,7 @@ class NoteDetailsview(LoginRequiredMixin, LogMixin, DetailView):
         unread_count = get_unread_notes_count(user)
         return HttpResponse(unread_count)
 
-        # if unread_count == 0:
-        #   return HttpResponse("""
-        #     <span id="unread-dot" class="hidden"></span>
-        #     <span id="unread-badge" class="hidden"></span>""")
-
-        # return HttpResponse(f"""
-        #   <span id="unread-dot"
-        #       class="absolute top-[10px] right-[10px]
-        #              w-2 h-2 bg-red-500 rounded-full group-hover:hidden">
-        #   </span>
-        #   <span id="unread-badge"
-        #       class="hidden group-hover:inline whitespace-nowrap
-        #              ml-2 text-xs font-semibold text-red-500
-        #              bg-red-100 px-2 py-1 rounded-full">
-        #      {unread_count}
-        #   </span> """)
-
     # Add a reply (HTMX)
-
      if action == "reply" and self.can_reply(note, user) and request.headers.get("HX-Request"):
         content = request.POST.get("reply_content", "").strip()
         receiver = None
@@ -1851,6 +1878,7 @@ class CreateNoteView(LoginRequiredMixin, LogMixin, CreateView):
         form = super().get_form(form_class)
         user = self.request.user
         role = user.role.role_name
+        plan =  StrategicPlan.objects.filter(is_active = True).first()
 
         form.fields['receiver'].required = False
         form.fields['initiative'].required = False
@@ -1864,7 +1892,7 @@ class CreateNoteView(LoginRequiredMixin, LogMixin, CreateView):
             form.fields['receiver'].widget = forms.Select()
             form.fields['receiver'].queryset = User.objects.filter(role__role_name__in=['M', 'CM'])
             form.fields['strategic_goal'].widget = forms.Select()
-            form.fields['strategic_goal'].queryset = StrategicGoal.objects.all()
+            form.fields['strategic_goal'].queryset = StrategicGoal.objects.filter(strategicplan=plan)
 
         elif role in ['M', 'CM']:
             form.fields['receiver'].widget = forms.Select()
@@ -1872,14 +1900,15 @@ class CreateNoteView(LoginRequiredMixin, LogMixin, CreateView):
 
             form.fields['initiative'].widget = forms.Select()
             form.fields['initiative'].queryset = Initiative.objects.filter(
+                strategic_goal__strategicplan=plan,
                 userinitiative__user__department=user.department
             ).distinct()
 
         elif role == 'E':
             form.fields['initiative'].widget = forms.Select()
-            form.fields['initiative'].queryset = Initiative.objects.filter(userinitiative__user=user).distinct()
+            form.fields['initiative'].queryset = Initiative.objects.filter(strategic_goal__strategicplan=plan, userinitiative__user=user).distinct()
 
-        # إذا دخلنا من الهدف hide كل شيء
+      
         if self.request.GET.get('goal_id'):
             form.fields['strategic_goal'].widget = forms.HiddenInput()
             form.fields['receiver'].widget = forms.HiddenInput()

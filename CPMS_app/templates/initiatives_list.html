@@ -18,8 +18,8 @@
             <div class="flex items-center gap-2">
 
                 <!-- Search Input -->
-                <div class="relative w-full">
-                    <div class="absolute inset-y-0 end-0 flex items-center pe-3 pointer-events-none">
+                <div class="relative">
+                    <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
                         <!-- Search icon -->
                         <svg class="w-4 h-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none"
                             viewBox="0 0 24 24" stroke="currentColor">
@@ -28,13 +28,13 @@
                         </svg>
                     </div>
                     <input type="text" id="search"
-                        class="block w-[48rem] h-10 pe-9 ps-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00A399]/10 focus:border-[#00685E]/20 "
+                        class="block w-80 ps-9 pe-3 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500"
                         placeholder="البحث عن مبادرة...">
                 </div>
                 <!-- Filter Button -->
                 <div class="relative">
                     <button id="dropdownDefaultButton"
-                        class="flex flex-row-reverse items-center h-10 justify-between text-body bg-neutral-secondary-medium border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00A399]/10 focus:border-[#00685E]/20  text-gray-500 hover:text-gray-800 hover:bg-neutral-tertiary-medium shadow-xs font-medium leading-5  text-sm px-3 py-2 gap-2 "
+                        class="flex flex-row-reverse items-center justify-between text-body bg-neutral-secondary-medium border rounded text-gray-500 hover:text-gray-800 hover:bg-neutral-tertiary-medium shadow-xs font-medium leading-5 rounded-lg text-sm px-3 py-2 focus:outline-none gap-2 "
                         type="button">
                         <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none"
                             viewBox="0 0 24 24" stroke="currentColor">
@@ -51,7 +51,7 @@
 
                     <!-- Dropdown Menu -->
                     <div id="dropdown"
-                        class="absolute right-0 z-10 hidden bg-neutral-primary-medium border border-default-medium rounded-base shadow-lg w-32 overflow-hidden">
+                        class="absolute right-0 z-10 hidden bg-white border border-default-medium rounded-lg shadow-lg w-32 overflow-hidden">
                         <ul class="p-2 text-sm text-body font-medium">
                             <li>
                                 <button type="button" data-priority=""
@@ -80,7 +80,7 @@
             <!-- dropdown page number -->
                 <div class="relative"> 
                     <button id="page-dropdown-button"
-                        class="flex flex-row-reverse h-10 items-center justify-between text-body bg-neutral-secondary-medium border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00A399]/10 focus:border-[#00685E]/20  text-gray-500 hover:text-gray-800 hover:bg-neutral-tertiary-medium shadow-xs font-medium leading-5 text-sm px-3 py-2 gap-2 "
+                        class="flex flex-row-reverse items-center justify-between text-body bg-white border rounded text-gray-500 hover:text-gray-800 hover:bg-neutral-tertiary-medium shadow-xs font-medium leading-5 rounded-lg text-sm px-3 py-2 focus:outline-none gap-2 "
                         type="button">
                         <span id="page-dropdown-text" class="ml-1">عدد الصفوف</span> 
                         <svg id="page-dropdown-icon" class="w-4 h-4 transition-transform duration-200" 
@@ -92,7 +92,7 @@
 
                     <!-- Dropdown Menu --> 
                     <div id="page-dropdown" 
-                        class="absolute right-0 z-10 hidden bg-neutral-primary-medium border border-default-medium rounded-base shadow-lg w-32 overflow-hidden">
+                        class="absolute right-0 z-10 hidden bg-white border border-default-medium rounded-lg shadow-lg w-32 overflow-hidden">
                         <ul class="p-2 text-sm text-body font-medium">
                             <li>
                                 <button type="button" data-number="25"

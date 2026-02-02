@@ -1,7 +1,7 @@
 // ---------------------------
 //          popoup js       
 // ---------------------------
-function openWindow(url){
+function openWindow(url) {
     const params = "scrollbars=no,resizable=no,status=no,location=no,toolbar=no,menubar=no,width=400,height=300,left=100,top=100";
 
     window.open(
@@ -13,13 +13,13 @@ function openWindow(url){
 
 
 
-function openPopup(id){
+function openPopup(id) {
     document.getElementById(id).classList.remove('hidden');
 }
 
 
 
-function closePopup(id){
+function closePopup(id) {
     document.getElementById(id).classList.add('hidden');
 }
 
@@ -43,17 +43,19 @@ document.addEventListener('DOMContentLoaded', function () {
 // --------------------------------------
 //       js for search & filter buttons    
 // --------------------------------------
-document.addEventListener("DOMContentLoaded", function() {
+document.addEventListener("DOMContentLoaded", function () {
 
     // Detect which table exists
     const plansBody = document.getElementById("plansBody");
     const initiativesBody = document.getElementById("initiativesBody");
     const goalsBody = document.getElementById("goalsBody");
-    const logsBody = document.getElementById('logsBody')
+    const logsBody = document.getElementById('logsBody');
+    const detailBody = document.getElementById('plangoalsBody');
     const isPlansPage = !!plansBody;
     const isInitiativesPage = !!initiativesBody;
-    const isPlanDetailsPage = !!goalsBody;
+    const isGoalsBodyPage = !!goalsBody;
     const isLogsBodyPage = !!logsBody;
+    const isPlanDetailPage = !!detailBody
 
     // Shared elements
     const dropdownBtn = document.getElementById("dropdownDefaultButton");
@@ -70,8 +72,9 @@ document.addEventListener("DOMContentLoaded", function() {
 
         if (isPlansPage) url += `&status=${filter}`;
         if (isInitiativesPage) url += `&priority=${filter}`;
-        if (isPlanDetailsPage) url += `&status=${filter}`;
+        if (isGoalsBodyPage) url += `&status=${filter}`;
         if (isLogsBodyPage) url += `&action=${filter}`;
+        if (isPlanDetailPage) url += `&status=${filter}`;
 
         fetch(url, { headers: { "X-Requested-With": "XMLHttpRequest" } })
             .then(res => res.json())
@@ -85,7 +88,8 @@ document.addEventListener("DOMContentLoaded", function() {
                     logsBody.innerHTML = data.html;
                     window.history.replaceState({}, "", url.toString());
                 }
-                if (isPlanDetailsPage) goalsBody.innerHTML = data.html;
+                if (isGoalsBodyPage) goalsBody.innerHTML = data.html;
+                if (isPlanDetailPage) detailBody.innerHTML = data.html;
             });
     }
 
@@ -117,8 +121,8 @@ document.addEventListener("DOMContentLoaded", function() {
 
 
     filterButtons.forEach(btn => {
-        btn.addEventListener("click", function() {
-            currentFilter = this.dataset.status || this.dataset.priority ||  this.dataset.action || "";
+        btn.addEventListener("click", function () {
+            currentFilter = this.dataset.status || this.dataset.priority || this.dataset.action || "";
             fetchData(searchInput.value, currentFilter);
             if (dropdownMenu) {
                 dropdownMenu.classList.add("hidden");
@@ -141,13 +145,15 @@ document.addEventListener("DOMContentLoaded", function() {
 document.addEventListener('DOMContentLoaded', function () {
 
     const plansBody = document.getElementById("plansBody");
-    const goalsBody = document.getElementById("goalsBody");
     const initiativesBody = document.getElementById("initiativesBody");
+    const goalsBody = document.getElementById("goalsBody");
     const logsBody = document.getElementById('logsBody');
+    const detailBody = document.getElementById('plangoalsBody');
     const isPlansPage = !!plansBody;
-    const isPlanDetailsPage = !!goalsBody;
     const isInitiativesPage = !!initiativesBody;
+    const isGoalsBodyPage = !!goalsBody;
     const isLogsBodyPage = !!logsBody;
+    const isPlanDetailPage = !!detailBody
 
     const pageDropdownButton = document.getElementById('page-dropdown-button');
     const pageDropdownIcon = document.getElementById('page-dropdown-icon');
@@ -212,7 +218,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     .then(res => res.json())
                     .then(data => {
                         if (isPlansPage) plansBody.innerHTML = data.html;
-                        if (isPlanDetailsPage) goalsBody.innerHTML = data.html;
+                        if (isGoalsBodyPage) goalsBody.innerHTML = data.html;
+                        if (isLogsBodyPage) logsBody.innerHTML = data.html;
+                        if (isPlanDetailPage) detailBody.innerHTML = data.html;
                     });
             }
 
@@ -228,8 +236,8 @@ document.addEventListener('DOMContentLoaded', function () {
 // ---------------------------
 function openDeleteModal(deleteUrl, message) {
     const modal = document.getElementById('deleteModal');
-    const form  = document.getElementById('deleteModalForm');
-    const text  = document.getElementById('deleteModalText');
+    const form = document.getElementById('deleteModalForm');
+    const text = document.getElementById('deleteModalText');
 
     form.action = deleteUrl;
     text.textContent = message;
@@ -252,10 +260,10 @@ function closeDeleteModal() {
 // ---------------------------
 //    assign employees js     
 // ---------------------------
-const toAdd = new Map();    
-const toRemove = new Map(); 
+const toAdd = new Map();
+const toRemove = new Map();
 
-document.querySelectorAll('.assign_employee_button').forEach(btn => { 
+document.querySelectorAll('.assign_employee_button').forEach(btn => {
     btn.addEventListener('click', () => {
         openPopup('assign_employee');
     });
@@ -341,8 +349,8 @@ if (cancelBtn) {
 
 
 const confirmAssignBtn = document.getElementById('confirmAssign');
-if (confirmAssignBtn){
-    confirmAssignBtn.addEventListener('click', function() {
+if (confirmAssignBtn) {
+    confirmAssignBtn.addEventListener('click', function () {
         const hiddenContainer = document.getElementById('hidden-inputs');
         hiddenContainer.innerHTML = ''; // clear inputs
 
@@ -358,10 +366,10 @@ if (confirmAssignBtn){
             const input = document.createElement('input');
             input.type = 'hidden';
             input.name = 'to_remove[]';
-            input.value = id;  
+            input.value = id;
             hiddenContainer.appendChild(input);
         });
-        document.getElementById('assignForm').submit(); 
+        document.getElementById('assignForm').submit();
     });
 }
 
@@ -425,14 +433,14 @@ document.querySelectorAll('.edit-kpi-btn').forEach(btn => {
 
         // Show modal
         document.getElementById('kpi-modal').classList.remove('hidden');
-        
+
     });
 
 
 });
 
 const addKpiBtn = document.getElementById('add_kpi_button');
-if (addKpiBtn){
+if (addKpiBtn) {
     addKpiBtn.addEventListener('click', () => {
         const form = document.getElementById('kpiForm');
         const title = document.getElementById('kpi-modal-title');
@@ -456,7 +464,7 @@ if (addKpiBtn){
 }
 
 const cancelBtnKpi = document.getElementById('cancel-btn-kpi')
-if (cancelBtnKpi){
+if (cancelBtnKpi) {
     document.getElementById('cancel-btn-kpi').addEventListener('click', () => {
         const form = document.getElementById('kpiForm');
         form.reset();
@@ -472,10 +480,10 @@ if (cancelBtnKpi){
 window.addEventListener('load', () => {
     const gauge = document.getElementById('gauge');
     const gaugeText = document.getElementById('gauge-text');
-    
+
     if (!gauge || !gaugeText) return;
     const targetValue = parseFloat(gauge.getAttribute('data-value')) || 0;
-    const avg = parseInt(targetValue)*2
+    const avg = parseInt(targetValue) * 2
 
     gauge.setAttribute('stroke-dasharray', targetValue + ' 100');
 
@@ -483,7 +491,7 @@ window.addEventListener('load', () => {
     const step = avg / 50; // 50 frames ~ 1s
     const interval = setInterval(() => {
         current += step;
-        if(current >= avg){
+        if (current >= avg) {
             current = avg;
             clearInterval(interval);
         }
@@ -530,7 +538,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }, 3000);
 
-    
+
     // sidebar (navbar)
     // const btn = document.getElementById('toggle-nav');
     // const sidebar = document.getElementById('sidebar');
@@ -549,7 +557,7 @@ document.addEventListener("DOMContentLoaded", () => {
 // ---------------------------
 
 ///////////// DONUT CHART \\\\\\\\\\\\\
-function donutChart(labels, data, id){
+function donutChart(labels, data, id) {
     const canvas = document.getElementById(id);
     if (!canvas) return;
 
@@ -561,7 +569,7 @@ function donutChart(labels, data, id){
             datasets: [{
                 data: data,
                 // backgroundColor: ['#CBD5E1', '#93C5FD', '#FCA5A5', '#86EFAC'],
-                backgroundColor: ['#F2C75C', '#E59256', '#A13525', ' #00685E','#CBD5E1', '#93C5FD', '#FCA5A5', '#86EFAC'],
+                backgroundColor: ['#F2C75C', '#E59256', '#A13525', ' #00685E', '#CBD5E1', '#93C5FD', '#FCA5A5', '#86EFAC'],
             }]
         },
         options: {
@@ -576,34 +584,34 @@ function donutChart(labels, data, id){
 
 
 ///////////////////////////////////////// BAR CHART \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-function barChart(labels, data, id, background='#AAC2BF', ticksDisplay=true, maxValue=null){
+function barChart(labels, data, id, background = '#AAC2BF', ticksDisplay = true, maxValue = null) {
     const canvas = document.getElementById(id);
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     new Chart(ctx, {
         type: 'bar',
-            data: {
+        data: {
             labels: labels,
             datasets: [{
                 data: data,
-                backgroundColor: background, 
-                borderRadius: 4, 
+                backgroundColor: background,
+                borderRadius: 4,
             }]
         },
         options: {
             responsive: true,
-            maintainAspectRatio: false,  
+            maintainAspectRatio: false,
             plugins: {
                 legend: { display: false },
-                tooltip:{ intersect: false } 
+                tooltip: { intersect: false }
             },
             scales: {
                 y: {
                     beginAtZero: true,
                     ...(maxValue !== null && { max: maxValue }),
-                    
-                },               
-                x:  {
+
+                },
+                x: {
                     ticks: {
                         display: ticksDisplay
                     },
@@ -615,7 +623,7 @@ function barChart(labels, data, id, background='#AAC2BF', ticksDisplay=true, max
             }
         }
     });
-}                      
+}
 
 
 
@@ -627,13 +635,13 @@ function stackedBarChart(data, id) {
     const ctx = canvas.getContext('2d');
     new Chart(ctx, {
         type: 'bar',
-        data: data, 
+        data: data,
         options: {
-            indexAxis: 'y', 
+            indexAxis: 'y',
             responsive: true,
             plugins: {
                 tooltip: { mode: 'index', intersect: false },
-                legend: { 
+                legend: {
                     position: 'right',  // <- here you go
                     labels: {
                         boxWidth: 18,
@@ -644,13 +652,13 @@ function stackedBarChart(data, id) {
                 }
             },
             scales: {
-                x:  {
+                x: {
                     stacked: true,
                 },
 
-                y: { 
-                    stacked: true, 
-                    beginAtZero: true ,                     
+                y: {
+                    stacked: true,
+                    beginAtZero: true,
                     grid: {
                         display: false
                     },
@@ -699,9 +707,9 @@ function lineChart(data, id) {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: { 
-                    position: 'bottom', 
-                    rtl: true, 
+                legend: {
+                    position: 'bottom',
+                    rtl: true,
                     labels: {
                         boxHeight: 12,
                         padding: 24,
@@ -723,7 +731,7 @@ function lineChart(data, id) {
             },
             elements: {
                 line: {
-                    tension: 0.3 
+                    tension: 0.3
                 },
                 point: {
                     radius: 3,
@@ -744,75 +752,226 @@ function lineChart(data, id) {
 
 
 // donut chart labels and data
-if (document.getElementById('donut-chart-labels')){
+if (document.getElementById('donut-chart-labels')) {
     const donutChartLabels = JSON.parse(document.getElementById('donut-chart-labels').textContent);
     const donutChartData = JSON.parse(document.getElementById('donut-chart-data').textContent);
     if (donutChartData && donutChartData.length > 0) {
         donutChart(donutChartLabels, donutChartData, 'donutChart');
-    }  
+    }
 }
 // bar chart labels and data
-if (document.getElementById('bar-chart-labels')){
+if (document.getElementById('bar-chart-labels')) {
     const barChartLabels = JSON.parse(document.getElementById('bar-chart-labels').textContent);
     const barChartData = JSON.parse(document.getElementById('bar-chart-data').textContent);
     if (barChartData && barChartData.length > 0) {
-        barChart(barChartLabels, barChartData, 'barChart',background='#AAC2BF', ticksDisplay=true, maxValue=100);
+        barChart(barChartLabels, barChartData, 'barChart', background = '#AAC2BF', ticksDisplay = true, maxValue = 100);
     }
 }
 // bar chart labels and data
-if (document.getElementById('bar-chart2-labels')){
+if (document.getElementById('bar-chart2-labels')) {
     const barChartLabels2 = JSON.parse(document.getElementById('bar-chart2-labels').textContent);
     const barChartData2 = JSON.parse(document.getElementById('bar-chart2-data').textContent);
     if (barChartData2 && barChartData2.length > 0) {
-        barChart(barChartLabels2, barChartData2, 'barChart2',['#00685E', '#55857F', '#AAC2BF', '#8BAA99'] ,false);
+        barChart(barChartLabels2, barChartData2, 'barChart2', ['#00685E', '#55857F', '#AAC2BF', '#8BAA99'], false);
     }
 }
 // stacked bar chart data
-if (document.getElementById('stacked-bar-chart-data')){
+if (document.getElementById('stacked-bar-chart-data')) {
     const stackedChartData = JSON.parse(document.getElementById('stacked-bar-chart-data').textContent);
     if (stackedChartData && stackedChartData.labels.length > 0) {
         stackedBarChart(stackedChartData, 'stackedBarChart');
     }
 }
 // line chart labels and data
-if (document.getElementById('line-chart-data')){
+if (document.getElementById('line-chart-data')) {
     const lineChartData = JSON.parse(document.getElementById('line-chart-data').textContent);
     if (lineChartData && Object.keys(lineChartData).length > 0) {
         lineChart(lineChartData, 'lineChart');
     }
 }
-
 // //====================== Plan Detail Dashboard =============================
-// function GoalsInitiativesDonut(labels, goalsData, initiativesData, elementId) {
-//     const donutCtx = document.getElementById(elementId);
-//     if (!donutCtx) return;
 
-//     new Chart(donutCtx, {
-//         type: 'doughnut',
-//         data: {
-//             labels: labels,
-//             datasets: [
-//                 {
-//                     label: 'الأهداف',
-//                     data: { goalsData },
-//                     backgroundColor: ['#F2C75C', '#E59256', '#A13525', ' #00685E'],
-//                     borderWidth: 0,
-//                     weight: 2
-//                 },
-//                 {
-//                     label: 'المبادرات',
-//                     data: { initiativesData },
-//                     backgroundColor: ['#D1D5DB', '#93C5FD', '#6EE7B7', '#FCA5A5'],
-//                     borderWidth: 0,
-//                     weight: 1
+//  function renderAllCharts() {
+//     // ====== Plan Gauge ======
+//     const planGauge = document.getElementById('plan-gauge');
+//     if (planGauge) {
+//         const value = planGauge.dataset.value;
+//         planGauge.setAttribute('stroke-dasharray', `${value} 100`);
+//     }
+
+//     // ====== Donut Chart ======
+//     const donutEl = document.getElementById('goalsInitiativesDonut');
+//     if (donutEl) {
+//         const goalsData = JSON.parse(donutEl.dataset.goals);
+//         const initiativesData = JSON.parse(donutEl.dataset.initiatives);
+
+//         const donutCtx = donutEl.getContext('2d');
+//         new Chart(donutCtx, {
+//             type: 'doughnut',
+//             data: {
+//                 labels: ['لم تبدأ', 'قيد التنفيذ', 'متأخرة', 'مكتملة'],
+//                 datasets: [
+//                     { label: 'الأهداف', data: goalsData, backgroundColor: ['#F2C75C', '#E59256', '#A13525', '#00685E'], borderWidth: 0, weight: 2 },
+//                     { label: 'المبادرات', data: initiativesData, backgroundColor: ['#F7E3A9', '#E8B8A0', '#C77C7A', '#166b70'], borderWidth: 0, weight: 1 }
+//                 ]
+//             },
+//             options: { cutout: '55%', plugins: { legend: { position: 'right' } }, responsive: true, maintainAspectRatio: true }
+//         });
+//     }
+
+//     // ====== Priority Progress Pie ======
+//     const priorityEl = document.getElementById('priorityProgressChart');
+//     if (priorityEl) {
+//         const chartData = JSON.parse(priorityEl.dataset.priority);
+//         new Chart(priorityEl, {
+//             type: 'pie',
+//             data: { 
+//                 labels: chartData.map(x => x.priority_label), 
+//                 datasets: [{ label: 'متوسط تقدم الأهداف (%)', data: chartData.map(x => x.avg_progress), backgroundColor: chartData.map(x => x.color), borderWidth: 1 }] 
+//             },
+//             options: {
+//                 responsive: true,
+//                 plugins: {
+//                     tooltip: { callbacks: { label: function(ctx){ const d = chartData[ctx.dataIndex]; return ` عدد الأهداف: ${d.count} - نسبة الإنجاز: ${d.avg_progress}%`; } } },
+//                     legend: { display: true, position: 'right' }
 //                 }
-//             ]
-//         },
-//         options: {
-//             cutout: '55%',
-//             plugins: {
-//                 legend: { position: 'right' }
 //             }
+//         }); 
+//     }
+
+//     // ====== KPI Chart ======
+//     const kpiEl = document.getElementById('kpiChart');
+//     if (kpiEl) {
+//         const kpiData = JSON.parse(kpiEl.dataset.kpi);
+//         if (kpiData.length > 0) {
+//             const labels = kpiData.map(x => `${x.kpi_name} (${x.initiative_title})`);
+//             const targetData = kpiData.map(x => x.target);
+//             const actualData = kpiData.map(x => x.actual);
+//             const actualColors = kpiData.map(x => x.color);
+
+//             new Chart(kpiEl, {
+//                 type: 'bar',
+//                 data: { labels, datasets: [
+//                     { label: 'القيمة المستهدفة', data: targetData, backgroundColor: 'rgba(128,128,128,0.3)', borderColor: 'rgba(128,128,128,1)', borderWidth: 1 },
+//                     { label: 'القيمة الفعلية', data: actualData, backgroundColor: actualColors, borderColor: actualColors, borderWidth: 1 }
+//                 ]},
+//                 options: {
+//                     indexAxis: 'y',
+//                     responsive: true,
+//                     plugins: {
+//                         tooltip: { callbacks: { label: function(ctx) { const item = kpiData[ctx.dataIndex]; return `القيمة الفعلية: ${item.actual} ${item.unit} | القيمة المستهدفة: ${item.target} | وحدة القياس: ${item.unit} | الإدارة: ${item.department}`; } } },
+//                         legend: { display: true }
+//                     },
+//                     scales: {
+//                         y: { title: { display: true, text: 'KPIs / المبادرات' }, ticks: { autoSkip: false, maxRotation: 90, minRotation: 0 } },
+//                         x: { beginAtZero: true, title: { display: true, text: 'القيمة' } }
+//                     }
+//                 }
+//             });
 //         }
-//     });
+//     }
+
+//     // ====== Top 5 Chart ======
+//     const top5El = document.getElementById('top5Chart');
+//     const noDataEl = document.getElementById('no-data-msg');
+//     if (top5El) {
+//         const top5_labels = JSON.parse(top5El.dataset.top5labels);
+//         const progressData = JSON.parse(top5El.dataset.progress);
+//         const role = top5El.dataset.role;
+
+//         if (top5_labels.length === 0 || progressData.length === 0) {
+//             top5El.style.display = 'none';
+//             if (noDataEl) noDataEl.classList.remove('hidden');
+//         } else {
+//             if (noDataEl) noDataEl.classList.add('hidden');
+//             new Chart(top5El, {
+//                 type: 'bar',
+//                 data: {
+//                     labels: top5_labels,
+//                     datasets: [{ data: progressData, backgroundColor: progressData.map(p => p >= 80 ? '#10b981' : p >= 50 ? '#f59e0b' : '#ef4444'), borderRadius: 8, barPercentage: 0.6 }]
+//                 },
+//                 options: {
+//                     responsive: true,
+//                     maintainAspectRatio: false,
+//                     indexAxis: 'x',
+//                     plugins: { tooltip: { callbacks: { label: ctx => `${ctx.label}: ${ctx.raw}%` } }, legend: { display: false } },
+//                     scales: {
+//                         y: { beginAtZero: true, max: 100, title: { display: true, text: 'متوسط التقدم %', font: { size: 14, weight: 'bold' } } },
+//                         x: { title: { display: true, text: role === 'GM' ? 'الإدارات' : 'الموظفين', font: { size: 14, weight: 'bold' } }, ticks: { maxRotation: 45, minRotation: 0, autoSkip: false } }
+//                     }
+//                 }
+//             });
+//         }
+//     }
+
+//     // ====== Timeline Chart ======
+//     const timelineEl = document.getElementById('timelineChart');
+//     if (timelineEl) {
+//         const raw = JSON.parse(timelineEl.dataset.timeline);
+//         const rows = raw.filter(i => i.delyed_item);
+//         if (rows.length > 0) {
+//             const labels = [], plannedStartDates = [], plannedEndDates = [], actualEndDates = [], delayDurations = [], colors = [];
+//             rows.forEach((item, i) => {
+//                 const start = new Date(item.start);
+//                 const plannedEnd = new Date(item.planned_end);
+//                 const actualEnd = item.completed_time ? new Date(item.completed_time) : plannedEnd;
+//                 const delay = Math.max(0, Math.ceil((actualEnd - plannedEnd)/(1000*60*60*24)));
+
+//                 const maxLength = 10;
+//                 labels.push(item.title && item.title.trim() !== '' ? (item.title.length > maxLength ? item.title.slice(0,maxLength)+"..." : item.title) : `عنصر ${i+1}`);
+//                 plannedStartDates.push(start);
+//                 plannedEndDates.push(plannedEnd);
+//                 actualEndDates.push(actualEnd);
+//                 delayDurations.push(delay);
+//                 colors.push('#A13529');
+//             });
+
+//             const oneDay = 24*60*60*1000;
+//             const minDate = new Date(Math.min(...plannedStartDates.map(d=>d.getTime())));
+//             const maxDate = new Date(Math.max(...actualEndDates.map(d=>d.getTime()+oneDay)));
+
+//             new Chart(timelineEl, {
+//                 type: 'bar',
+//                 data: {
+//                     labels,
+//                     datasets: [
+//                         { label:'المدة المخططة للتنفيذ', data: plannedStartDates.map((start,i)=>({x:[start,plannedEndDates[i]],y:labels[i]})), backgroundColor:'rgba(156,163,175,0.6)', borderRadius:0, barThickness:15, minBarLength:10 },
+//                         { label:'المدة الفعلية حتى الاكتمال', data: plannedEndDates.map((plannedEnd,i)=>({x:[plannedEnd,actualEndDates[i]],y:labels[i]})), backgroundColor:colors, borderRadius:4, barThickness:15, minBarLength:10 }
+//                     ]
+//                 },
+//                 options: {
+//                     indexAxis:'y',
+//                     responsive:true,
+//                     scales: {
+//                         x:{ type:'time', time:{unit:'day', tooltipFormat:'d/M', displayFormats:{day:'d/M'}}, min:minDate, max:maxDate },
+//                         y:{ stacked:true }
+//                     },
+//                     plugins: {
+//                         legend:{ display:true },
+//                         tooltip: {
+//                             callbacks:{
+//                                 title: ctx => rows[ctx[0].dataIndex].title,
+//                                 label: ctx => {
+//                                     const idx = ctx.dataIndex;
+//                                     const barColor = ctx.dataset.backgroundColor[idx] || ctx.dataset.backgroundColor;
+//                                     const plannedStart = plannedStartDates[idx].toLocaleDateString('ar-SA');
+//                                     const plannedEnd = plannedEndDates[idx].toLocaleDateString('ar-SA');
+//                                     const actualEnd = actualEndDates[idx].toLocaleDateString('ar-SA');
+//                                     if (barColor === '#A13529') {
+//                                         const delay = delayDurations[idx];
+//                                         return `الفترة المخططة: ${plannedStart} ← ${plannedEnd} | تاريخ الاكتمال: ${actualEnd} | مدة التأخير: ${delay ===1 ? 'يوم' : delay===2 ? 'يومان' : delay<10 ? delay+' أيام' : delay+' يوم'}`;
+//                                     }
+//                                     return `الفترة المخططة: ${plannedStart} ← ${plannedEnd}`;
+//                                 }
+//                             }
+//                         }
+//                     }
+//                 }
+//             });
+//         }
+//     }
 // }
+
+// // ====== Call function after DOM is ready ======
+// document.addEventListener("DOMContentLoaded", renderAllCharts);
+// backgroundColor: progressData.map(p => p >= 80 ? '#36715d' : p >= 50 ? '#b7914f' : '#b85f5f'

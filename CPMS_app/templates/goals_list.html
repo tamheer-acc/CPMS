@@ -52,7 +52,7 @@
 
                     <!-- Dropdown Menu -->
                     <div id="dropdown"
-                        class="absolute right-0 z-10 hidden bg-white border border-default-medium rounded-base shadow-lg w-32 overflow-hidden">
+                        class="absolute right-0 z-10 hidden bg-white border border-default-medium rounded-lg shadow-lg w-32 overflow-hidden">
                         <ul class="p-2 text-sm text-body font-medium">
                             <li>
                                 <button type="button" data-status=""
@@ -60,13 +60,11 @@
                             </li>
                             <li>
                                 <button type="button" data-status="NS"
-                                    class="filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">لم يبدأ
-                                    بعد</button>
+                                    class="filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">لم يبدأ بعد</button>
                             </li>
                             <li>
                                 <button type="button" data-status="IP"
-                                    class="filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">قيد
-                                    التنفيذ</button>
+                                    class="filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">قيد التنفيذ</button>
                             </li>
                             <li>
                                 <button type="button" data-status="C"
@@ -83,32 +81,45 @@
             <!-- Add goal Button chanege style -->
             {% if request.user.role.role_name in 'CM M' %}
             <div class="relative inline-block group">
-
-                <a href="{% if not active_plan_exists %}{% url 'plan_create' %}{% else %}#{% endif %}"
-                  class="bg-[#00A399] text-white px-4 py-2 rounded-md text-sm font-semibold">
+                <a href="{% if active_plan_exists %}{% url 'goal_create' active_plan.id %}{% else %}#{% endif %}"
+                  onclick="{% if not active_plan_exists %}return false;{% endif %}"
+                  class="bg-[#00A399] text-white px-4 py-2 rounded-md text-sm font-semibold
+                  {% if not active_plan_exists %}
+                     opacity-70 cursor-not-allowed
+                  {% else %}
+                      hover:bg-[#018077]
+                  {% endif %}">
                     إضافة هدف
                 </a>
+              {% if not active_plan_exists %}
+                <div
+                    class="absolute top-1/2 left-full -translate-y-1/2 ml-2
+                hidden group-hover:block whitespace-nowrap rounded-md bg-gray-300/90 px-3 py-1 text-xs text-gray-600 shadow-lg z-10">
 
-            </div>
-
+                    لا يمكنك إضافة هدف جديد، نظرًا لعدم وجود خطة نشطة حاليًا.
+                    <!-- arrow -->
+                    <span class="absolute top-1/2 -translate-y-1/2 left-0 -translate-x-full
+                     w-0 h-0 border-y-8 border-y-transparent border-r-8 border-r-gray-300/90"></span>
+                </div>
+                {% endif %}
+                </div>
             {% endif %}
 
         </div>
-
+        
 
         <table class="w-full text-right text-gray-700 border border-gray-200">
             <thead class="text-sm bg-gray-50 border-b text-center items-center">
                 <tr>
-                    <th class="py-3 font-semibold">عنوان الهدف</th>
+                    <th class="px-2 py-3 font-semibold">عنوان الهدف</th>
                     {% if request.user.role.role_name == 'GM' %}
                     <th class="py-3 font-semibold">الإدارة</th>
                     {% endif %}
-                    <!-- <th class="py-3 font-semibold">وصف الهدف</th> -->
                     <th class="py-3 font-semibold">الحالة</th>
                     <th class="py-3 font-semibold">
                         <span class="inline-flex items-center gap-1 font-semibold">
                             <a class="text-gray-400 hover:text-gray-700 transition" title="فرز حسب الأهمية"
-                                href="?{% if request.GET.sort == 'priority' %}{% else %}sort=priority{% endif %}&per_page={{ request.GET.per_page|default:5 }}&page=1">
+                                href="?{% if request.GET.sort == 'priority' %}{% else %}sort=priority{% endif %}&per_page={{ per_page }}&page=1">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"
                                     class="size-4">
                                     <path fill-rule="evenodd"
@@ -119,7 +130,6 @@
                             الأهمية
                         </span>
                     </th>
-                    <!-- <th class="py-3 font-semibold"></th> -->
                     <th class="py-3 font-semibold">
                         <span class="inline-flex items-center gap-1 font-semibold">
                             <a class="text-gray-400 hover:text-gray-700 transition" title="فرز حسب المدة"
@@ -135,7 +145,11 @@
                         </span>
 
                     </th>
-                    <th class="px-3 py-3 font-semibold text-right">المبادرات</th>
+                     {% if show_initiatives %}
+                    <th class="px-3 py-3 font-semibold {% if request.user.role.role_name == 'GM' %} px-4 text-right {% endif %}">المبادرات</th>
+                     {% else %}
+                     <th></th>
+                     {% endif %}
                 </tr>
             </thead>
             <tbody id="goalsBody">
@@ -157,7 +171,7 @@
                 <!-- Previous button -->
                 <li>
                     {% if page_obj.has_previous %}
-                    <a href="?page={{ page_obj.previous_page_number }}&per_page={{ request.GET.per_page|default:5 }}&search={{ search }}&priority={{ priority }}"
+                    <a href="?page={{ page_obj.previous_page_number }}&per_page={{ per_page }}&search={{ search }}&priority={{ priority }}"
                         class="flex items-center justify-center text-body bg-neutral-secondary-medium border border-default-medium rounded-s-full text-sm px-3 h-9 hover:bg-gray-200 transition-colors duration-200 bg-gray-50">
                         ‹
                     </a>
@@ -187,7 +201,7 @@
                 </li>
                 {% else %}
                 <li>
-                    <a href="?page={{ num }}&per_page={{ request.GET.per_page|default:5 }}&search={{ search }}&priority={{ priority }}"
+                    <a href="?page={{ num }}&per_page={{ per_page }}&search={{ search }}&priority={{ priority }}"
                         class="flex items-center justify-center text-body bg-neutral-secondary-medium border border-default-medium font-medium text-sm w-9 h-9 hover:bg-gray-200 bg-gray-50">
                         {{ num }}
                     </a>
@@ -198,7 +212,7 @@
                 <!-- Next button -->
                 <li>
                     {% if page_obj.has_next %}
-                    <a href="?page={{ page_obj.next_page_number }}&per_page={{ request.GET.per_page|default:5 }}&search={{ search }}&priority={{ priority }}"
+                    <a href="?page={{ page_obj.next_page_number }}&per_page={{ per_page }}&search={{ search }}&priority={{ priority }}"
                         class="flex items-center justify-center text-body bg-neutral-secondary-medium border border-default-medium rounded-e-full text-sm px-3 h-9 hover:bg-gray-200 transition-colors duration-200 bg-gray-50">
                         ›
                     </a>

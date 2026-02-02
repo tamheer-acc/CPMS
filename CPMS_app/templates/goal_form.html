@@ -3,7 +3,7 @@
 {% block breadcrumb %}
 <li class="flex items-center">
     <span class="mx-2">/</span>
-    <span class="hover:text-gray-700">الأهداف</span>
+   <a href="{% url 'goals_list' %}" class="hover:text-gray-700">الأهداف</a>
 </li>
 <li class="flex items-center">
     <span class="mx-2">/</span>
@@ -31,7 +31,7 @@
                     <input type="text" name="{{ form.goal_title.name }}" value="{{ form.goal_title.value|default:'' }}"
                         placeholder="مثال: تحسين سرعة إنجاز المشاريع التشغيلية." class="bg-gray-50 border border-gray-300 text-gray-900 text-sm
                         rounded-xl shadow-sm block w-full p-2.5
-                        focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-500
+                        focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-800
                         hover:border-gray-400 transition-all duration-200">
 
                     {% if form.goal_title.errors %}
@@ -49,7 +49,7 @@
                         placeholder="مثال: تطوير آليات متابعة وتنسيق فرق العمل لضمان تنفيذ المشاريع التشغيلية في الوقت المحدد، وتقليل التأخير بنسبة 15% خلال فترة الخطة."
                         class="block p-2.5 w-full text-sm text-gray-900
                                bg-gray-50 rounded-xl shadow-sm border border-gray-300
-                               focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-500
+                               focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-800
                                hover:border-gray-400 transition-all duration-200 resize-none">{{ form.description.value|default:'' }}</textarea>
 
                     {% if form.description.errors %}
@@ -58,36 +58,24 @@
                     {% endif %}
                 </div>
 
-                <div class="grid grid-cols-[1fr_auto_1fr] items-center gap-14 px-2">
-
-                    <!--Goal Status-->
-                    <div class="flex items-center">
-                        <label for="{{ form.goal_status.id_for_label }}"
-                            class="text-sm font-semibold text-gray-800 w-24 ">
-                            {{form.goal_status.label}}<span class="text-red-500"> *</span>
-                        </label>
-                        {{ form.goal_status }}
-                    </div>
-                    {% if form.goal_status.errors %}
-                    <div class="flex items-center gap-1 text-red-600 text-xs mt-1"> ⚠ {{ form.goal_status.errors }}
-                    </div>
-                    {% endif %}
-
                     <!--Goal Priority-->
-                    <div class="flex items-center">
+                    
+                    <div class="flex items-center gap-2">
                         <label for="{{ form.goal_priority.id_for_label }}"
-                            class="text-sm font-semibold text-gray-800 w-24">
+                            class="text-sm font-semibold text-gray-800 w-22">
                             {{ form.goal_priority.label}}<span class="text-red-500"> *</span>
                         </label>
 
-                        {{ form.goal_priority }}
+                         <div class="flex-1">
+                            {{ form.goal_priority }}
+                         </div>
 
                     </div>
                     {% if form.goal_priority.errors %}
                     <div class="flex items-center gap-1 text-red-600 text-xs mt-1"> ⚠ {{ form.goal_priority.errors }}
                     </div>
                     {% endif %}
-                </div>
+                
 
                 <!-- Goal Satrt&End Date -->
                 <div>
@@ -95,29 +83,14 @@
                         مدة تنفيذ الهدف <span class="text-red-500">*</span>
                     </label>
                     <div class="grid grid-cols-[1fr_auto_1fr] items-center gap-4">
-                        <!--Satrt Date-->
-                        <input type="date" name="{{ form.start_date.name }}"
-                            value="{% if form.start_date.value %}{{ form.start_date.value }}{% endif %}" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm
-                                   rounded-xl shadow-sm block w-full p-2.5
-                                   focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-500
-                                   hover:border-gray-400 transition-all duration-200">
-                        {% if form.start_date.errors %}
-                        <div class="flex items-center gap-1 text-red-600 text-xs mt-1"> ⚠ {{ form.start_date.errors }}
-                        </div>
-                        {% endif %}
+                        
+                         <!--Satrt Date-->
+                         {{ form.start_date.as_widget }}
 
                         <span class="text-sm font-medium text-gray-600">إلى</span>
 
                         <!--End Date-->
-                        <input type="date" name="{{ form.end_date.name }}"
-                            value="{% if form.end_date.value %}{{ form.end_date.value|date:'Y-m-d' }}{% endif %}" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm
-                                   rounded-xl shadow-sm block w-full p-2.5
-                                   focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-500
-                                   hover:border-gray-400 transition-all duration-200">
-                        {% if form.end_date.errors %}
-                        <div class="flex items-center gap-1 text-red-600 text-xs mt-1"> ⚠ {{ form.end_date.errors }}
-                        </div>
-                        {% endif %}
+                         {{ form.end_date.as_widget }}
                     </div>
                 </div>
 

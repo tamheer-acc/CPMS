@@ -1,0 +1,523 @@
+<div class="grid grid-cols-5 gap-4">
+
+    <div class="col-span-2 flex flex-col gap-4">
+
+        <!-- Plan progress -->
+        <div class="bg-white rounded-xl shadow p-4 flex items-center justify-center min-h-[150px]">
+            <div class="relative w-40 h-40">
+                <svg class="w-full h-full rotate-180" viewBox="0 0 36 36">
+                    <circle cx="18" cy="18" r="16" fill="none"
+                     class="{% if '{{is_plan_late}}' %} stroke-current text-red-100 shadow-red-200 {% else %} stroke-current text-green-100 {% endif %}"
+                     stroke-width="3" stroke-dasharray="50 100" stroke-linecap="round"></circle>
+
+                    <circle id="gauge" cx="18" cy="18" r="16" fill="none" data-value='{{plan_avg|floatformat:0}}'
+                     class= "{% if '{{is_plan_late}}' %} stroke-current text-red-600 {% else %} stroke-current text-green-600 {% endif %} transition-all duration-1000 ease-out"
+                     stroke-width="1" stroke-dasharray="0 100" stroke-linecap="round"></circle>
+                </svg>
+
+                <div class="absolute inset-0 flex flex-col items-center justify-center text-center pt-2 space-y-4">
+                    <span id="gauge-text" class="text-xl font-bold {%if '{{is_plan_late}}' %} text-red-600 {% else %} text-green-600 {% endif %}">{{ plan_avg|floatformat:0 }}%</span>
+                    <span class="text-sm font-medium {%if '{{is_plan_late}}' %} text-red-600 {% else %} text-green-600 {% endif %}">نسبة إنجاز الخطة</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cards -->
+        <div class="flex gap-4">
+            <div class="flex-1 bg-white p-4 rounded-lg shadow text-center flex flex-col space-y-4 min-h-[120px]">
+                <h3 class="text-sm text-gray-500">إجمالي عدد الأهداف</h3>
+                <p id="goalsCount" class="text-2xl font-bold text-gray-800 leading-tight">{{ goals_total }}</p>
+            </div>
+            <div class="flex-1 bg-white p-4 rounded-lg shadow text-center flex flex-col space-y-4 min-h-[120px]">
+                <h3 class="text-sm text-gray-500">إجمالي عدد المبادرات</h3>
+                <p id="initiativesCount" class="text-2xl font-bold text-gray-800 leading-tight">{{ initiatives_count }}
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dounght chart -->
+    <div class="col-span-3 bg-white rounded-xl shadow p-2 flex flex-col items-center">
+        {% if initiative_data_length > 0 or initiative_data_length > 0 %}
+        <h3 class="font-semibold mb-3 text-center mt-2">الحالة الإجمالية للأهداف والمبادرات</h3>
+        <div class="flex-1 flex items-center justify-center">
+            <canvas id="goalsInitiativesDonut" data-goals='{{ goals_data_json|safe }}'
+                data-initiatives='{{ initiatives_data_json|safe }}' class="w-80 h-80 max-h-[200px]"></canvas>
+        </div>
+        {% else %}
+                <div class="flex flex-col justify-center items-center gap-2 mb-5">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class=" icon icon-tabler icons-tabler-outline icon-tabler-chart-bar-off w-24 h-24 stroke-gray-300 hover:stroke-gray-400 transition-transform duration-300 hover:scale-110 ">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                        <path d="M3 13a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -6" />
+                        <path d="M12 8h2a1 1 0 0 1 1 1v2m0 4v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1v-10" />
+                        <path d="M15 11v-6a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v12m-1 3h-4a1 1 0 0 1 -1 -1v-4" />
+                        <path d="M4 20h14" />
+                        <path d="M3 3l18 18" />
+                    </svg>
+                    <p class="text-lg font-semibold text-gray-400">لا توجد بيانات</p>
+                </div>
+            {% endif %}
+    </div>
+
+</div>
+
+<div class="grid grid-cols-5 gap-6">
+    <!-- Pie chart -->
+    <div class="col-span-2 bg-white rounded-xl shadow p-4 flex flex-col items-center min-h-[300px]">
+        {% if chart_length > 0 %}
+        <h3 class="font-semibold mb-3 text-center">متوسط تقدم الأهداف حسب الأهمية</h3>
+        <div class="flex-1 flex items-center justify-center">
+            <canvas id="priorityProgressChart" data-priority='{{ chart_goals_json|safe }}' class="w-full h-64"></canvas>
+        </div>
+        {% else %}
+            <div class="flex flex-col justify-center items-center gap-2 mb-5">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    class=" icon icon-tabler icons-tabler-outline icon-tabler-chart-bar-off w-24 h-24 stroke-gray-300 hover:stroke-gray-400 transition-transform duration-300 hover:scale-110 ">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                    <path d="M3 13a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -6" />
+                    <path d="M12 8h2a1 1 0 0 1 1 1v2m0 4v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1v-10" />
+                    <path d="M15 11v-6a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v12m-1 3h-4a1 1 0 0 1 -1 -1v-4" />
+                    <path d="M4 20h14" />
+                    <path d="M3 3l18 18" />
+                </svg>
+                <p class="text-lg font-semibold text-gray-400">لا توجد بيانات</p>
+            </div>
+            {% endif %}
+    </div>
+
+    <!-- Bar chart -->
+    <div class="col-span-3 bg-white rounded-xl shadow p-4 flex flex-col min-h-[300px]">
+        {% if top5_length > 0 %}
+        {% if user.role.role_name in 'M CM' %}
+        <h3 class="font-semibold mb-3 text-center">أفضل 5 موظفين حسب الأداء</h3>
+        {% else %}
+        <h3 class="font-semibold mb-3 text-center">أفضل 5 إدارات حسب الأداء</h3>
+        {% endif %}
+        <div class="flex-1 flex items-center justify-center">
+            <canvas id="top5Chart" data-top5labels='{{ top5_labels_json|safe }}'
+                data-progress='{{ top5_progress_json|safe }}' data-role='{{ role }}' class="w-full h-64"></canvas>
+        </div>
+        {% else %}
+            <div class="flex flex-col justify-center items-center gap-2 mb-5">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    class=" icon icon-tabler icons-tabler-outline icon-tabler-chart-bar-off w-24 h-24 stroke-gray-300 hover:stroke-gray-400 transition-transform duration-300 hover:scale-110 ">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                    <path d="M3 13a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -6" />
+                    <path d="M12 8h2a1 1 0 0 1 1 1v2m0 4v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1v-10" />
+                    <path d="M15 11v-6a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v12m-1 3h-4a1 1 0 0 1 -1 -1v-4" />
+                    <path d="M4 20h14" />
+                    <path d="M3 3l18 18" />
+                </svg>
+                <p class="text-lg font-semibold text-gray-400">لا توجد بيانات</p>
+            </div>
+            {% endif %}
+    </div>
+</div>
+
+<!-- KPI Chart -->
+<div class="bg-white rounded-xl shadow p-4 flex flex-col justify-center min-h-[300px]">
+    {% if Kpi_length > 0 %}
+    <h3 class="font-semibold mb-3 text-center">مؤشرات الأداء الرئيسية</h3>
+    <div class="flex-1 flex items-center justify-center">
+        <canvas id="kpiChart" data-kpi='{{ kpi_chart_data_json|escapejs }}' class="w-full h-64 max-h-[250px]"></canvas>
+    </div>
+    {% else %}
+        <div class="flex flex-col justify-center items-center gap-2 mb-5">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class=" icon icon-tabler icons-tabler-outline icon-tabler-chart-bar-off w-24 h-24 stroke-gray-300 hover:stroke-gray-400 transition-transform duration-300 hover:scale-110 ">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path d="M3 13a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -6" />
+                <path d="M12 8h2a1 1 0 0 1 1 1v2m0 4v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1v-10" />
+                <path d="M15 11v-6a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v12m-1 3h-4a1 1 0 0 1 -1 -1v-4" />
+                <path d="M4 20h14" />
+                <path d="M3 3l18 18" />
+            </svg>
+            <p class="text-lg font-semibold text-gray-400">لا توجد بيانات</p>
+        </div>
+        {% endif %}
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+    <!-- Cards -->
+    <div class="col-span-1 flex flex-col justify-center gap-4">
+        <div
+            class="bg-green-50 border border-green-200 rounded-xl shadow p-3 text-center h-20 flex flex-col justify-center">
+            <p class="text-sm text-green-700 mb-2">
+                {% if user.role.role_name in 'M CM' %}المبادرات المكتملة في الوقت{% else %}الأهداف المكتملة في الوقت{%endif %}
+            </p>
+            <h2 id="onTimeCount" class="text-2xl font-bold text-green-800  leading-tight">{{ completed_on_time }}</h2>
+        </div>
+        <div
+            class="bg-yellow-50 border border-yellow-200 rounded-xl shadow p-3 text-center h-20 flex flex-col justify-center">
+            <p class="text-sm text-yellow-700 mb-2">
+                {% if user.role.role_name in 'M CM' %}المبادرات المكتملة متأخرًا{% else %}الأهداف المكتملة متأخرًا{%endif %}
+            </p>
+            <h2 id="lateCount" class="text-2xl font-bold text-yellow-800  leading-tight">{{ completed_late }}</h2>
+        </div>
+        <div
+            class="bg-red-50 border border-red-200 rounded-xl shadow p-3 text-center h-20 flex flex-col justify-center">
+            <p class="text-sm text-red-700 mb-2">
+                {% if user.role.role_name in 'M CM' %}المبادرات غير المكتملة{% else %}الأهداف غير المكتملة{% endif %}
+            </p>
+            <h2 id="notCompletedCount" class="text-2xl font-bold text-red-800  leading-tight">{{ not_completed }}</h2>
+        </div>
+    </div>
+
+    <!-- Timeline -->
+
+    <div class="col-span-3 bg-white rounded-xl shadow p-4 flex flex-col justify-center min-h-[300px]">
+        {% if timeline_length > 0 %}
+        {% if user.role.role_name in 'M CM' %}
+        <h3 class="font-semibold mb-3 text-center mb-4"> الجدول الزمني لمدة تأخير المبادرات المكتملة</h3>
+        {% else %}
+        <h3 class="font-semibold mb-3 text-center mb-4"> الجدول الزمني لمدة تأخير الأهداف المكتملة</h3>
+        {% endif %}
+         <div class="flex-1 flex items-center justify-center">
+        <canvas id="timelineChart" data-timeline='{{ timeline_json|escapejs }}' class="w-full h-64 max-h-[300px]"></canvas>
+        </div>
+        {% else %}
+        <div class="flex flex-col justify-center items-center gap-2 mb-5">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class=" icon icon-tabler icons-tabler-outline icon-tabler-chart-bar-off w-24 h-24 stroke-gray-300 hover:stroke-gray-400 transition-transform duration-300 hover:scale-110 ">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path d="M3 13a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -6" />
+                <path d="M12 8h2a1 1 0 0 1 1 1v2m0 4v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1v-10" />
+                <path d="M15 11v-6a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v12m-1 3h-4a1 1 0 0 1 -1 -1v-4" />
+                <path d="M4 20h14" />
+                <path d="M3 3l18 18" />
+            </svg>
+            <p class="text-lg font-semibold text-gray-400">لا توجد بيانات</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+
+<script>
+function renderAllCharts() {
+    // ====== Donut Chart ======
+    const goalsData = JSON.parse('{{ goals_data_json|safe }}');
+    const initiativesData = JSON.parse('{{ initiatives_data_json|safe }}');
+    const donutEl = document.getElementById('goalsInitiativesDonut');
+    if (donutEl) {
+        const donutCtx = donutEl.getContext('2d');
+        new Chart(donutCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['لم تبدأ', 'قيد التنفيذ', 'متأخرة', 'مكتملة'],
+                datasets: [
+                    { label: 'الأهداف', data: goalsData, backgroundColor: ['#F2C75C', '#E59256', '#A13525', '#00685E'], borderWidth: 0, weight: 2 },
+                    { label: 'المبادرات', data: initiativesData, backgroundColor: ['#F7E3A9', '#E8B8A0', '#C77C7A', '#166b70'], borderWidth: 0, weight: 1 }
+                ]
+            },
+            options: { cutout: '55%', plugins: {tooltip:{
+                         rtl: true,
+                         textDirection: 'rtl',
+                         bodyAlign: 'right',
+                         titleAlign: 'center',
+                         displayColors: true,
+                         titleFont: { size: 14, weight: '500' },
+                         bodyFont: { size: 12 },
+                         padding: 8,
+                         bodySpacing: 2,  
+                         titleMarginBottom: 6,
+            } ,legend: { position: 'right' } }, responsive: true, maintainAspectRatio: true }
+        });
+    }
+
+    // ====== Priority Progress Pie ======
+    const chartData = JSON.parse('{{ chart_goals_json|escapejs }}');
+    const priorityEl = document.getElementById('priorityProgressChart');
+    if (priorityEl) {
+        new Chart(priorityEl, {
+            type: 'pie',
+            data: { labels: chartData.map(x => x.priority_label), datasets: [{data: chartData.map(x => x.avg_progress), backgroundColor: chartData.map(x => x.color), borderWidth: 1 }] },
+            options: {
+                responsive: true,
+                plugins: {
+                    tooltip: {
+                         rtl: true,
+                         textDirection: 'rtl',
+                         bodyAlign: 'right',
+                         titleAlign: 'center',
+                         displayColors: false,
+                         titleFont: { size: 14, weight: '500' },
+                         bodyFont: { size: 12 },
+                         padding: 8,
+                         bodySpacing: 2,  
+                         titleMarginBottom: 6,
+                         callbacks: {
+                            title: function(ctx) {
+                            const item = chartData[ctx[0].dataIndex];
+                            return `الأهمية: ${item.priority_label}`;
+                            }, 
+                            label: function(ctx){ 
+                                const d = chartData[ctx.dataIndex];
+                                 return [
+                                    ` عدد الأهداف: ${d.count}`,
+                                    `نسبة الإنجاز: ${d.avg_progress}%`
+                                ]; 
+                            } 
+                        } 
+                    },
+                    legend: { display: true, position: 'right' }
+                }
+            }
+        });
+    }
+
+    // ====== KPI Chart ======
+    const kpiData = JSON.parse('{{ kpi_chart_data_json|escapejs }}');
+    const kpiEl = document.getElementById('kpiChart');
+    if (kpiEl && kpiData.length > 0) {
+     const maxLength = 10;
+     const labels = kpiData.map((x, i) => {
+     const name = x.kpi_name && x.kpi_name.trim() !== ''  ? (x.kpi_name.length > maxLength ? x.kpi_name.slice(0, maxLength) + "..." : x.kpi_name)  : `عنصر ${i+1}`; return name;});
+     const targetData = kpiData.map(x => x.target);
+     const actualData = kpiData.map(x => x.actual);
+     const actualColors = kpiData.map(x => x.color);
+
+     const allValues = [...actualData, ...targetData];
+     const maxValue = Math.max(...allValues);
+     const xMax = Math.ceil(maxValue * 1.1);
+     const stepApprox = Math.ceil(xMax / 6 / 5) * 5; 
+
+
+     const ctx = kpiEl.getContext('2d');
+ 
+     new Chart(ctx, {
+        type: 'bar',
+        data: { 
+            labels, 
+            datasets: [
+                { 
+                    label: 'القيمة المستهدفة', 
+                    data: targetData, 
+                    backgroundColor: 'rgba(107,114,128,0.4)', 
+                    borderColor: 'rgba(107,114,128,0.1)', 
+                    borderWidth: 1,
+                    borderRadius: 5
+                },
+                { 
+                    label: 'القيمة الفعلية', 
+                    data: actualData, 
+                    backgroundColor: actualColors, 
+                    borderWidth: 1,
+                    borderRadius: 5
+                }
+            ]
+        },
+        options: {
+            indexAxis: 'y', 
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                tooltip: {
+                    rtl: true,
+                    textDirection: 'rtl',
+                    bodyAlign: 'right',
+                    titleAlign: 'center',
+                    displayColors: false,
+                    titleFont: { size: 14, weight: '500' },
+                    bodyFont: { size: 12 },
+                    padding: 10,
+                    bodySpacing: 2,  
+                    titleMarginBottom: 8,
+                    callbacks: {
+                        title: function(ctx) {
+                            const item = kpiData[ctx[0].dataIndex];
+                             return (item.initiative_title ? `${item.initiative_title} - ` : '') + item.kpi_name;
+                            },
+                        label: function(ctx) {
+                            const item = kpiData[ctx.dataIndex];
+                            const difference = item.actual - item.target;
+                            const percentage = item.target ? Math.round((item.actual / item.target) * 100) : 0;
+                            let statusText = "";
+                            if (difference > 0) {
+                                statusText = ` تم تجاوز المستهدف بـ ${Math.abs(difference)} ${item.unit}`;
+                            } else if (difference < 0) {
+                                statusText = ` أقل من المستهدف بـ ${Math.abs(difference)} ${item.unit}`;
+                            } else {
+                                statusText = `تم تحقيق المستهدف تمامًا`;
+                            }
+
+                            if (ctx.datasetIndex === 0) {
+                                return [
+                                       `🎯 القيمة المستهدفة: ${item.target}`,
+                                       `📏 وحدة القياس: ${item.unit}`,
+                                       `🏢 الإدارة: ${item.department}`
+                                     ];
+                                    }
+                                    let statusIcon = "🔴";
+                                    if (item.actual >= item.target) statusIcon = "🟢";
+                                    else if (item.actual >= item.target * 0.5) statusIcon = "🟠";
+                                    else if (item.actual >= item.target * 0.7) statusIcon = "🟡";
+                                    return [
+                                         `📊 القيمة الفعلية: ${item.actual} ${item.unit}`,
+                                         `🎯 القيمة المستهدفة: ${item.target} ${item.unit}`,
+                                         `${statusIcon} الأداء: ${statusText}`
+                                        ];
+                                }
+                            
+                    }
+                },
+                legend: { 
+                    display: true,
+                    position: 'top',
+                    labels: { font: { size: 12 } }
+                }
+            },
+            scales: {
+                y: {
+                    title: { display: true, text: 'مؤشرات الأداء', padding: { right: 10 }, font: { size: 14, weight: '500' } },
+                    ticks: { autoSkip: false, maxRotation: 90, minRotation: 45, font: { size: 12 } },
+                },
+                x: {
+                    beginAtZero: true,
+                    max: xMax,
+                    title: { display: true, text: 'القيمة',padding: { top: 10 }, font: { size: 14, weight: '500' } },
+                    ticks: { stepSize: stepApprox, maxTicksLimit: 6, font: { size: 12 } },
+                    
+                }
+            }
+        }
+    });
+}
+
+
+    // ====== Top 5 Chart ======
+    const role = '{{ role }}';
+    const top5_labels = {{ top5_labels_json| safe }};
+    const progressData = {{ top5_progress_json| safe }};
+    const top5El = document.getElementById('top5Chart');
+
+        new Chart(top5El, {
+            type: 'bar',
+            data: {
+                labels: top5_labels,
+                datasets: [{ data: progressData, 
+                    backgroundColor: progressData.map(p => p >= 80 ? '#36715d' : p >= 50 ? '#b7914f' : '#b85f5f'),
+                    borderRadius: 6, barPercentage: 0.2 }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: 'x',
+                plugins: {
+                    tooltip: {
+                         rtl: true,
+                         textDirection: 'rtl',
+                         bodyAlign: 'right',
+                         titleAlign: 'center',
+                         displayColors: true,
+                         titleFont: { size: 14, weight: '500' },
+                         bodyFont: { size: 12 },
+                         padding: 8,
+                         bodySpacing: 2,  
+                         titleMarginBottom: 6,
+                         callbacks: { label: ctx => `متوسط الأداء: ${ctx.raw}%` } },
+                    legend: { display: false }
+                },
+                scales: {
+                    y: { beginAtZero: true, max: 100, title: { display: true, text:  'متوسط الأداء %', padding:{righ:10}, font: { size: 14, weight: '500' } } },
+                    x: { title: { display: true, text: role === 'GM' ? 'الإدارات' : 'الموظفين', padding:{top:10,bottom:2}, font: { size: 14, weight: '500' } }, ticks: { maxRotation: 45, minRotation: 0, autoSkip: false } }
+                }
+            }
+        });
+    }
+
+    // ====== Timeline Chart ======
+    const timelineEl = document.getElementById('timelineChart');
+    if (timelineEl) {
+        const raw = JSON.parse('{{ timeline_json|escapejs }}');
+        const rows = raw.filter(i => i.delyed_item);
+        if (rows.length > 0) {
+            const labels = [], plannedStartDates = [], plannedEndDates = [], actualEndDates = [], delayDurations = [], colors = [];
+            rows.forEach((item, i) => {
+                const start = new Date(item.start);
+                const plannedEnd = new Date(item.planned_end);
+                const actualEnd = item.completed_time ? new Date(item.completed_time) : plannedEnd;
+                const delay = Math.max(0, Math.ceil((actualEnd - plannedEnd)/(1000*60*60*24)));
+
+                const maxLength = 10;
+                labels.push(item.title && item.title.trim() !== '' ? (item.title.length > maxLength ? item.title.slice(0,maxLength)+"..." : item.title) : `عنصر ${i+1}`);
+                plannedStartDates.push(start);
+                plannedEndDates.push(plannedEnd);
+                actualEndDates.push(actualEnd);
+                delayDurations.push(delay);
+                colors.push('#A13529');
+            });
+
+            const oneDay = 24*60*60*1000;
+            const minDate = new Date(Math.min(...plannedStartDates.map(d=>d.getTime())));
+            const maxDate = new Date(Math.max(...actualEndDates.map(d=>d.getTime()+oneDay)));
+
+            new Chart(timelineEl, {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [
+                        { label:'المدة المخططة للتنفيذ', data: plannedStartDates.map((start,i)=>({x:[start,plannedEndDates[i]],y:labels[i]})), backgroundColor:'rgba(156,163,175,0.6)', borderRadius:0, barThickness:15, minBarLength:10 },
+                        { label:'المدة الفعلية حتى الاكتمال', data: plannedEndDates.map((plannedEnd,i)=>({x:[plannedEnd,actualEndDates[i]],y:labels[i]})), backgroundColor:colors, borderRadius:4, barThickness:15, minBarLength:10 }
+                    ]
+                },
+                options: {
+                    indexAxis:'y',
+                    responsive:true,
+                    scales: {
+                        x:{ type:'time', time:{unit:'day', tooltipFormat:'d/M', displayFormats:{day:'d/M'}}, min:minDate, max:maxDate,
+                        ticks: {
+                            autoSkip: true,     
+                            maxTicksLimit: 20, 
+                            font: { size: 12 }
+                        },
+                            title:{ display:true, text:'التاريخ', padding:{top:10,bottom:2}, color:'#404956', font:{size:14, weight:'500', family:'Tajawal, Arial, sans-serif'}}
+                        },
+                        y:{ stacked:true }
+                    },
+                    plugins: {
+                        legend:{ display:true },
+                        tooltip: {
+                         rtl: true,
+                         textDirection: 'rtl',
+                         bodyAlign: 'right',
+                         titleAlign: 'center',
+                         displayColors: true,
+                         titleFont: { size: 14, weight: '500' },
+                         bodyFont: { size: 12 },
+                         padding: 8,
+                         bodySpacing: 4,  
+                         titleMarginBottom: 6,
+                         callbacks:{
+                                title: ctx => rows[ctx[0].dataIndex].title,
+                                label: ctx => {
+                                    const idx = ctx.dataIndex;
+                                    const barColor = ctx.dataset.backgroundColor[idx] || ctx.dataset.backgroundColor;
+                                    const plannedStart = plannedStartDates[idx].toLocaleDateString('ar-SA');
+                                    const plannedEnd = plannedEndDates[idx].toLocaleDateString('ar-SA');
+                                    const actualEnd = actualEndDates[idx].toLocaleDateString('ar-SA');
+                                    if (barColor === '#A13529') {
+                                        const delay = delayDurations[idx];
+                                        return [
+                                            ` تاريخ الاكتمال: ${actualEnd}`, `مدة التأخير: ${delay ===1 ? 'يوم' : delay===2 ? 'يومان' : delay<10 ? delay+' أيام' : delay+' يوم'}`
+                                        ];
+                                    }
+                                    return `المدة المحددة للتنفيذ: ${plannedStart} ← ${plannedEnd}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+// ====== Call function after DOM is ready ======
+document.addEventListener("DOMContentLoaded", renderAllCharts);
+</script>
