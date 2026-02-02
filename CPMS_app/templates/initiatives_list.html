@@ -1,219 +1,233 @@
 {% extends 'base.html' %}
 {% block breadcrumb %}
 <li class="flex items-center">
-    <span class="mx-2">/</span>
-    <span class="text-gray-800 font-semibold">المبادرات</span>
+<span class="mx-2">/</span>
+<span class="text-gray-800 font-semibold">المبادرات</span>
 </li>
 {% endblock %}
 {% block content %}
 
 
 <div class="max-w-6xl mx-auto px-6 my-10" dir="rtl">
-    <div class="bg-white shadow-sm rounded-lg border border-gray-200">
-        
-        <!-- Container for Search, Filter, and pages number  -->
-        <div class="p-4 flex items-center justify-between gap-4"> 
+<div class="bg-white shadow-sm rounded-lg border border-gray-200">
+    
+    <!-- Container for Search, Filter, and pages number  -->
+    <div class="p-4 flex items-center justify-between gap-4">
 
-            <!-- Container for Search and Filter -->
-            <div class="flex items-center gap-2">
 
-                <!-- Search Input -->
-                <div class="relative">
-                    <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
-                        <!-- Search icon -->
-                        <svg class="w-4 h-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none"
-                            viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M21 21l-4.35-4.35M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0z" />
-                        </svg>
-                    </div>
-                    <input type="text" id="search"
-                        class="block w-80 ps-9 pe-3 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="البحث عن مبادرة...">
+        <!-- Container for Search and Filter -->
+        <div class="flex items-center gap-2">
+
+
+            <!-- Search Input -->
+            <div class="relative w-full">
+                <div class="absolute inset-y-0 end-0 flex items-center pe-3 pointer-events-none">
+                    <!-- Search icon -->
+                    <svg class="w-4 h-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M21 21l-4.35-4.35M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0z" />
+                    </svg>
                 </div>
-                <!-- Filter Button -->
-                <div class="relative">
-                    <button id="dropdownDefaultButton"
-                        class="flex flex-row-reverse items-center justify-between text-body bg-neutral-secondary-medium border rounded text-gray-500 hover:text-gray-800 hover:bg-neutral-tertiary-medium shadow-xs font-medium leading-5 rounded-lg text-sm px-3 py-2 focus:outline-none gap-2 "
-                        type="button">
-                        <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none"
-                            viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-width="2"
-                                d="M18.796 4H5.204a1 1 0 0 0-.753 1.659l5.302 6.058a1 1 0 0 1 .247.659v4.874a.5.5 0 0 0 .2.4l3 2.25a.5.5 0 0 0 .8-.4v-7.124a1 1 0 0 1 .247-.659l5.302-6.059c.566-.646.106-1.658-.753-1.658Z" />
-                        </svg>
-                        <span class="ml-1">الأهمية</span>
-                        <svg id="dropdownIcon" class="w-4 h-4 transition-transform duration-200"
-                            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="m19 9-7 7-7-7" />
-                        </svg>
-                    </button>
+                <input type="text" id="search"
+                    class="block w-[48rem] h-10 pe-9 ps-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00A399]/10 focus:border-[#00685E]/20 "
+                    placeholder="البحث عن مبادرة...">
+            </div>
+            <!-- Filter Button -->
+            <div class="relative">
+                <button id="dropdownDefaultButton"
+                    class="flex flex-row-reverse items-center h-10 justify-between text-body bg-neutral-secondary-medium border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00A399]/10 focus:border-[#00685E]/20  text-gray-500 hover:text-gray-800 hover:bg-neutral-tertiary-medium shadow-xs font-medium leading-5  text-sm px-3 py-2 gap-2 "
+                    type="button">
+                    <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-width="2"
+                            d="M18.796 4H5.204a1 1 0 0 0-.753 1.659l5.302 6.058a1 1 0 0 1 .247.659v4.874a.5.5 0 0 0 .2.4l3 2.25a.5.5 0 0 0 .8-.4v-7.124a1 1 0 0 1 .247-.659l5.302-6.059c.566-.646.106-1.658-.753-1.658Z" />
+                    </svg>
+                    <span class="ml-1">الأهمية</span>
+                    <svg id="dropdownIcon" class="w-4 h-4 transition-transform duration-200"
+                        xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="m19 9-7 7-7-7" />
+                    </svg>
+                </button>
 
-                    <!-- Dropdown Menu -->
-                    <div id="dropdown"
-                        class="absolute right-0 z-10 hidden bg-white border border-default-medium rounded-lg shadow-lg w-32 overflow-hidden">
-                        <ul class="p-2 text-sm text-body font-medium">
-                            <li>
-                                <button type="button" data-priority=""
-                                    class="bg-white filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">الكل</button>
-                            </li>
-                            <li>
-                                <button type="button" data-priority="C"
-                                    class="bg-white filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">حرجة</button>
-                            </li>
-                            <li>
-                                <button type="button" data-priority="H"
-                                    class="bg-white filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">عالية</button>
-                            </li>
-                            <li>
-                                <button type="button" data-priority="M"
-                                    class="bg-white filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">متوسطة</button>
-                            </li>
-                            <li>
-                                <button type="button" data-priority="L"
-                                    class="bg-white filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">منخفضة</button>
-                            </li>
-                        </ul>
-                    </div>
+
+                <!-- Dropdown Menu -->
+                <div id="dropdown"
+                    class="absolute right-0 z-10 hidden bg-neutral-primary-medium border border-default-medium rounded-base shadow-lg w-32 overflow-hidden">
+                    <ul class="p-2 text-sm text-body font-medium">
+                        <li>
+                            <button type="button" data-priority=""
+                                class="bg-white filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">الكل</button>
+                        </li>
+                        <li>
+                            <button type="button" data-priority="C"
+                                class="bg-white filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">حرجة</button>
+                        </li>
+                        <li>
+                            <button type="button" data-priority="H"
+                                class="bg-white filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">عالية</button>
+                        </li>
+                        <li>
+                            <button type="button" data-priority="M"
+                                class="bg-white filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">متوسطة</button>
+                        </li>
+                        <li>
+                            <button type="button" data-priority="L"
+                                class="bg-white filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">منخفضة</button>
+                        </li>
+                    </ul>
                 </div>
             </div>
-            <!-- dropdown page number -->
-                <div class="relative"> 
-                    <button id="page-dropdown-button"
-                        class="flex flex-row-reverse items-center justify-between text-body bg-white border rounded text-gray-500 hover:text-gray-800 hover:bg-neutral-tertiary-medium shadow-xs font-medium leading-5 rounded-lg text-sm px-3 py-2 focus:outline-none gap-2 "
-                        type="button">
-                        <span id="page-dropdown-text" class="ml-1">عدد الصفوف</span> 
-                        <svg id="page-dropdown-icon" class="w-4 h-4 transition-transform duration-200" 
-                            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="m19 9-7 7-7-7" />
-                        </svg>
-                    </button>
+        </div>
+        <!-- dropdown page number -->
+            <div class="relative">
+                <button id="page-dropdown-button"
+                    class="flex flex-row-reverse h-10 items-center justify-between text-body bg-neutral-secondary-medium border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00A399]/10 focus:border-[#00685E]/20  text-gray-500 hover:text-gray-800 hover:bg-neutral-tertiary-medium shadow-xs font-medium leading-5 text-sm px-3 py-2 gap-2 "
+                    type="button">
+                    <span id="page-dropdown-text" class="ml-1">عدد الصفوف</span>
+                    <svg id="page-dropdown-icon" class="w-4 h-4 transition-transform duration-200"
+                        xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="m19 9-7 7-7-7" />
+                    </svg>
+                </button>
 
-                    <!-- Dropdown Menu --> 
-                    <div id="page-dropdown" 
-                        class="absolute right-0 z-10 hidden bg-white border border-default-medium rounded-lg shadow-lg w-32 overflow-hidden">
-                        <ul class="p-2 text-sm text-body font-medium">
-                            <li>
-                                <button type="button" data-number="25"
-                                    class="bg-white page-filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">عدد الصفوف</button>
-                            </li>
-                            <li>
-                                <button type="button" data-number="5"
-                                    class="bg-white page-filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">5</button>
-                            </li>
-                            <li>
-                                <button type="button" data-number="10"
-                                    class="bg-white page-filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">10</button>
-                            </li>
-                            <li>
-                                <button type="button" data-number="50"
-                                    class="bg-white page-filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">50</button>
-                            </li>
-                            <li>
-                                <button type="button" data-number="100"
-                                    class="bg-white page-filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">100</button>
-                            </li>
-                        </ul>
-                    </div>
+
+                <!-- Dropdown Menu -->
+                <div id="page-dropdown"
+                    class="absolute right-0 z-10 hidden bg-neutral-primary-medium border border-default-medium rounded-base shadow-lg w-32 overflow-hidden">
+                    <ul class="p-2 text-sm text-body font-medium">
+                        <li>
+                            <button type="button" data-number="25"
+                                class="bg-white page-filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">عدد الصفوف</button>
+                        </li>
+                        <li>
+                            <button type="button" data-number="5"
+                                class="bg-white page-filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">5</button>
+                        </li>
+                        <li>
+                            <button type="button" data-number="10"
+                                class="bg-white page-filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">10</button>
+                        </li>
+                        <li>
+                            <button type="button" data-number="50"
+                                class="bg-white page-filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">50</button>
+                        </li>
+                        <li>
+                            <button type="button" data-number="100"
+                                class="bg-white page-filter-btn block w-full text-right px-4 py-2 hover:bg-gray-100">100</button>
+                        </li>
+                    </ul>
                 </div>
+            </div>
 
-        </div>
-        <table class="w-full text-sm text-right text-gray-700 ">
 
-            <thead class="text-xs bg-gray-50 border-b text-center">
-                <tr>
-                    <th class="py-3 font-semibold">عنوان المبادرة</th>
-                    <th class="px-0 py-3 font-semibold text-body ">
-                        <div class="flex items-center justify-center gap-1">
-                            <span>الأهمية</span>
-                            <a href="?{% if request.GET.sort == 'priority' %}{% else %}sort=priority{% endif %}&per_page={{ request.GET.per_page|default:25 }}&page=1">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="size-4">
-                                    <path fill-rule="evenodd" d="M5.22 10.22a.75.75 0 0 1 1.06 0L8 11.94l1.72-1.72a.75.75 0 1 1 1.06 1.06l-2.25 2.25a.75.75 0 0 1-1.06 0l-2.25-2.25a.75.75 0 0 1 0-1.06ZM10.78 5.78a.75.75 0 0 1-1.06 0L8 4.06 6.28 5.78a.75.75 0 0 1-1.06-1.06l2.25-2.25a.75.75 0 0 1 1.06 0l2.25 2.25a.75.75 0 0 1 0 1.06Z" clip-rule="evenodd" />
-                                </svg>
-                            </a>
-                        </div>
-                    </th>
-
-                    <th class="px-0 py-3 font-semibold">مدة المبادرة</th>
-                    {% if request.user.role.role_name == 'GM' %}
-                        <th class="px-0 py-3 font-semibold">القسم</th>
-                    {% endif %}
-                    <th class="px-0 py-3 font-semibold">فئة المبادرة</th>
-                    <th class="px-0 py-3 font-semibold">العاملين على المبادرة</th>
-                    <th class="px-0 py-3 font-semibold text-center"> </th>
-                </tr>
-            </thead>
-
-            <tbody id="initiativesBody">
-                {% include 'partials/initiatives_table_rows.html' %}
-            </tbody>
-            
-        </table>
-
-    <!-- Pagination -->
-
-                
-        {% if is_paginated %}
-        <div class="flex items-center flex-column flex-wrap md:flex-row justify-between p-4" aria-label="Table navigation" dir="rtl">
-            <span class="text-sm font-normal text-gray-600 mb-4 md:mb-0 block w-full md:inline md:w-auto">
-                عرض
-                <span class="font-semibold text-gray-900">{{ page_obj.number }}</span>
-                من
-                <span class="font-semibold text-gray-900">{{ paginator.num_pages }}</span>
-            </span>
-            <ul class="flex gap-5 text-sm items-center border rounded-full py-2 px-5 flex-start">
-
-                <!-- Previous button -->
-                <li>
-                    {% if page_obj.has_previous %}
-                        <a href="?page={{ page_obj.previous_page_number }}&per_page={{ request.GET.per_page|default:25 }}&search={{ search }}&priority={{ request.GET.priority|default:'' }}"
-                        class="text-[#00685E] hover:text-[#00A399] transition-colors duration-200 text-lg">
-                            ‹
-                        </a>
-                    {% else %}
-                        <span class="text-gray-400 text-lg cursor-not-allowed">‹</span>
-                    {% endif %}
-                </li>
-
-                <!-- Page numbers -->
-                {% for num in page_numbers %}
-                    {% if num == '...' %}
-                        <li>
-                            <span class="text-gray-400">…</span>
-                        </li>
-                    {% elif num == page_obj.number %}
-                        <li>
-                            <span class="flex items-center justify-center w-8 h-8 bg-[#00A399] text-white rounded-full">
-                                {{ num }}
-                            </span>
-                        </li>
-                    {% else %}
-                        <li>
-                            <a href="?page={{ num }}&per_page={{ request.GET.per_page|default:25 }}&search={{ search }}&priority={{ request.GET.priority|default:'' }}"
-                            class="text-[#00685E] hover:text-[#00A399] transition-colors duration-200">
-                                {{ num }}
-                            </a>
-                        </li>
-                    {% endif %}
-                {% endfor %}
-
-                <!-- Next button -->
-                <li>
-                    {% if page_obj.has_next %}
-                        <a href="?page={{ page_obj.next_page_number }}&per_page={{ request.GET.per_page|default:25 }}&search={{ search }}&priority={{ request.GET.priority|default:'' }}"
-                        class="text-[#00685E] hover:text-[#00A399] transition-colors duration-200 text-lg">
-                            ›
-                        </a>
-                    {% else %}
-                        <span class="text-gray-400 text-lg cursor-not-allowed">›</span>
-                    {% endif %}
-                </li>
-
-            </ul>
-        </div>
-        {% endif %}
     </div>
+    <table class="w-full text-sm text-right text-gray-700 ">
+
+
+        <thead class="text-xs bg-gray-50 border-b text-center">
+            <tr>
+                <th class="py-3 font-semibold">عنوان المبادرة</th>
+                <th class="px-0 py-3 font-semibold text-body ">
+                    <div class="flex items-center justify-center gap-1">
+                        <span>الأهمية</span>
+                        <a href="?{% if request.GET.sort == 'priority' %}{% else %}sort=priority{% endif %}&per_page={{ request.GET.per_page|default:25 }}&page=1">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="size-4">
+                                <path fill-rule="evenodd" d="M5.22 10.22a.75.75 0 0 1 1.06 0L8 11.94l1.72-1.72a.75.75 0 1 1 1.06 1.06l-2.25 2.25a.75.75 0 0 1-1.06 0l-2.25-2.25a.75.75 0 0 1 0-1.06ZM10.78 5.78a.75.75 0 0 1-1.06 0L8 4.06 6.28 5.78a.75.75 0 0 1-1.06-1.06l2.25-2.25a.75.75 0 0 1 1.06 0l2.25 2.25a.75.75 0 0 1 0 1.06Z" clip-rule="evenodd" />
+                            </svg>
+                        </a>
+                    </div>
+                </th>
+
+
+                <th class="px-0 py-3 font-semibold">مدة المبادرة</th>
+                {% if request.user.role.role_name == 'GM' %}
+                    <th class="px-0 py-3 font-semibold">القسم</th>
+                {% endif %}
+                <th class="px-0 py-3 font-semibold">فئة المبادرة</th>
+                <th class="px-0 py-3 font-semibold">العاملين على المبادرة</th>
+                <th class="px-0 py-3 font-semibold text-center"> </th>
+            </tr>
+        </thead>
+
+
+        <tbody id="initiativesBody">
+            {% include 'partials/initiatives_table_rows.html' %}
+        </tbody>
+        
+    </table>
+
+
+<!-- Pagination -->
+
+
+            
+    {% if is_paginated %}
+    <div class="flex items-center flex-column flex-wrap md:flex-row justify-between p-4" aria-label="Table navigation" dir="rtl">
+        <span class="text-sm font-normal text-gray-600 mb-4 md:mb-0 block w-full md:inline md:w-auto">
+            عرض
+            <span class="font-semibold text-gray-900">{{ page_obj.number }}</span>
+            من
+            <span class="font-semibold text-gray-900">{{ paginator.num_pages }}</span>
+        </span>
+        <ul class="flex gap-5 text-sm items-center border rounded-full py-2 px-5 flex-start">
+
+
+            <!-- Previous button -->
+            <li>
+                {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}&per_page={{ request.GET.per_page|default:25 }}&search={{ search }}&priority={{ request.GET.priority|default:'' }}"
+                    class="text-[#00685E] hover:text-[#00A399] transition-colors duration-200 text-lg">
+                        ‹
+                    </a>
+                {% else %}
+                    <span class="text-gray-400 text-lg cursor-not-allowed">‹</span>
+                {% endif %}
+            </li>
+
+
+            <!-- Page numbers -->
+            {% for num in page_numbers %}
+                {% if num == '...' %}
+                    <li>
+                        <span class="text-gray-400">…</span>
+                    </li>
+                {% elif num == page_obj.number %}
+                    <li>
+                        <span class="flex items-center justify-center w-8 h-8 bg-[#00A399] text-white rounded-full">
+                            {{ num }}
+                        </span>
+                    </li>
+                {% else %}
+                    <li>
+                        <a href="?page={{ num }}&per_page={{ request.GET.per_page|default:25 }}&search={{ search }}&priority={{ request.GET.priority|default:'' }}"
+                        class="text-[#00685E] hover:text-[#00A399] transition-colors duration-200">
+                            {{ num }}
+                        </a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+
+
+            <!-- Next button -->
+            <li>
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}&per_page={{ request.GET.per_page|default:25 }}&search={{ search }}&priority={{ request.GET.priority|default:'' }}"
+                    class="text-[#00685E] hover:text-[#00A399] transition-colors duration-200 text-lg">
+                        ›
+                    </a>
+                {% else %}
+                    <span class="text-gray-400 text-lg cursor-not-allowed">›</span>
+                {% endif %}
+            </li>
+
+
+        </ul>
+    </div>
+    {% endif %}
+</div>
 </div>
 {% include 'partials/confirm_delete.html' %}
 
