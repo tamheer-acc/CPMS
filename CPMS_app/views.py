@@ -186,6 +186,14 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         user = self.request.user
         status_order = [s[0] for s in STATUS]
         active_plan = StrategicPlan.objects.filter(is_active = True).first()
+        if not active_plan:
+            context['active_plan'] = None
+            context['department'] = user.department if user.role.role_name != 'GM' else None
+            return context
+        context['active_plan'] = active_plan
+        context['vision'] = active_plan.vision
+        context['mission'] = active_plan.mission
+
 
         # GENERAL MANAGER #
         if user.role.role_name == 'GM':
@@ -293,7 +301,8 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             
             
             # Bar Chart ( توزيع العمل ) : each employee and the number of initiatives they're working on
-            employees = User.objects.filter(role__role_name = 'E', department = user.department).annotate(workload=Count('userinitiative')).order_by('workload')
+            employees = User.objects.filter(role__role_name = 'E', department = user.department, 
+                                            userinitiative__initiative__strategic_goal__strategicplan=active_plan).annotate(workload=Count('userinitiative')).order_by('workload')
             bar_chart2_labels = []
             bar_chart2_data = []
             for employee in employees:
@@ -305,46 +314,47 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             
             # Stacked Bar Chart ( مؤشرات الأداء الرئيسية ) : KPIs based on status, grouped by initiatives 
             kpis = KPI.objects.filter(initiative__strategic_goal__strategicplan=active_plan,initiative__strategic_goal__department = user.department)
-            achieved, in_progress, not_started = kpi_filter(kpis)
-            initiative_labels = [initiative.title for initiative in (Initiative.objects.filter(userinitiative__user=user))]
-            
-            not_started_data = []
-            in_progress_data = []
-            achieved_data = []
-
-            for initiative in initiatives:
-                kpis_for_initiative = KPI.objects.filter(initiative=initiative)
-                achieved, in_progress, not_started = kpi_filter(kpis_for_initiative)
-                not_started_data.append(len(not_started))
-                in_progress_data.append(len(in_progress))
-                achieved_data.append(len(achieved))
-            
-            stacked_bar_chart_data = {
-                'labels': initiative_labels,
-                'datasets': [
-                    {
-                        'label': 'لم يبدأ بعد',
-                        'data': not_started_data,
-                        'backgroundColor': '#F2C75C',
-                        'borderRadius':4
-
-                    },
-                    {
-                        'label': 'قيد التنفيذ',
-                        'data': in_progress_data,
-                        'backgroundColor': '#00A399',
-                        'borderRadius':4
-                    },
-                    {
-                        'label': 'مكتمل',
-                        'data': achieved_data,
-                        'backgroundColor': '#00685E',
-                        'borderRadius':4
-                    },
-                ],
+            if kpis:
+                achieved, in_progress, not_started = kpi_filter(kpis)
+                initiative_labels = [initiative.title for initiative in (Initiative.objects.filter(userinitiative__user=user, strategic_goal__strategicplan=active_plan))]
                 
-            }
-            context['stacked_bar_chart_data'] = stacked_bar_chart_data
+                not_started_data = []
+                in_progress_data = []
+                achieved_data = []
+
+                for initiative in initiatives:
+                    kpis_for_initiative = KPI.objects.filter(initiative=initiative)
+                    achieved, in_progress, not_started = kpi_filter(kpis_for_initiative)
+                    not_started_data.append(len(not_started))
+                    in_progress_data.append(len(in_progress))
+                    achieved_data.append(len(achieved))
+                
+                stacked_bar_chart_data = {
+                    'labels': initiative_labels,
+                    'datasets': [
+                        {
+                            'label': 'لم يبدأ بعد',
+                            'data': not_started_data,
+                            'backgroundColor': '#F2C75C',
+                            'borderRadius':4
+
+                        },
+                        {
+                            'label': 'قيد التنفيذ',
+                            'data': in_progress_data,
+                            'backgroundColor': '#00A399',
+                            'borderRadius':4
+                        },
+                        {
+                            'label': 'مكتمل',
+                            'data': achieved_data,
+                            'backgroundColor': '#00685E',
+                            'borderRadius':4
+                        },
+                    ],
+                    
+                }
+                context['stacked_bar_chart_data'] = stacked_bar_chart_data
 
             context['plans'] = StrategicPlan.objects.all()                                                                                     #  Plans
             context['goals'] = goals                                                                                                           #  Goals
@@ -458,12 +468,12 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         context['line_chart_data'] = departments_progress_over_time(departments)
 
         # context['notes'] = Note.objects.filter(sender=user)
-        active_plan = StrategicPlan.objects.get(is_active=True)
+        active_plan = StrategicPlan.objects.filter(is_active=True).first()
         context['notes'] = Note.objects.filter(sender=user, created_at__date__range=(active_plan.start_date, active_plan.end_date)).filter(
-                                                       Q(receiver__isnull=False)|
-                                                       Q(strategic_goal__strategicplan=active_plan) |
-                                                       Q(initiative__strategic_goal__strategicplan=active_plan)
-                                                       ).distinct()
+                                                Q(receiver__isnull=False)|
+                                                Q(strategic_goal__strategicplan=active_plan) |
+                                                Q(initiative__strategic_goal__strategicplan=active_plan)
+                                                ).distinct()
 
         context['departments'] = departments
         context['department'] = user.department if user.role.role_name != 'GM' else None
@@ -545,7 +555,7 @@ class AllInitiativeView(LoginRequiredMixin, InitiativePermissionMixin, ListView)
 
 
 
-class InitiativeDetailsView(LoginRequiredMixin, InitiativePermissionMixin, DetailView):
+class InitiativeDetailsView(LoginRequiredMixin, DetailView):
     '''
     - Shows details of a single initiative
     '''
@@ -557,7 +567,10 @@ class InitiativeDetailsView(LoginRequiredMixin, InitiativePermissionMixin, Detai
         context = super().get_context_data(**kwargs) 
         user = self.request.user 
         initiative = self.get_object() 
-
+        goal =  initiative.strategic_goal 
+        plan = goal.strategicplan
+        context['is_plan_active'] = plan.is_active
+        
         #  Average 
         avg_progress = UserInitiative.objects.filter( initiative = initiative, user__role__role_name='E').aggregate ( avg = Avg('progress')) ['avg']
         avg_progress = avg_progress or 0
@@ -677,6 +690,7 @@ class CreateInitiativeView(LoginRequiredMixin, RoleRequiredMixin, InitiativePerm
         kwargs = super().get_form_kwargs()
         kwargs['goal'] = get_object_or_404(StrategicGoal, id=self.kwargs['goal_id'])
         return kwargs
+
 
 
 class UpdateInitiativeView(LoginRequiredMixin, RoleRequiredMixin, InitiativePermissionMixin, LogMixin, UpdateView):  #managers only
