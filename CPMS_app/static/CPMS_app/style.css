@@ -18,6 +18,9 @@
     font-weight: 500;
     font-style: normal;
 }
+.font-cairo {
+font-family: 'Cairo', sans-serif;
+}
 
 .toast-message {
     transform: translateY(-20px);

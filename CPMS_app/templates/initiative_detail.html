@@ -159,17 +159,19 @@
         <div class="bg-white p-4 rounded-lg shadow">
             <div class="flex justify-between">
                 <h1 class="font-semibold m-2">مؤشرات الأداء الرئيسية</h1>
-                {% if request.user.role.role_name == 'M' or request.user.role.role_name == 'CM' %}
-                <div>
-                    <button id="add_kpi_button"
-                        class="bg-blue-600 hover:bg-blue-700 text-white px-2 py-2 rounded-md text-sm font-semibold"
-                        data-initiative-id="{{ initiative.id }}" data-initiative-title="{{ initiative.title }}">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="size-4">
-                            <path
-                                d="M8.75 3.75a.75.75 0 0 0-1.5 0v3.5h-3.5a.75.75 0 0 0 0 1.5h3.5v3.5a.75.75 0 0 0 1.5 0v-3.5h3.5a.75.75 0 0 0 0-1.5h-3.5v-3.5Z" />
-                        </svg>
-                    </button>
-                </div>
+                {% if is_plan_active %}
+                    {% if request.user.role.role_name == 'M' or request.user.role.role_name == 'CM' %}
+                    <div>
+                        <button id="add_kpi_button"
+                            class="bg-blue-600 hover:bg-blue-700 text-white px-2 py-2 rounded-md text-sm font-semibold"
+                            data-initiative-id="{{ initiative.id }}" data-initiative-title="{{ initiative.title }}">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="size-4">
+                                <path
+                                    d="M8.75 3.75a.75.75 0 0 0-1.5 0v3.5h-3.5a.75.75 0 0 0 0 1.5h3.5v3.5a.75.75 0 0 0 1.5 0v-3.5h3.5a.75.75 0 0 0 0-1.5h-3.5v-3.5Z" />
+                            </svg>
+                        </button>
+                    </div>
+                    {% endif %}
                 {% endif %}
             </div>
             <div class="overflow-x-auto mt-4">
@@ -186,39 +188,41 @@
                             {{ kpi.actual_value }} / {{ kpi.target_value|default:"—" }}
                         </span>
 
-                        {% if user.role.role_name == 'M' or user.role.role_name == 'CM' %}
+                        {% if is_plan_active %}
+                            {% if user.role.role_name == 'M' or user.role.role_name == 'CM' %}
 
-                        <div class="flex gap-2 pt-1">
-                            <a href="#"
-                                class="edit-kpi-btn text-yellow-600 hover:text-yellow-800 p-1 inline-flex items-center gap-1"
-                                data-kpi-id="{{ kpi.id }}" data-initiative-id="{{ initiative.id }}"
-                                data-kpi-name="{{ kpi.kpi }}" data-unit="{{ kpi.unit }}"
-                                data-target="{{ kpi.target_value|default_if_none:'' }}"
-                                data-actual="{{ kpi.actual_value|default_if_none:'' }}">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none"
-                                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                    stroke-linejoin="round" viewBox="0 0 24 24">
-                                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                    <path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" />
-                                    <path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415" />
-                                    <path d="M16 5l3 3" />
-                                </svg>
-                            </a>
+                            <div class="flex gap-2 pt-1">
+                                <a href="#"
+                                    class="edit-kpi-btn text-yellow-600 hover:text-yellow-800 p-1 inline-flex items-center gap-1"
+                                    data-kpi-id="{{ kpi.id }}" data-initiative-id="{{ initiative.id }}"
+                                    data-kpi-name="{{ kpi.kpi }}" data-unit="{{ kpi.unit }}"
+                                    data-target="{{ kpi.target_value|default_if_none:'' }}"
+                                    data-actual="{{ kpi.actual_value|default_if_none:'' }}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none"
+                                        stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" viewBox="0 0 24 24">
+                                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                        <path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" />
+                                        <path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415" />
+                                        <path d="M16 5l3 3" />
+                                    </svg>
+                                </a>
 
-                            <button class="text-red-600 hover:text-red-800 p-1"
-                                onclick="openDeleteModal('/initiatives/{{ initiative.id }}/kpis/{{ kpi.id }}/delete/','هل أنت متأكد أنك تريد حذف هذا المؤشر')">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none"
-                                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                    stroke-linejoin="round" viewBox="0 0 24 24">
-                                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                    <path d="M4 7l16 0" />
-                                    <path d="M10 11l0 6" />
-                                    <path d="M14 11l0 6" />
-                                    <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" />
-                                    <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" />
-                                </svg>
-                            </button>
-                        </div>
+                                <button class="text-red-600 hover:text-red-800 p-1"
+                                    onclick="openDeleteModal('/initiatives/{{ initiative.id }}/kpis/{{ kpi.id }}/delete/','هل أنت متأكد أنك تريد حذف هذا المؤشر')">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none"
+                                        stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" viewBox="0 0 24 24">
+                                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                        <path d="M4 7l16 0" />
+                                        <path d="M10 11l0 6" />
+                                        <path d="M14 11l0 6" />
+                                        <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" />
+                                        <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" />
+                                    </svg>
+                                </button>
+                            </div>
+                            {% endif %}
                         {% endif %}
                         </span>
                     </div>
@@ -229,206 +233,212 @@
 
 
         <!-- employees -->
-        {% if user.role.role_name == 'M' or user.role.role_name == 'CM' or user.role.role_name == 'GM' or user in assigned_employees %}
-        <div class="overflow-hidden rounded-lg border border-gray-200">
-            <div class="bg-white p-4 rounded-lg shadow">
-                <div class="flex justify-between pb-6">
-                    <h1 class="font-semibold m-2">فريق المبادرة</h1>
-                    <div>
-                        {% if user.role.role_name == 'CM' or user.role.role_name == 'M' %}
-                        <button
-                            class="assign_employee_button bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-semibold">
-                            تعيين موظف
-                        </button>
-                        {% endif %}
+        {% if is_plan_active %}
+            {% if user.role.role_name == 'M' or user.role.role_name == 'CM' or user.role.role_name == 'GM' or user in assigned_employees %}
+            <div class="overflow-hidden rounded-lg border border-gray-200">
+                <div class="bg-white p-4 rounded-lg shadow">
+                    <div class="flex justify-between pb-6">
+                        <h1 class="font-semibold m-2">فريق المبادرة</h1>
+                        <div>
+                            {% if user.role.role_name == 'CM' or user.role.role_name == 'M' %}
+                            <button
+                                class="assign_employee_button bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-semibold">
+                                تعيين موظف
+                            </button>
+                            {% endif %}
+                        </div>
                     </div>
+
+                    <table class="w-full border-collapse text-sm">
+                        {% if not assigned_employees %}
+                        <div>لا يوجد</div>
+                        {% else %}
+                        <thead class="bg-gray-100">
+                            <tr>
+                                <th class="px-4 py-2 text-right w-1/4">الموظف</th>
+                                <th class="px-4 py-2 text-right w-1/4">الحالة</th>
+                                <th class="px-4 py-2 text-right w-1/2">
+                                    <div class="flex justify-between">
+                                        التقدم
+                                    </div>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for employee, progress, status, color in employee_progress %}
+                            <tr
+                                class="border-b border-gray-200 hover:bg-gray-50 transition
+                                            {% if employee == request.user %} bg-[#8BAA99]/20 hover:bg-[#698274] {% else %} hover:bg-gray-50 {% endif %}">
+                                <td class="px-4 py-2 text-right">{{employee.get_full_name}}</td>
+                                <td class="px-4 py-2 text-right text-gray-600">{{status}}</td>
+                                <td class="px-4 py-2">
+                                    <div class="flex items-center gap-x-3 whitespace-nowrap">
+                                        <div class="flex w-full h-2 bg-gray-200 rounded-full overflow-hidden"
+                                            role="progressbar" aria-valuenow="{{progress}}" aria-valuemin="0"
+                                            aria-valuemax="100">
+                                            <div class="flex flex-col justify-center rounded-full overflow-hidden {{color}} text-xs text-white text-center whitespace-nowrap transition duration-500"
+                                                style="width: {{progress}}%"></div>
+                                        </div>
+                                        <div class="w-10 text-end">
+                                            <span class="text-sm text-gray-800">{{progress}}%</span>
+                                        </div>
+                                        {% if employee == request.user %}
+                                        <button
+                                            class="add-progress-btn text-yellow-600 hover:text-yellow-800 px-3 py-1 rounded-md text-xs font-semibold"
+                                            data-initiative-id="{{ initiative.pk }}" data-current-progress="{{ progress }}"
+                                            onclick="addProgress(this)">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none"
+                                                stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                                stroke-linejoin="round" viewBox="0 0 24 24">
+                                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                                <path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" />
+                                                <path
+                                                    d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415" />
+                                                <path d="M16 5l3 3" />
+                                            </svg>
+                                        </button>
+
+                                        {% endif %}
+
+                                    </div>
+
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr class="border-b border-gray-200 hover:bg-gray-50 transition"> لا يوجد </tr>
+                            {% endfor %}
+                        </tbody>
+                        {% endif %}
+                    </table>
                 </div>
-
-                <table class="w-full border-collapse text-sm">
-                    {% if not assigned_employees %}
-                    <div>لا يوجد</div>
-                    {% else %}
-                    <thead class="bg-gray-100">
-                        <tr>
-                            <th class="px-4 py-2 text-right w-1/4">الموظف</th>
-                            <th class="px-4 py-2 text-right w-1/4">الحالة</th>
-                            <th class="px-4 py-2 text-right w-1/2">
-                                <div class="flex justify-between">
-                                    التقدم
-                                </div>
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for employee, progress, status, color in employee_progress %}
-                        <tr
-                            class="border-b border-gray-200 hover:bg-gray-50 transition
-                                        {% if employee == request.user %} bg-[#8BAA99]/20 hover:bg-[#698274] {% else %} hover:bg-gray-50 {% endif %}">
-                            <td class="px-4 py-2 text-right">{{employee.get_full_name}}</td>
-                            <td class="px-4 py-2 text-right text-gray-600">{{status}}</td>
-                            <td class="px-4 py-2">
-                                <div class="flex items-center gap-x-3 whitespace-nowrap">
-                                    <div class="flex w-full h-2 bg-gray-200 rounded-full overflow-hidden"
-                                        role="progressbar" aria-valuenow="{{progress}}" aria-valuemin="0"
-                                        aria-valuemax="100">
-                                        <div class="flex flex-col justify-center rounded-full overflow-hidden {{color}} text-xs text-white text-center whitespace-nowrap transition duration-500"
-                                            style="width: {{progress}}%"></div>
-                                    </div>
-                                    <div class="w-10 text-end">
-                                        <span class="text-sm text-gray-800">{{progress}}%</span>
-                                    </div>
-                                    {% if employee == request.user %}
-                                    <button
-                                        class="add-progress-btn text-yellow-600 hover:text-yellow-800 px-3 py-1 rounded-md text-xs font-semibold"
-                                        data-initiative-id="{{ initiative.pk }}" data-current-progress="{{ progress }}"
-                                        onclick="addProgress(this)">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none"
-                                            stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                            stroke-linejoin="round" viewBox="0 0 24 24">
-                                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                            <path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" />
-                                            <path
-                                                d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415" />
-                                            <path d="M16 5l3 3" />
-                                        </svg>
-                                    </button>
-
-                                    {% endif %}
-
-                                </div>
-
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr class="border-b border-gray-200 hover:bg-gray-50 transition"> لا يوجد </tr>
-                        {% endfor %}
-                    </tbody>
-                    {% endif %}
-                </table>
             </div>
-        </div>
+            {% endif %}
         {% endif %}
 
 
         <!-- notes -->
         {% if user.role.role_name != 'GM' %}
-        <div class="bg-white p-4 rounded-lg shadow">
-            <div class="flex justify-between">
-                <h1 class="font-semibold m-2">الملاحظات</h1>
-                <label for="note-modal-toggle"
-                      hx-get="{% url 'note_create_modal' %}?initiative_id={{ initiative.id }}&next={{ request.path }}"
-                      hx-target="#note-form-container" hx-swap="innerHTML"
-                      class="bg-[#00A399] rounded-lg p-3 hover:bg-[#018077] text-white transition-colors cursor-pointer">
-                    أرسل ملاحظة
-                </label>
-            </div>
+            <div class="bg-white p-4 rounded-lg shadow">
+                <div class="flex justify-between">
+                    <h1 class="font-semibold m-2">الملاحظات</h1>
+                    {% if is_plan_active %}
+                        <label for="note-modal-toggle"
+                            hx-get="{% url 'note_create_modal' %}?initiative_id={{ initiative.id }}&next={{ request.path }}"
+                            hx-target="#note-form-container" hx-swap="innerHTML"
+                            class="bg-[#00A399] rounded-lg p-3 hover:bg-[#018077] text-white transition-colors cursor-pointer">
+                            أرسل ملاحظة
+                        </label>
+                    {% endif %}
+                </div>
 
-            <div class="mt-4">
-                {% if initiative_notes %}
-                <ol class="list-none space-y-2">
-                    {% for note in initiative_notes %}
-                    <li class="flex items-start gap-3 p-3 bg-white rounded-lg border hover:bg-gray-50">
-                        <!-- <span class="border-l-2 border-gray-300 h-20"></span> -->
+                <div class="mt-4">
+                    {% if initiative_notes %}
+                    <ol class="list-none space-y-2">
+                        {% for note in initiative_notes %}
+                        <li class="flex items-start gap-3 p-3 bg-white rounded-lg border hover:bg-gray-50">
+                            <!-- <span class="border-l-2 border-gray-300 h-20"></span> -->
 
-                        <div class="flex-1 space-y-2">
-                            <!-- Sender name & Date  -->
-                            <div class="flex justify-between items-center">
-                                <span class="flex items-center gap-1 text-xs font-semibold text-gray-500">
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"
-                                        class="size-4">
-                                        <path fill-rule="evenodd"
-                                            d="M15 8A7 7 0 1 1 1 8a7 7 0 0 1 14 0Zm-5-2a2 2 0 1 1-4 0 2 2 0 0 1 4 0ZM8 9c-1.825 0-3.422.977-4.295 2.437A5.49 5.49 0 0 0 8 13.5a5.49 5.49 0 0 0 4.294-2.063A4.997 4.997 0 0 0 8 9Z"
-                                            clip-rule="evenodd" />
-                                    </svg>
+                            <div class="flex-1 space-y-2">
+                                <!-- Sender name & Date  -->
+                                <div class="flex justify-between items-center">
+                                    <span class="flex items-center gap-1 text-xs font-semibold text-gray-500">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"
+                                            class="size-4">
+                                            <path fill-rule="evenodd"
+                                                d="M15 8A7 7 0 1 1 1 8a7 7 0 0 1 14 0Zm-5-2a2 2 0 1 1-4 0 2 2 0 0 1 4 0ZM8 9c-1.825 0-3.422.977-4.295 2.437A5.49 5.49 0 0 0 8 13.5a5.49 5.49 0 0 0 4.294-2.063A4.997 4.997 0 0 0 8 9Z"
+                                                clip-rule="evenodd" />
+                                        </svg>
 
-                                    {% if note.sender == request.user %}
-                                    أنت
-                                    {% else %}
-                                    {{ note.sender.get_full_name }}
-                                    {% endif %}
-                                </span>
+                                        {% if note.sender == request.user %}
+                                        أنت
+                                        {% else %}
+                                        {{ note.sender.get_full_name }}
+                                        {% endif %}
+                                    </span>
 
 
-                                <span class="flex items-center gap-1 text-xs text-gray-500">
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"
-                                        class="size-4">
-                                        <path
-                                            d="M5.75 7.5a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5ZM5 10.25a.75.75 0 1 1 1.5 0 .75.75 0 0 1-1.5 0ZM10.25 7.5a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5ZM7.25 8.25a.75.75 0 1 1 1.5 0 .75.75 0 0 1-1.5 0ZM8 9.5A.75.75 0 1 0 8 11a.75.75 0 0 0 0-1.5Z" />
-                                        <path fill-rule="evenodd"
-                                            d="M4.75 1a.75.75 0 0 0-.75.75V3a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2V1.75a.75.75 0 0 0-1.5 0V3h-5V1.75A.75.75 0 0 0 4.75 1ZM3.5 7a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1v4.5a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1V7Z"
-                                            clip-rule="evenodd" />
-                                    </svg>
-                                    {{ note.created_at|date:"Y/m/d" }}
-                                </span>
-                            </div>
-
-                            <div class="flex gap-3">
-
-                                <span class="border-l-2 border-gray-300 h-8"></span>
-
-                                <div class="space-y-2">
-                                    <h4 class="font-semibold text-gray-800 break-words leading-normal">
-                                        <a href="{% url 'notes_list' %}?initiative={{ initiative.id }}&note={{ note.id }}"
-                                            class="hover:underline text-[#00A399]">
-                                            {{ note.title|default:"ملاحظة" }}
-                                        </a>
-                                    </h4>
-
-                                    <p class="text-sm text-gray-500 break-words leading-normal">
-                                        {{ note.content|truncatechars:120|default:"لا يوجد محتوى" }}
-                                    </p>
+                                    <span class="flex items-center gap-1 text-xs text-gray-500">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"
+                                            class="size-4">
+                                            <path
+                                                d="M5.75 7.5a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5ZM5 10.25a.75.75 0 1 1 1.5 0 .75.75 0 0 1-1.5 0ZM10.25 7.5a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5ZM7.25 8.25a.75.75 0 1 1 1.5 0 .75.75 0 0 1-1.5 0ZM8 9.5A.75.75 0 1 0 8 11a.75.75 0 0 0 0-1.5Z" />
+                                            <path fill-rule="evenodd"
+                                                d="M4.75 1a.75.75 0 0 0-.75.75V3a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2V1.75a.75.75 0 0 0-1.5 0V3h-5V1.75A.75.75 0 0 0 4.75 1ZM3.5 7a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1v4.5a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1V7Z"
+                                                clip-rule="evenodd" />
+                                        </svg>
+                                        {{ note.created_at|date:"Y/m/d" }}
+                                    </span>
                                 </div>
+
+                                <div class="flex gap-3">
+
+                                    <span class="border-l-2 border-gray-300 h-8"></span>
+
+                                    <div class="space-y-2">
+                                        <h4 class="font-semibold text-gray-800 break-words leading-normal">
+                                            <a href="{% url 'notes_list' %}?initiative={{ initiative.id }}&note={{ note.id }}"
+                                                class="hover:underline text-[#00A399]">
+                                                {{ note.title|default:"ملاحظة" }}
+                                            </a>
+                                        </h4>
+
+                                        <p class="text-sm text-gray-500 break-words leading-normal">
+                                            {{ note.content|truncatechars:120|default:"لا يوجد محتوى" }}
+                                        </p>
+                                    </div>
+                                </div>
+
                             </div>
+                        </li>
 
-                        </div>
-                    </li>
+                        {% endfor %}
+                    </ol>
 
-                    {% endfor %}
-                </ol>
-
-                {% else %}
-                <p class="text-gray-500">لا توجد ملاحظات مرتبطة بهذه المبادرة</p>
-                {% endif %}
+                    {% else %}
+                    <p class="text-gray-500">لا توجد ملاحظات مرتبطة بهذه المبادرة</p>
+                    {% endif %}
+                </div>
             </div>
-        </div>
         {% endif %}
 
 
         <!-- edit and delete -->
-        {% if user.role.role_name == 'CM' or user.role.role_name == 'M' %}
-        <div class="flex justify-start gap-3">
-            <button
-                class="bg-yellow-600 rounded-lg p-3 items-center  hover:bg-yellow-800 text-white rounded-lg transition-colors flex gap-1"
-                onclick="window.open(
-                '/initiatives/{{initiative.id}}/update/','_blank');">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" stroke="currentColor"
-                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                    <path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" />
-                    <path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415" />
-                    <path d="M16 5l3 3" />
-                </svg>
-                 تعديل المبادرة
-            </button>
+        {% if is_plan_active %}
+            {% if user.role.role_name == 'CM' or user.role.role_name == 'M' %}
+            <div class="flex justify-start gap-3">
+                <button
+                    class="bg-yellow-600 rounded-lg p-3 items-center  hover:bg-yellow-800 text-white rounded-lg transition-colors flex gap-1"
+                    onclick="window.open(
+                    '/initiatives/{{initiative.id}}/update/','_blank');">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" stroke="currentColor"
+                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                        <path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" />
+                        <path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415" />
+                        <path d="M16 5l3 3" />
+                    </svg>
+                    تعديل المبادرة
+                </button>
 
-            <button
-                class="bg-red-600 rounded-lg p-3 items-center  hover:bg-red-800 text-white rounded-lg transition-colors flex gap-1"
-                onclick="openDeleteModal( 
-                        '/initiatives/{{ initiative.id }}/delete/',
-                        'هل أنت متأكد أنك تريد حذف هذه المبادرة؟'
-                    )">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" stroke="currentColor"
-                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                    <path d="M4 7l16 0" />
-                    <path d="M10 11l0 6" />
-                    <path d="M14 11l0 6" />
-                    <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" />
-                    <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" />
-                </svg>
-                 حذف المبادرة
-            </button>
-        </div>
+                <button
+                    class="bg-red-600 rounded-lg p-3 items-center  hover:bg-red-800 text-white rounded-lg transition-colors flex gap-1"
+                    onclick="openDeleteModal( 
+                            '/initiatives/{{ initiative.id }}/delete/',
+                            'هل أنت متأكد أنك تريد حذف هذه المبادرة؟'
+                        )">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" stroke="currentColor"
+                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                        <path d="M4 7l16 0" />
+                        <path d="M10 11l0 6" />
+                        <path d="M14 11l0 6" />
+                        <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" />
+                        <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" />
+                    </svg>
+                    حذف المبادرة
+                </button>
+            </div>
+            {% endif %}
         {% endif %}
 
     </div>

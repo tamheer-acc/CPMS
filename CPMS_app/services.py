@@ -911,10 +911,10 @@ def weight_initiative(initiative):
 def departments_progress_over_time(departments, days_count=30):
     days = [(now() - timedelta(days=i)).date() for i in range(days_count - 1, -1, -1)]
     chart_data = {}
-
+    active_plan = StrategicPlan.objects.filter(is_active = True).first()
     for dept in departments:
         initiatives = Initiative.objects.filter(
-            userinitiative__user__department=dept
+            userinitiative__user__department=dept, strategic_goal__strategicplan = active_plan
         ).distinct()
 
         total_initiatives = initiatives.count()
