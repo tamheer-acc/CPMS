@@ -212,8 +212,8 @@ function renderAllCharts() {
             data: {
                 labels: ['لم تبدأ', 'قيد التنفيذ', 'متأخرة', 'مكتملة'],
                 datasets: [
-                    { label: 'الأهداف', data: goalsData, backgroundColor: ['#F2C75C', '#E59256', '#A13525', '#00685E'], borderWidth: 0, weight: 2 },
-                    { label: 'المبادرات', data: initiativesData, backgroundColor: ['#F7E3A9', '#E8B8A0', '#C77C7A', '#166b70'], borderWidth: 0, weight: 1 }
+                    { label: 'عدد الأهداف ', data: goalsData, backgroundColor: ['#F2C75C', '#E59256', '#A13525', '#00685E'], borderWidth: 0, weight: 2 },
+                    { label: 'عدد المبادرات ', data: initiativesData, backgroundColor: ['#F7E3A9', '#E8B8A0', '#C77C7A', '#166b70'], borderWidth: 0, weight: 1 }
                 ]
             },
             options: { cutout: '55%', plugins: {tooltip:{
@@ -227,6 +227,11 @@ function renderAllCharts() {
                          padding: 8,
                          bodySpacing: 2,  
                          titleMarginBottom: 6,
+                          callbacks: {
+                           title: function(donutCtx) {
+                            return `الحالة: ${donutCtx[0].label}`;
+                        }
+                        }
             } ,legend: { position: 'right' } }, responsive: true, maintainAspectRatio: true }
         });
     }
@@ -402,8 +407,8 @@ function renderAllCharts() {
             data: {
                 labels: top5_labels,
                 datasets: [{ data: progressData, 
-                    backgroundColor: progressData.map(p => p >= 80 ? '#36715d' : p >= 50 ? '#b7914f' : '#b85f5f'),
-                    borderRadius: 6, barPercentage: 0.2 }]
+                    backgroundColor: ['#00685E', '#55857F', '#AAC2BF', '#8BAA99'],
+                    borderRadius: 6, barPercentage: 0.3}]
             },
             options: {
                 responsive: true,
@@ -436,7 +441,7 @@ function renderAllCharts() {
     const timelineEl = document.getElementById('timelineChart');
     if (timelineEl) {
         const raw = JSON.parse('{{ timeline_json|escapejs }}');
-        const rows = raw.filter(i => i.delyed_item);
+        const rows = raw.filter(i => i.delayed_item);
         if (rows.length > 0) {
             const labels = [], plannedStartDates = [], plannedEndDates = [], actualEndDates = [], delayDurations = [], colors = [];
             rows.forEach((item, i) => {
