@@ -5,10 +5,12 @@ from django import forms
 from django.utils import timezone
 from django.utils.safestring import mark_safe
 from django.utils.timezone import now, timedelta
+from django.utils.decorators import method_decorator
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy, reverse
 from django.views.generic import ListView, DetailView, CreateView, TemplateView
 from django.views.generic.edit import UpdateView, DeleteView
+from django.views.decorators.cache import never_cache
 from django.http import HttpResponse, JsonResponse
 from django.forms import BooleanField, ModelForm
 from django.forms.models import model_to_dict  
@@ -168,6 +170,7 @@ def page_not_found_view(request, exception=None):
 # ---------------------------
 #  Dashboard View done
 # ---------------------------
+@method_decorator(never_cache, name='dispatch')
 class DashboardView(LoginRequiredMixin, TemplateView):
     '''
     - Displays the main dashboard with an overview of the system
@@ -485,6 +488,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
 # ---------------------------
 #  Initiative Views done
 # ---------------------------
+@method_decorator(never_cache, name='dispatch')
 class AllInitiativeView(LoginRequiredMixin, InitiativePermissionMixin, ListView): 
     '''
     List all initiatives
@@ -555,6 +559,7 @@ class AllInitiativeView(LoginRequiredMixin, InitiativePermissionMixin, ListView)
 
 
 
+@method_decorator(never_cache, name='dispatch')
 class InitiativeDetailsView(LoginRequiredMixin, DetailView):
     '''
     - Shows details of a single initiative
@@ -628,6 +633,7 @@ class InitiativeDetailsView(LoginRequiredMixin, DetailView):
 
 
 
+@method_decorator(never_cache, name='dispatch')
 class CreateInitiativeView(LoginRequiredMixin, RoleRequiredMixin, InitiativePermissionMixin, LogMixin, CreateView):
     '''
     - Allows Managers to create a new initiative
@@ -693,6 +699,7 @@ class CreateInitiativeView(LoginRequiredMixin, RoleRequiredMixin, InitiativePerm
 
 
 
+@method_decorator(never_cache, name='dispatch')
 class UpdateInitiativeView(LoginRequiredMixin, RoleRequiredMixin, InitiativePermissionMixin, LogMixin, UpdateView):  #managers only
     '''
     - Allows updating an existing initiative
@@ -731,6 +738,7 @@ class UpdateInitiativeView(LoginRequiredMixin, RoleRequiredMixin, InitiativePerm
 
 
 
+@method_decorator(never_cache, name='dispatch')
 class DeleteInitiativeView(LoginRequiredMixin, RoleRequiredMixin, InitiativePermissionMixin, LogMixin, DeleteView):#managers only
     '''
     - Allows deletion of an initiative
@@ -765,12 +773,13 @@ class DeleteInitiativeView(LoginRequiredMixin, RoleRequiredMixin, InitiativePerm
 
 
 
-
+@never_cache
 def is_manager(user):
     return user.role and user.role.role_name in ['M', 'CM']
 
 
 
+@never_cache
 @login_required
 @user_passes_test(is_manager)
 def assign_employee_to_initiative(request, pk):
@@ -839,6 +848,7 @@ def assign_employee_to_initiative(request, pk):
 
 
 
+@never_cache
 @login_required
 def add_progress(request, initiative_id):
     user = request.user
@@ -901,6 +911,7 @@ def add_progress(request, initiative_id):
 # ---------------------------
 #  KPI Views
 # ---------------------------
+@method_decorator(never_cache, name='dispatch')
 class KPIDetailsView(LoginRequiredMixin, DetailView):
     '''
     - Shows details of a single KPI
@@ -911,6 +922,7 @@ class KPIDetailsView(LoginRequiredMixin, DetailView):
 
 
 
+@never_cache
 @login_required
 @user_passes_test(is_manager)
 def create_kpi_view(request, initiative_id):
@@ -954,6 +966,7 @@ def create_kpi_view(request, initiative_id):
 
 
 
+@method_decorator(never_cache, name='dispatch')
 class DeleteKPIView(LoginRequiredMixin, RoleRequiredMixin, LogMixin, DeleteView):
     '''
     - Allows users to delete a KPI
@@ -990,6 +1003,7 @@ class DeleteKPIView(LoginRequiredMixin, RoleRequiredMixin, LogMixin, DeleteView)
 
 
 
+@never_cache
 @login_required
 def edit_kpi_view(request, initiative_id, kpi_id):
     kpi = get_object_or_404(KPI, id=kpi_id, initiative_id=initiative_id)
@@ -1017,6 +1031,7 @@ def edit_kpi_view(request, initiative_id, kpi_id):
 
 
 
+@method_decorator(never_cache, name='dispatch')
 class AllKPIsView(LoginRequiredMixin,ListView): #not needed but here we go
     '''
     - Displays a list of KPIs related to initiatives assigned to the current user
@@ -1041,6 +1056,7 @@ class AllKPIsView(LoginRequiredMixin,ListView): #not needed but here we go
 # ---------------------------
 #  Department View
 # ---------------------------
+@method_decorator(never_cache, name='dispatch')
 class AllDepartmentsView(LoginRequiredMixin, ListView):
     '''
     - List all departments
@@ -1057,6 +1073,7 @@ class AllDepartmentsView(LoginRequiredMixin, ListView):
 # ---------------------------
 #  StrategicPlan View
 # ---------------------------
+@method_decorator(never_cache, name='dispatch')
 class AllPlansView(LoginRequiredMixin, RoleRequiredMixin, ListView):
     model = StrategicPlan
     template_name = 'plans_list.html'
@@ -1111,6 +1128,7 @@ class AllPlansView(LoginRequiredMixin, RoleRequiredMixin, ListView):
 
 
 
+@method_decorator(never_cache, name='dispatch')
 class PlanDetailsview(LoginRequiredMixin, RoleRequiredMixin, DetailView):
      '''
      - Displays details of a single strategic plan
@@ -1176,6 +1194,8 @@ class PlanDetailsview(LoginRequiredMixin, RoleRequiredMixin, DetailView):
          return super().render_to_response(context, **response_kwargs)
 
 
+
+@method_decorator(never_cache, name='dispatch')
 class CreatePlanView(LoginRequiredMixin, LogMixin, CreateView):
     '''
     - Only Committee Manager can create a new strategic plan
@@ -1213,6 +1233,7 @@ class CreatePlanView(LoginRequiredMixin, LogMixin, CreateView):
 
 
 
+@method_decorator(never_cache, name='dispatch')
 class UpdatePlanView(LoginRequiredMixin, LogMixin, UpdateView):
     '''
     - Only Committee Manager can update an existing plan
@@ -1241,6 +1262,7 @@ class UpdatePlanView(LoginRequiredMixin, LogMixin, UpdateView):
 
 
 
+@method_decorator(never_cache, name='dispatch')
 class DeletePlanView(LoginRequiredMixin, RoleRequiredMixin, LogMixin, DeleteView):
     '''
     - Only Committee Manager can delete a plan
@@ -1263,6 +1285,7 @@ class DeletePlanView(LoginRequiredMixin, RoleRequiredMixin, LogMixin, DeleteView
 # ---------------------------
 #  StrategicGoal View
 # ---------------------------
+@method_decorator(never_cache, name='dispatch')
 class AllGoalsView(LoginRequiredMixin, ListView):
     '''
     Displays a list of all strategic plans
@@ -1339,6 +1362,7 @@ class AllGoalsView(LoginRequiredMixin, ListView):
 
 
 
+@method_decorator(never_cache, name='dispatch')
 class GoalDetailsview(LoginRequiredMixin, DetailView):
     '''
     - Shows details of a single goal
@@ -1382,9 +1406,10 @@ class GoalDetailsview(LoginRequiredMixin, DetailView):
         # context["circle_offset_for_progress"] = round(circumference * (1 - goal_progress/100), 2)
 
         return context
-        
 
 
+
+@method_decorator(never_cache, name='dispatch')
 class CreateGoalView(LoginRequiredMixin, RoleRequiredMixin, LogMixin, CreateView):
     '''
     - Allows Managers and Committee Managers to create a new goal
@@ -1429,6 +1454,7 @@ class CreateGoalView(LoginRequiredMixin, RoleRequiredMixin, LogMixin, CreateView
 
 
 
+@method_decorator(never_cache, name='dispatch')
 class UpdateGoalView(LoginRequiredMixin, RoleRequiredMixin, LogMixin, UpdateView):
     '''
     - Managers and Committee Managers can update goals in their department
@@ -1450,6 +1476,7 @@ class UpdateGoalView(LoginRequiredMixin, RoleRequiredMixin, LogMixin, UpdateView
 
 
 
+@method_decorator(never_cache, name='dispatch')
 class DeleteGoalView(LoginRequiredMixin, RoleRequiredMixin, LogMixin, DeleteView):
     '''
     - Managers and Committee Managers can delete goals in their department
@@ -1473,6 +1500,7 @@ class DeleteGoalView(LoginRequiredMixin, RoleRequiredMixin, LogMixin, DeleteView
 # ---------------------------
 #  Note View
 # ---------------------------
+@method_decorator(never_cache, name='dispatch')
 class AllNotesView(LoginRequiredMixin, ListView):
     '''
     - Displays a list of notes for the current user
@@ -1744,6 +1772,7 @@ class AllNotesView(LoginRequiredMixin, ListView):
 
 
 
+@method_decorator(never_cache, name='dispatch')
 class NoteDetailsview(LoginRequiredMixin, LogMixin, DetailView):
     model = Note
     template_name = 'partials/note_detail.html'
@@ -1863,6 +1892,7 @@ class NoteDetailsview(LoginRequiredMixin, LogMixin, DetailView):
 
 
 
+@method_decorator(never_cache, name='dispatch')
 class CreateNoteView(LoginRequiredMixin, LogMixin, CreateView):
     model = Note
     form_class = NoteForm
@@ -1973,6 +2003,7 @@ class CreateNoteView(LoginRequiredMixin, LogMixin, CreateView):
 
 
 
+@method_decorator(never_cache, name='dispatch')
 class UpdateNoteView(LoginRequiredMixin, LogMixin, UpdateView):
     '''
     - Allows updating a note
@@ -2002,6 +2033,7 @@ class UpdateNoteView(LoginRequiredMixin, LogMixin, UpdateView):
 
 
 
+@method_decorator(never_cache, name='dispatch')
 class DeleteNoteView(LoginRequiredMixin, LogMixin, DeleteView):
     '''
     - Allows deleting a note
@@ -2033,6 +2065,7 @@ class DeleteNoteView(LoginRequiredMixin, LogMixin, DeleteView):
 # ---------------------------
 #  Log View
 # ---------------------------
+@method_decorator(never_cache, name='dispatch')
 class AllLogsView(LoginRequiredMixin,ListView):
     model = Log
     template_name = 'log.html'
