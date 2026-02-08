@@ -1,12 +1,13 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>{% block title %}متابعة الأداء المؤسسي{% endblock %}</title>
-        {% load static %}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}متابعة الأداء المؤسسي{% endblock %}</title>
 
+    {% load static %}
+    <link rel="icon" href="{% static 'CPMS_app/images/fav-icon.svg' %}" type="image/svg+xml">
     <!-- APP CSS -->
     <link rel="stylesheet" href="{% static 'CPMS_app/style.css' %}">
     <!-- Tailwind CSS -->
@@ -23,119 +24,157 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@200;300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
 
 </head>
 
-    <body class="flex bg-gray-50 min-h-screen">
+<body class="flex bg-gray-50 min-h-screen">
 
-        <!-- navbar -->
-        <aside class="w-64 bg-white shadow-md flex flex-col sticky top-0 h-screen">
-            <div class="p-6 flex items-center gap-3 border-b border-gray-200 bg-[#00685E] text-white">
-                <h1 class="text-xl font-normal text-white">متابعة الأداء المؤسسي</h1>
-            </div>
-            <ul class="flex-1 mt-6 space-y-2">
-                <li>
-                    <a href="{% url 'dashboard' %}"
-                        class="flex items-center gap-3 px-6 py-3 text-gray-700 hover:bg-green-100 hover:text-green-700 rounded-lg transition">
-                        <span>لوحة التحكم</span>
-                    </a>
-                </li>
-                <!-- GM, M, CM -->
-                {% if request.user.role.role_name != 'E' %}
-                <li>
-                    <a href="{% url 'plans_list' %}"
-                        class="flex items-center gap-3 px-6 py-3 text-gray-700 hover:bg-green-100 hover:text-green-700 rounded-lg transition">
-                        <span>الخطط الاستراتيجية</span>
-                    </a>
-                </li>
+    <!-- navbar -->
+    <aside class="w-64 bg-white shadow-md flex flex-col sticky top-0 h-screen">
+        <div
+            class="p-6 flex items-center gap-3 border-b border-gray-200 bg-gradient-to-r from-[#00685E] via-[#00675B] to-[#337461]  text-white">
+            <h1 class="text-xl font-normal text-white">مـتابعة الأداء المؤسســـي</h1>
+            <!-- <h1 class="text-xl font-normal text-right text-white">مـــــــــتــــــابـــــــعـــــــة الأداء الـــــــمــــــــؤسســـــــــــــــــي</h1> -->
+        </div>
+        <ul class="flex-1 mt-6 space-y-2 px-4">
+            <li>
+                <a href="{% url 'dashboard' %}"
+                    class="flex items-center gap-3 px-6 py-3 text-gray-700 hover:bg-green-100 hover:text-green-700 rounded-lg transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-chart-pie"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M10 3.2a9 9 0 1 0 10.8 10.8a1 1 0 0 0 -1 -1h-6.8a2 2 0 0 1 -2 -2v-7a.9 .9 0 0 0 -1 -.8" /><path d="M15 3.5a9 9 0 0 1 5.5 5.5h-4.5a1 1 0 0 1 -1 -1v-4.5" /></svg>
+                    <span>لوحة التحكم</span>
+                </a>
+            </li>
+            <!-- GM, M, CM -->
+            {% if request.user.role.role_name != 'E' %}
+            <li>
+                <a href="{% url 'plans_list' %}"
+                    class="flex items-center gap-3 px-6 py-3 text-gray-700 hover:bg-green-100 hover:text-green-700 rounded-lg transition">
+                    <svg fill="currentColor" version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 496 496" xml:space="preserve" width="18px" height="18px"><g id="SVGRepo_bgCarrier" stroke-width="1"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <g> <g> <g> <path d="M476.88,480l-144-280H256v-72h159.544l-45.712-64l45.712-64H240v200h-76.88l-144,280H0v16h496v-16H476.88z M256,48h80V32 h-80V16h128.456l-11.432,16H352v16h9.6l-11.432,16L361.6,80H256V48z M256,96h117.024l11.432,16H256V96z M37.112,480L172.88,216 h150.24l135.776,264H37.112z"></path> <path d="M320,352c0-39.696-32.304-72-72-72s-72,32.304-72,72c0,20.616,8.696,39.944,24,53.624V416h-16v16h16v32h96v-32h16v-16 h-16v-10.376C311.304,391.944,320,372.616,320,352z M280,448h-64v-16h64V448z M240,352c0-4.408,3.592-8,8-8s8,3.592,8,8 c0,4.408-3.592,8-8,8C243.592,360,240,356.408,240,352z M282.992,395.68l-2.992,2.4V416h-24v-41.472 c9.288-3.312,16-12.112,16-22.528c0-13.232-10.768-24-24-24s-24,10.768-24,24c0,10.416,6.712,19.216,16,22.528V416h-24v-17.92 l-2.992-2.4C199.656,384.968,192,369.04,192,352c0-30.88,25.12-56,56-56s56,25.12,56,56 C304,369.04,296.344,384.968,282.992,395.68z"></path> <rect x="240" y="232" width="16" height="32"></rect> <rect x="158.459" y="270.458" transform="matrix(0.7071 0.7071 -0.7071 0.7071 247.9977 -41.8026)" width="32" height="16"></rect> <rect x="128" y="344" width="32" height="16"></rect> <rect x="336" y="344" width="32" height="16"></rect> <rect x="305.522" y="270.475" transform="matrix(-0.7071 0.7071 -0.7071 -0.7071 745.7845 248.0361)" width="32" height="16"></rect> </g> </g> </g> </g></svg>
+                    <span>الخطط الاستراتيجية</span>
+                </a>
+            </li>
 
-                <li>
-                    <a href="{% url 'goals_list' %}"
-                        class="flex items-center gap-3 px-6 py-3 text-gray-700 hover:bg-green-100 hover:text-green-700 rounded-lg transition">
-                        <span>الأهداف الاستراتيجية</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="{% url 'initiatives_list' %}"
-                        class="flex items-center gap-3 px-6 py-3 text-gray-700 hover:bg-green-100 hover:text-green-700 rounded-lg transition">
-                        <span>المبادرات</span>
-                    </a>
-                </li>
-                {% endif %}
-                <!-- M, CM, E -->
-                {% if request.user.role.role_name != 'GM' %}
-                <li>
-                    <a href="{% url 'notes_list' %}"
-                        class="flex items-center gap-3 px-6 py-3 text-gray-700 hover:bg-green-100 hover:text-green-700 rounded-lg transition">
-                        <span>الملاحظات</span>
-                    </a>
-                </li>
-                {% endif %}
+            <li>
+                <a href="{% url 'goals_list' %}"
+                    class="flex items-center gap-3 px-6 py-3 text-gray-700 hover:bg-green-100 hover:text-green-700 rounded-lg transition">
+                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-target-arrow">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                    <path d="M11 12a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" />
+                    <path d="M12 7a5 5 0 1 0 5 5" />
+                    <path d="M13 3.055a9 9 0 1 0 7.941 7.945" />
+                    <path d="M15 6v3h3l3 -3h-3v-3l-3 3" />
+                    <path d="M15 9l-3 3" />
+                </svg>
+
+                    <span>الأهداف الاستراتيجية</span>
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'initiatives_list' %}"
+                    class="flex items-center gap-3 px-6 py-3 text-gray-700 hover:bg-green-100 hover:text-green-700 rounded-lg transition">
+                 <svg width="24px" height="24px" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor" stroke-width="0.528"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round" stroke="#00000" stroke-width="2"></g><g id="SVGRepo_iconCarrier"><path d="M2.595 15L8 8.764l3 3.461V11.5a2.467 2.467 0 0 1 .106-.68L8 7.236V5.228c.464-.486 1.104-.327 2.287.126 1.185.452 2.66 1.014 3.63-.44L14 4.786V.633l-.788.555c-.806.569-1.732.257-2.713-.073A3.369 3.369 0 0 0 7.674 1H7v7.39L.405 16H11v-1zM10.18 2.063a4.727 4.727 0 0 0 2.82.328v2.083c-.468.586-1.102.424-2.356-.055a5.749 5.749 0 0 0-1.954-.496 2.004 2.004 0 0 0-.69.115V1.984c.502-.452 1.145-.268 2.18.08zM21.5 10h-8a1.502 1.502 0 0 0-1.5 1.5v10a1.502 1.502 0 0 0 1.5 1.5h8a1.502 1.502 0 0 0 1.5-1.5v-10a1.502 1.502 0 0 0-1.5-1.5zm.5 11.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5zM17 13h3v1h-3zm0 6h3v1h-3zm0-3h3v1h-3zm-2-3h1v1h-1zm0 6h1v1h-1zm.595-3H16v1h-1v-1z"></path><path fill="none" d="M0 0h24v24H0z"></path></g></svg>
+                 <span>المبادرات</span>
+                </a>
+            </li>
+            {% endif %}
+            <!-- M, CM, E -->
+            {% if request.user.role.role_name != 'GM' %}
+            <li>
+                <a href="{% url 'notes_list' %}"
+                    class="flex items-center gap-3 px-6 py-3 text-gray-700 hover:bg-green-100 hover:text-green-700 rounded-lg transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-message"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M8 9h8" /><path d="M8 13h6" /><path d="M18 4a3 3 0 0 1 3 3v8a3 3 0 0 1 -3 3h-5l-5 3v-3h-2a3 3 0 0 1 -3 -3v-8a3 3 0 0 1 3 -3h12" /></svg>
+                    <span>الملاحظات</span>
+                    {% if unread_count > 4 %}
+                    <span class="inline whitespace-nowrap text-xs font-semibold text-red-500 bg-red-100 px-2 py-1 rounded-full {% if unread_count == 0 %}hidden{% endif %}">
+                       4+
+                    </span>
+                    {% else %}
+                    <span class="inline whitespace-nowrap text-xs font-semibold text-red-500 bg-red-100 px-2 py-1 rounded-full {% if unread_count == 0 %}hidden{% endif %}">
+                        {{ unread_count }}
+                        
+                    </span>
+                    
+                    {% endif %}
+                    <!-- <span
+                        class="absolute flex items-center gap-1 px-2 py-0.5 bg-red-100 rounded-md {% if unread_count == 0 %}hidden{% endif %}">
+                    
+                        <span class="w-2 h-2 bg-red-600 rounded-full"></span>
+                     
+                        <span class="text-red-600 text-xs font-semibold">جديد</span>
+                    </span> -->
+                </a>
+            </li>
+            {% endif %}
             <!-- Maybe all -->
+            <li>
+                <a href="{% url 'logs_list' %}"
+                    class="flex items-center gap-3 px-6 py-3 text-gray-700 hover:bg-green-100 hover:text-green-700 rounded-lg transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-history"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 8l0 4l2 2" /><path d="M3.05 11a9 9 0 1 1 .5 4m-.5 5v-5h5" /></svg>
+                    <span>سجل النظام</span>
+                </a>
+            </li>
+        </ul>
+        <div class="py-6 px-8 border-t border-gray-200">
+            <form method="post" action="{% url 'logout' %}">
+                {% csrf_token %}
+                <button type="submit" class="flex items-center gap-3 text-gray-700 hover:text-red-600 transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-logout"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 8v-2a2 2 0 0 0 -2 -2h-7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2 -2v-2" /><path d="M9 12h12l-3 -3" /><path d="M18 15l3 -3" /></svg>
+                   <span> تسجيل الخروج </span>
+                </button>
+            </form>
+        </div>
+    </aside>
+
+    <main class="flex-1 p-8">
+        <!-- Breadcrumb -->
+        <nav class="text-sm text-gray-500 mb-4" aria-label="Breadcrumb">
+            <ol class="list-none p-0 inline-flex items-center space-x-2">
                 <li>
-                    <a href="{% url 'logs_list' %}"
-                        class="flex items-center gap-3 px-6 py-3 text-gray-700 hover:bg-green-100 hover:text-green-700 rounded-lg transition">
-                        <span>سجل النظام</span>
-                    </a>
+                    <a href="{% url 'dashboard' %}" class="hover:text-gray-700">لوحة التحكم</a>
                 </li>
-            </ul>
-            <div class="p-6 border-t border-gray-200">
-                <form method="post" action="{% url 'logout' %}">
-                    {% csrf_token %}
-                    <button type="submit" class="flex items-center gap-3 text-gray-700 hover:text-red-600 transition">
-                        تسجيل الخروج
-                    </button>
-                </form>
-            </div>
-        </aside>
+                {% block breadcrumb %}
+                {% endblock %}
+            </ol>
+        </nav>
+        {% block content %}
+        {% endblock %}
+    </main>
+    {% if messages %}
+    <div id="django-messages" class="fixed top-5 right-5 space-y-3 z-50 w-96">
 
-        <main class="flex-1 p-8">
-            <!-- Breadcrumb -->
-            <nav class="text-sm text-gray-500 mb-4" aria-label="Breadcrumb">
-                <ol class="list-none p-0 inline-flex items-center space-x-2">
-                    <li>
-                        <a href="{% url 'dashboard' %}" class="hover:text-gray-700">لوحة التحكم</a>
-                    </li>
-                    {% block breadcrumb %}
-                    {% endblock %}
-                </ol>
-            </nav>
-            {% block content %}
-            {% endblock %}
-        </main>
-        {% if messages %}
-        <div id="django-messages" class="fixed top-5 right-5 space-y-3 z-50 w-96">
+        {% for message in messages %}
 
-            {% for message in messages %}
-
-            <div role="alert" class="toast-message rounded-lg p-4 shadow-md flex items-center gap-3 text-sm font-semibold
+        <div role="alert" class="toast-message rounded-lg p-4 shadow-md flex items-center gap-3 text-sm font-semibold
                 {% if 'delete' in message.tags %}bg-red-50 text-red-600
                 {% elif 'update' in message.tags %}bg-yellow-50 text-yellow-600
                 {% elif 'create' in message.tags %}bg-green-50 text-green-600
                 {% elif 'error' in message.tags %}bg-red-50 text-red-600
                 {% else %}bg-gray-50 text-black{% endif %}">
-                {% if 'error' in message.tags %}
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                    stroke="currentColor" class="h-6 w-6 shrink-0 stroke-current">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                        d="m9.75 9.75 4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                </svg>
-                {% else %}
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0 stroke-current" fill="none"
-                    viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                {% endif %}
-                <span>{{ message }}</span>
-            </div>
-            {% endfor %}
+            {% if 'error' in message.tags %}
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                stroke="currentColor" class="h-6 w-6 shrink-0 stroke-current">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                    d="m9.75 9.75 4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+            </svg>
+            {% else %}
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0 stroke-current" fill="none"
+                viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            {% endif %}
+            <span>{{ message }}</span>
         </div>
+        {% endfor %}
+    </div>
 
-        {% endif %}
+    {% endif %}
 
-    </body>
+</body>
 
 
 </html>

@@ -789,189 +789,176 @@ if (document.getElementById('line-chart-data')) {
         lineChart(lineChartData, 'lineChart');
     }
 }
-// //====================== Plan Detail Dashboard =============================
 
-//  function renderAllCharts() {
-//     // ====== Plan Gauge ======
-//     const planGauge = document.getElementById('plan-gauge');
-//     if (planGauge) {
-//         const value = planGauge.dataset.value;
-//         planGauge.setAttribute('stroke-dasharray', `${value} 100`);
-//     }
+// to expanding goal table 
+function toggleRow(id, iconId) {
+    const row = document.getElementById(id);
+    const icon = document.getElementById(iconId);
 
-//     // ====== Donut Chart ======
-//     const donutEl = document.getElementById('goalsInitiativesDonut');
-//     if (donutEl) {
-//         const goalsData = JSON.parse(donutEl.dataset.goals);
-//         const initiativesData = JSON.parse(donutEl.dataset.initiatives);
+    row.classList.toggle("hidden");
 
-//         const donutCtx = donutEl.getContext('2d');
-//         new Chart(donutCtx, {
-//             type: 'doughnut',
-//             data: {
-//                 labels: ['لم تبدأ', 'قيد التنفيذ', 'متأخرة', 'مكتملة'],
-//                 datasets: [
-//                     { label: 'الأهداف', data: goalsData, backgroundColor: ['#F2C75C', '#E59256', '#A13525', '#00685E'], borderWidth: 0, weight: 2 },
-//                     { label: 'المبادرات', data: initiativesData, backgroundColor: ['#F7E3A9', '#E8B8A0', '#C77C7A', '#166b70'], borderWidth: 0, weight: 1 }
-//                 ]
-//             },
-//             options: { cutout: '55%', plugins: { legend: { position: 'right' } }, responsive: true, maintainAspectRatio: true }
-//         });
-//     }
+    if (row.classList.contains("hidden")) {
+            icon.style.transform = "rotate(0deg)";
+    } else {
+            icon.style.transform = "rotate(45deg)";
+    }
+}
+// ----------------------------------------
+// for note list page
+// ----------------------------------------
+document.body.addEventListener('click', function (e) {
+        const row = e.target.closest('.note-row');
+        if (!row) return;
+        
+        if (e.target.closest('.star-btn')) return;
 
-//     // ====== Priority Progress Pie ======
-//     const priorityEl = document.getElementById('priorityProgressChart');
-//     if (priorityEl) {
-//         const chartData = JSON.parse(priorityEl.dataset.priority);
-//         new Chart(priorityEl, {
-//             type: 'pie',
-//             data: { 
-//                 labels: chartData.map(x => x.priority_label), 
-//                 datasets: [{ label: 'متوسط تقدم الأهداف (%)', data: chartData.map(x => x.avg_progress), backgroundColor: chartData.map(x => x.color), borderWidth: 1 }] 
-//             },
-//             options: {
-//                 responsive: true,
-//                 plugins: {
-//                     tooltip: { callbacks: { label: function(ctx){ const d = chartData[ctx.dataIndex]; return ` عدد الأهداف: ${d.count} - نسبة الإنجاز: ${d.avg_progress}%`; } } },
-//                     legend: { display: true, position: 'right' }
-//                 }
-//             }
-//         }); 
-//     }
+        const noteId = row.dataset.id;
 
-//     // ====== KPI Chart ======
-//     const kpiEl = document.getElementById('kpiChart');
-//     if (kpiEl) {
-//         const kpiData = JSON.parse(kpiEl.dataset.kpi);
-//         if (kpiData.length > 0) {
-//             const labels = kpiData.map(x => `${x.kpi_name} (${x.initiative_title})`);
-//             const targetData = kpiData.map(x => x.target);
-//             const actualData = kpiData.map(x => x.actual);
-//             const actualColors = kpiData.map(x => x.color);
+        htmx.ajax('GET', `/notes/${noteId}/detail/`, {
+            target: "#note-preview > div",
+            swap: "innerHTML"
+        });
 
-//             new Chart(kpiEl, {
-//                 type: 'bar',
-//                 data: { labels, datasets: [
-//                     { label: 'القيمة المستهدفة', data: targetData, backgroundColor: 'rgba(128,128,128,0.3)', borderColor: 'rgba(128,128,128,1)', borderWidth: 1 },
-//                     { label: 'القيمة الفعلية', data: actualData, backgroundColor: actualColors, borderColor: actualColors, borderWidth: 1 }
-//                 ]},
-//                 options: {
-//                     indexAxis: 'y',
-//                     responsive: true,
-//                     plugins: {
-//                         tooltip: { callbacks: { label: function(ctx) { const item = kpiData[ctx.dataIndex]; return `القيمة الفعلية: ${item.actual} ${item.unit} | القيمة المستهدفة: ${item.target} | وحدة القياس: ${item.unit} | الإدارة: ${item.department}`; } } },
-//                         legend: { display: true }
-//                     },
-//                     scales: {
-//                         y: { title: { display: true, text: 'KPIs / المبادرات' }, ticks: { autoSkip: false, maxRotation: 90, minRotation: 0 } },
-//                         x: { beginAtZero: true, title: { display: true, text: 'القيمة' } }
-//                     }
-//                 }
-//             });
-//         }
-//     }
+        const url = new URL(window.location);
+        url.searchParams.set("note", noteId);
+        window.history.pushState({}, "", url);
 
-//     // ====== Top 5 Chart ======
-//     const top5El = document.getElementById('top5Chart');
-//     const noDataEl = document.getElementById('no-data-msg');
-//     if (top5El) {
-//         const top5_labels = JSON.parse(top5El.dataset.top5labels);
-//         const progressData = JSON.parse(top5El.dataset.progress);
-//         const role = top5El.dataset.role;
 
-//         if (top5_labels.length === 0 || progressData.length === 0) {
-//             top5El.style.display = 'none';
-//             if (noDataEl) noDataEl.classList.remove('hidden');
-//         } else {
-//             if (noDataEl) noDataEl.classList.add('hidden');
-//             new Chart(top5El, {
-//                 type: 'bar',
-//                 data: {
-//                     labels: top5_labels,
-//                     datasets: [{ data: progressData, backgroundColor: progressData.map(p => p >= 80 ? '#10b981' : p >= 50 ? '#f59e0b' : '#ef4444'), borderRadius: 8, barPercentage: 0.6 }]
-//                 },
-//                 options: {
-//                     responsive: true,
-//                     maintainAspectRatio: false,
-//                     indexAxis: 'x',
-//                     plugins: { tooltip: { callbacks: { label: ctx => `${ctx.label}: ${ctx.raw}%` } }, legend: { display: false } },
-//                     scales: {
-//                         y: { beginAtZero: true, max: 100, title: { display: true, text: 'متوسط التقدم %', font: { size: 14, weight: 'bold' } } },
-//                         x: { title: { display: true, text: role === 'GM' ? 'الإدارات' : 'الموظفين', font: { size: 14, weight: 'bold' } }, ticks: { maxRotation: 45, minRotation: 0, autoSkip: false } }
-//                     }
-//                 }
-//             });
-//         }
-//     }
+        highlightActive(row);
+        openPreview();
+    });
 
-//     // ====== Timeline Chart ======
-//     const timelineEl = document.getElementById('timelineChart');
-//     if (timelineEl) {
-//         const raw = JSON.parse(timelineEl.dataset.timeline);
-//         const rows = raw.filter(i => i.delyed_item);
-//         if (rows.length > 0) {
-//             const labels = [], plannedStartDates = [], plannedEndDates = [], actualEndDates = [], delayDurations = [], colors = [];
-//             rows.forEach((item, i) => {
-//                 const start = new Date(item.start);
-//                 const plannedEnd = new Date(item.planned_end);
-//                 const actualEnd = item.completed_time ? new Date(item.completed_time) : plannedEnd;
-//                 const delay = Math.max(0, Math.ceil((actualEnd - plannedEnd)/(1000*60*60*24)));
 
-//                 const maxLength = 10;
-//                 labels.push(item.title && item.title.trim() !== '' ? (item.title.length > maxLength ? item.title.slice(0,maxLength)+"..." : item.title) : `عنصر ${i+1}`);
-//                 plannedStartDates.push(start);
-//                 plannedEndDates.push(plannedEnd);
-//                 actualEndDates.push(actualEnd);
-//                 delayDurations.push(delay);
-//                 colors.push('#A13529');
-//             });
+// to display note detail section
+function openPreview() {
+        const messages = document.getElementById('messages-section');
+        const preview = document.getElementById('note-preview');
 
-//             const oneDay = 24*60*60*1000;
-//             const minDate = new Date(Math.min(...plannedStartDates.map(d=>d.getTime())));
-//             const maxDate = new Date(Math.max(...actualEndDates.map(d=>d.getTime()+oneDay)));
+        preview.classList.remove('hidden');
+        messages.classList.remove('flex-1');
+        messages.classList.add('w-[45%]');
+    }
 
-//             new Chart(timelineEl, {
-//                 type: 'bar',
-//                 data: {
-//                     labels,
-//                     datasets: [
-//                         { label:'المدة المخططة للتنفيذ', data: plannedStartDates.map((start,i)=>({x:[start,plannedEndDates[i]],y:labels[i]})), backgroundColor:'rgba(156,163,175,0.6)', borderRadius:0, barThickness:15, minBarLength:10 },
-//                         { label:'المدة الفعلية حتى الاكتمال', data: plannedEndDates.map((plannedEnd,i)=>({x:[plannedEnd,actualEndDates[i]],y:labels[i]})), backgroundColor:colors, borderRadius:4, barThickness:15, minBarLength:10 }
-//                     ]
-//                 },
-//                 options: {
-//                     indexAxis:'y',
-//                     responsive:true,
-//                     scales: {
-//                         x:{ type:'time', time:{unit:'day', tooltipFormat:'d/M', displayFormats:{day:'d/M'}}, min:minDate, max:maxDate },
-//                         y:{ stacked:true }
-//                     },
-//                     plugins: {
-//                         legend:{ display:true },
-//                         tooltip: {
-//                             callbacks:{
-//                                 title: ctx => rows[ctx[0].dataIndex].title,
-//                                 label: ctx => {
-//                                     const idx = ctx.dataIndex;
-//                                     const barColor = ctx.dataset.backgroundColor[idx] || ctx.dataset.backgroundColor;
-//                                     const plannedStart = plannedStartDates[idx].toLocaleDateString('ar-SA');
-//                                     const plannedEnd = plannedEndDates[idx].toLocaleDateString('ar-SA');
-//                                     const actualEnd = actualEndDates[idx].toLocaleDateString('ar-SA');
-//                                     if (barColor === '#A13529') {
-//                                         const delay = delayDurations[idx];
-//                                         return `الفترة المخططة: ${plannedStart} ← ${plannedEnd} | تاريخ الاكتمال: ${actualEnd} | مدة التأخير: ${delay ===1 ? 'يوم' : delay===2 ? 'يومان' : delay<10 ? delay+' أيام' : delay+' يوم'}`;
-//                                     }
-//                                     return `الفترة المخططة: ${plannedStart} ← ${plannedEnd}`;
-//                                 }
-//                             }
-//                         }
-//                     }
-//                 }
-//             });
-//         }
-//     }
-// }
 
-// // ====== Call function after DOM is ready ======
-// document.addEventListener("DOMContentLoaded", renderAllCharts);
-// backgroundColor: progressData.map(p => p >= 80 ? '#36715d' : p >= 50 ? '#b7914f' : '#b85f5f'
+// to close note detail section
+function closePreview() {
+        const messages = document.getElementById('messages-section');
+        const preview = document.getElementById('note-preview');
+
+        preview.classList.add('hidden');
+        messages.classList.remove('w-[45%]');
+        messages.classList.add('flex-1');
+    }
+
+// to highlight the selected note
+function highlightActive(activeRow) {
+        document.querySelectorAll('.note-row').forEach(row => {
+            row.classList.remove('bg-[#00A399]/10');
+        });
+
+        activeRow.classList.add('bg-[#00A399]/10');
+    }
+
+// set url for selected note
+document.addEventListener("DOMContentLoaded", function () {
+        const params = new URLSearchParams(window.location.search);
+        const noteId = params.get("note");
+
+        if (!noteId) return;
+
+        const noteRow = document.querySelector(
+            `.note-row[data-id="${noteId}"]`
+        );
+
+        if (noteRow) {
+            noteRow.click();
+        }
+    });
+
+
+// change icon color when dropdown button was clicked
+const icon = document.getElementById("dropdownIconfilter");
+let filterActive = false;
+
+document.querySelectorAll(".filter-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+            const filter = btn.dataset.filter;
+
+            if (filter === "all") {
+                filterActive = false;
+                icon?.setAttribute("fill", "none");
+                icon?.setAttribute("stroke", "currentColor");
+            } else {
+                filterActive = true;
+                icon?.setAttribute("fill", "#00A399");
+                icon?.setAttribute("stroke", "#00A399");
+            }
+        });
+    });
+
+
+function initNoteForm() {
+        const sendType = document.getElementById("send-type");
+        if (!sendType) return;
+
+        const receiver = document.getElementById("receiver-field");
+        const initiative = document.getElementById("initiative-field");
+        const goal = document.getElementById("goal-field");
+
+        function hideAll() {
+            receiver?.classList.add("hidden");
+            initiative?.classList.add("hidden");
+            goal?.classList.add("hidden");
+        }
+
+        hideAll();
+
+        sendType.addEventListener("change", function () {
+            hideAll();
+
+            if (this.value === "manager" || this.value === "employee") {
+                receiver?.classList.remove("hidden");
+            }
+
+            if (this.value === "initiative") {
+                initiative?.classList.remove("hidden");
+            }
+
+            if (this.value === "goal") {
+                goal?.classList.remove("hidden");
+            }
+        });
+
+        sendType.dispatchEvent(new Event("change"));
+    }
+
+
+document.body.addEventListener("htmx:afterSwap", function (e) {
+        if (e.target.id === "note-form-container") {
+            document.getElementById('note-modal-toggle').checked = true;
+            initNoteForm();
+        }
+    });
+
+// for note detail
+function scrollToBottom() {
+    const container = document.getElementById("replies-container");
+    if (!container) return;
+
+    container.scrollTo({
+      top: container.scrollHeight,
+      behavior: "smooth"
+    });
+  }
+
+document.body.addEventListener("htmx:afterSwap", function (evt) {
+
+    if (evt.detail.target.id === "replies-container") {
+      scrollToBottom();
+    }
+    if (evt.target && evt.target.id === "replies-container") {
+      const textarea = document.querySelector("textarea[name='reply_content']");
+      if (textarea) textarea.value = "";
+
+    }
+})

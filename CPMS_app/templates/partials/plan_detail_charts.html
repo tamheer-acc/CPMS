@@ -212,8 +212,8 @@ function renderAllCharts() {
             data: {
                 labels: ['لم تبدأ', 'قيد التنفيذ', 'متأخرة', 'مكتملة'],
                 datasets: [
-                    { label: 'الأهداف', data: goalsData, backgroundColor: ['#F2C75C', '#E59256', '#A13525', '#00685E'], borderWidth: 0, weight: 2 },
-                    { label: 'المبادرات', data: initiativesData, backgroundColor: ['#F7E3A9', '#E8B8A0', '#C77C7A', '#166b70'], borderWidth: 0, weight: 1 }
+                    { label: 'عدد الأهداف ', data: goalsData, backgroundColor: ['#F2C75C', '#E59256', '#A13525', '#00685E'], borderWidth: 0, weight: 2 },
+                    { label: 'عدد المبادرات ', data: initiativesData, backgroundColor: ['#F7E3A9', '#E8B8A0', '#C77C7A', '#166b70'], borderWidth: 0, weight: 1 }
                 ]
             },
             options: { cutout: '55%', plugins: {tooltip:{
@@ -227,6 +227,11 @@ function renderAllCharts() {
                          padding: 8,
                          bodySpacing: 2,  
                          titleMarginBottom: 6,
+                          callbacks: {
+                           title: function(donutCtx) {
+                            return `الحالة: ${donutCtx[0].label}`;
+                        }
+                        }
             } ,legend: { position: 'right' } }, responsive: true, maintainAspectRatio: true }
         });
     }
@@ -287,6 +292,8 @@ function renderAllCharts() {
      const maxValue = Math.max(...allValues);
      const xMax = Math.ceil(maxValue * 1.1);
      const stepApprox = Math.ceil(xMax / 6 / 5) * 5; 
+     console.log(actualColors.length);
+     console.log(actualData.length);
 
 
      const ctx = kpiEl.getContext('2d');
@@ -327,7 +334,7 @@ function renderAllCharts() {
                     titleFont: { size: 14, weight: '500' },
                     bodyFont: { size: 12 },
                     padding: 10,
-                    bodySpacing: 2,  
+                    bodySpacing: 4,  
                     titleMarginBottom: 8,
                     callbacks: {
                         title: function(ctx) {
@@ -336,17 +343,6 @@ function renderAllCharts() {
                             },
                         label: function(ctx) {
                             const item = kpiData[ctx.dataIndex];
-                            const difference = item.actual - item.target;
-                            const percentage = item.target ? Math.round((item.actual / item.target) * 100) : 0;
-                            let statusText = "";
-                            if (difference > 0) {
-                                statusText = ` تم تجاوز المستهدف بـ ${Math.abs(difference)} ${item.unit}`;
-                            } else if (difference < 0) {
-                                statusText = ` أقل من المستهدف بـ ${Math.abs(difference)} ${item.unit}`;
-                            } else {
-                                statusText = `تم تحقيق المستهدف تمامًا`;
-                            }
-
                             if (ctx.datasetIndex === 0) {
                                 return [
                                        `🎯 القيمة المستهدفة: ${item.target}`,
@@ -354,13 +350,13 @@ function renderAllCharts() {
                                        `🏢 الإدارة: ${item.department}`
                                      ];
                                     }
-                                    let statusIcon = "🔴";
-                                    if (item.actual >= item.target) statusIcon = "🟢";
-                                    else if (item.actual >= item.target * 0.5) statusIcon = "🟠";
-                                    else if (item.actual >= item.target * 0.7) statusIcon = "🟡";
+                                   
+                                    let statusIcon = item.status_icon || "🔴";
+                                    let statusText = item.status_text || "";
                                     return [
-                                         `📊 القيمة الفعلية: ${item.actual} ${item.unit}`,
+                                         `${item.kpi_direction}`,
                                          `🎯 القيمة المستهدفة: ${item.target} ${item.unit}`,
+                                         `📊 القيمة الفعلية: ${item.actual} ${item.unit}`,
                                          `${statusIcon} الأداء: ${statusText}`
                                         ];
                                 }
@@ -368,7 +364,7 @@ function renderAllCharts() {
                     }
                 },
                 legend: { 
-                    display: true,
+                    display: false,
                     position: 'top',
                     labels: { font: { size: 12 } }
                 }
@@ -395,6 +391,7 @@ function renderAllCharts() {
     const role = '{{ role }}';
     const top5_labels = {{ top5_labels_json| safe }};
     const progressData = {{ top5_progress_json| safe }};
+    const department_name = {{top5_department_name | safe}}
     const top5El = document.getElementById('top5Chart');
 
         new Chart(top5El, {
@@ -402,8 +399,8 @@ function renderAllCharts() {
             data: {
                 labels: top5_labels,
                 datasets: [{ data: progressData, 
-                    backgroundColor: progressData.map(p => p >= 80 ? '#36715d' : p >= 50 ? '#b7914f' : '#b85f5f'),
-                    borderRadius: 6, barPercentage: 0.2 }]
+                    backgroundColor: ['#00685E', '#55857F', '#AAC2BF', '#8BAA99'],
+                    borderRadius: 6, barPercentage: 0.3}]
             },
             options: {
                 responsive: true,
@@ -415,14 +412,29 @@ function renderAllCharts() {
                          textDirection: 'rtl',
                          bodyAlign: 'right',
                          titleAlign: 'center',
-                         displayColors: true,
+                         displayColors: false,
                          titleFont: { size: 14, weight: '500' },
                          bodyFont: { size: 12 },
                          padding: 8,
-                         bodySpacing: 2,  
+                         bodySpacing: 4,  
                          titleMarginBottom: 6,
-                         callbacks: { label: ctx => `متوسط الأداء: ${ctx.raw}%` } },
-                    legend: { display: false }
+                         callbacks: {  label: function(ctx) {
+                            const index = ctx.dataIndex;
+                            const value = ctx.raw;
+                            if (role === 'GM') {
+                               return `متوسط الأداء: ${value}%`;
+                            } else {
+                              const dept = department_name[index] || '';
+                              return [
+                                `الإدارة: ${dept}`,
+                                `متوسط الأداء: ${value}%`
+                              ];
+                             
+                          }
+                      }
+                  }
+               },
+                legend: { display: false }
                 },
                 scales: {
                     y: { beginAtZero: true, max: 100, title: { display: true, text:  'متوسط الأداء %', padding:{righ:10}, font: { size: 14, weight: '500' } } },
@@ -436,7 +448,7 @@ function renderAllCharts() {
     const timelineEl = document.getElementById('timelineChart');
     if (timelineEl) {
         const raw = JSON.parse('{{ timeline_json|escapejs }}');
-        const rows = raw.filter(i => i.delyed_item);
+        const rows = raw.filter(i => i.delayed_item);
         if (rows.length > 0) {
             const labels = [], plannedStartDates = [], plannedEndDates = [], actualEndDates = [], delayDurations = [], colors = [];
             rows.forEach((item, i) => {
@@ -502,13 +514,16 @@ function renderAllCharts() {
                                     const plannedStart = plannedStartDates[idx].toLocaleDateString('ar-SA');
                                     const plannedEnd = plannedEndDates[idx].toLocaleDateString('ar-SA');
                                     const actualEnd = actualEndDates[idx].toLocaleDateString('ar-SA');
+                                    const department = rows[idx].department_name || '';
                                     if (barColor === '#A13529') {
                                         const delay = delayDurations[idx];
                                         return [
                                             ` تاريخ الاكتمال: ${actualEnd}`, `مدة التأخير: ${delay ===1 ? 'يوم' : delay===2 ? 'يومان' : delay<10 ? delay+' أيام' : delay+' يوم'}`
                                         ];
                                     }
-                                    return `المدة المحددة للتنفيذ: ${plannedStart} ← ${plannedEnd}`;
+                                    return [ `المدة المحددة للتنفيذ: ${plannedStart} ← ${plannedEnd}`,
+                                        `الإدارة: ${department}`
+                                    ];
                                 }
                             }
                         }

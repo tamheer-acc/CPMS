@@ -17,7 +17,7 @@
 
       <!-- Title + Date -->
       <div class="flex justify-between items-center">
-        <h2 class="font-semibold text-lg text-gray-800 break-all whitespace-wrap">
+        <h2 class="font-semibold text-sm text-gray-800 break-all whitespace-wrap">
           {{ note.title }}
         </h2>
         <span class="text-xs text-gray-400 whitespace-nowrap">
@@ -127,29 +127,3 @@
     {% endif %}
   </div>
 </div>
-
-<script>
-  function scrollToBottom() {
-    const container = document.getElementById("replies-container");
-    if (!container) return;
-
-    container.scrollTo({
-      top: container.scrollHeight,
-      behavior: "smooth"
-    });
-  }
-
-
-  document.body.addEventListener("htmx:afterSwap", function (evt) {
-
-    if (evt.detail.target.id === "replies-container") {
-      scrollToBottom();
-    }
-    if (evt.target && evt.target.id === "replies-container") {
-      const textarea = document.querySelector("textarea[name='reply_content']");
-      if (textarea) textarea.value = "";
-
-    }
-  })
-
-</script>

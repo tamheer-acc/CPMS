@@ -16,21 +16,4 @@
           </time>
         </div>
 
-        <div class="chat-footer text-xs text-gray-400 mt-1">
-
-          {% if request.user == reply.sender %}
-
-          {% if note.receiver %}
-
-          {% if is_read_by_receiver %}
-          مقروءة
-          {% else %}
-          تم الإرسال
-          {% endif %}
-
-          {% endif %}
-
-          {% endif %}
-
-        </div>
       </div>

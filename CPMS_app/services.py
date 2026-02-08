@@ -1,6 +1,9 @@
 import json
+import re
 from statistics import mean
 from datetime import date, timedelta
+from datetime import datetime, time
+from django.utils.timezone import make_aware
 from statistics import mean
 from django.utils import timezone
 from django.utils.timezone import now
@@ -15,6 +18,10 @@ from django.db.models import OuterRef, Subquery, Q
 from collections import defaultdict
 from django.utils.timezone import localtime
 from itertools import groupby
+from django.db.models import Case, When, F, Subquery, OuterRef
+from django.db.models.functions import Coalesce
+from django.db.models import CharField
+from django.db.models.functions import Cast
 
 def model_to_dict_with_usernames(instance):
     """
@@ -107,11 +114,15 @@ def get_unread_notes_count(user):
     '''
     -  Returns unread notes count for the user   
     -  Use: inside AllNotesView, and NoteDetailview
-    '''
-
-    last_reply_sender = Note.objects.filter(
+    # '''
+    last_reply_sender = Subquery(
+    Note.objects.filter(
         parent_note=OuterRef('pk')
-    ).order_by('-created_at').values('sender')[:1]
+    )
+    .order_by('-created_at')
+    .values('sender_id')[:1],
+    output_field=IntegerField()
+)
 
     # GM never receives notes
     if user.role.role_name == 'GM':
@@ -123,31 +134,45 @@ def get_unread_notes_count(user):
         return (
             Note.objects
             .filter(parent_note__isnull=True)
-            .annotate(last_sender=Subquery(last_reply_sender))
-            .exclude(last_sender=user)
+           .annotate(
+               last_sender=Coalesce(
+                   last_reply_sender,
+                   F('sender_id'),
+                   output_field=IntegerField()
+                   )
+            )
+
+            .exclude(last_sender=user.id)
             .exclude(read_by=user)
             .filter(
-                Q(receiver=user) |
+                Q(receiver=user.id) |
+                Q(sender=user.id) |
                 Q(strategic_goal__department=user.department) |
                 Q(initiative__userinitiative__user=user)
             )
-            .distinct()
-            .count()
+            .values('pk').distinct().count()
+
         )
 
     # Employee
     return (
         Note.objects
         .filter(parent_note__isnull=True)
-        .annotate(last_sender=Subquery(last_reply_sender))
-        .exclude(last_sender=user)
+        .annotate(
+               last_sender=Coalesce(
+                   last_reply_sender,
+                   F('sender_id'),
+                   output_field=IntegerField()
+                   )
+            )
+        .exclude(last_sender=user.id)
         .exclude(read_by=user)
         .filter(
-            Q(receiver=user) |
+            Q(receiver=user.id) |
             Q(initiative__userinitiative__user=user)
         )
-        .distinct()
-        .count()
+        .values('pk').distinct().count()
+
     )
 
 
@@ -215,11 +240,22 @@ def calculate_goal_timeline(goal):
     }
 
 
+# ---------- Helper to clean log values ----------
+def clean_log_value(value):
+    """Clean log value to convert datetime.date(...) into JSON-friendly string"""
+    if not value:
+        return "{}"
+
+    def replace_date(match):
+        y, m, d = map(int, match.groups())
+        return f'"{y:04d}-{m:02d}-{d:02d}"'
+
+    return re.sub(r"datetime\.date\((\d+),\s*(\d+),\s*(\d+)\)", replace_date, value)
+
 def get_timeline_data(plan, user):
     timeline_data = []
-    title=None
-    delyed_item= None
 
+    # ===== Select items based on user role =====
     if user.role.role_name == 'GM':
         items_qs = StrategicGoal.objects.filter(strategicplan=plan)
         table_name = 'StrategicGoal'
@@ -232,51 +268,114 @@ def get_timeline_data(plan, user):
     if not items_qs.exists():
         return timeline_data
 
+    # ===== Fetch all related UserInitiatives =====
+    if table_name == 'Initiative':
+        user_initiatives = UserInitiative.objects.filter(initiative_id__in=items_qs.values_list('id', flat=True))
+    else:
+        initiatives = Initiative.objects.filter(strategic_goal_id__in=items_qs.values_list('id', flat=True))
+        user_initiatives = UserInitiative.objects.filter(initiative__in=initiatives)
+
+    # ===== Fetch logs for all UserInitiatives =====
+    ui_ids = list(user_initiatives.values_list('id', flat=True))
     all_logs = Log.objects.filter(
-        table_name=table_name,
-        record_id__in=[str(item.id) for item in items_qs],
+        table_name='UserInitiative',
+        record_id__in=[str(i) for i in ui_ids],
         action='تعديل'
-    ).order_by('record_id','created_at')
+    ).order_by('record_id', 'created_at')
 
     logs_grouped = {k: list(g) for k, g in groupby(all_logs, key=lambda log: log.record_id)}
-    
+
+    # ===== Map UserInitiative IDs by Initiative =====
+    ui_by_initiative = {}
+    for ui in user_initiatives:
+        ui_by_initiative.setdefault(ui.initiative_id, []).append(ui.id)
+
+    # ---------- Process each item ----------
     for item in items_qs:
+        completed_time = None
+        delayed_item = False
+
         if table_name == 'Initiative':
-            title =  item.title
+            # ===== Initiative =====
+            title = item.title
+            planned_end = item.end_date
+
+            # ===== Calculate average progress =====
+            avg_progress = avg_calculator(
+                UserInitiative.objects.filter(initiative=item, user__role__role_name='E')
+            )
+
+            department_name = item.strategic_goal.department.department_name if item.strategic_goal and hasattr(item.strategic_goal, 'department') else None
+
+
+            # ===== Get last completion time =====
+            progress_list = []
+            for ui_id in ui_by_initiative.get(item.id, []):
+                for log in logs_grouped.get(str(ui_id), []):
+                    try:
+                        new_data = json.loads(clean_log_value(log.new_value))
+                        progress = int(str(new_data.get('progress', '0')).strip() or 0)
+                        if progress >= 100:
+                            progress_list.append(localtime(log.created_at))
+                    except Exception as e:
+                        print(f"Error parsing log {log.id}: {e}")
+
+            if progress_list:
+                completed_time = max(progress_list)
+
+            # ===== Determine status =====
             initiative_status = calc_initiative_status_for_Cards(item)
-            if initiative_status in ['C', 'CL']:
+            if avg_progress >= 100:
                 completion_status = 'completed'
                 time_status = 'on_time' if initiative_status == 'C' else 'late'
             else:
                 completion_status = 'not_completed'
                 time_status = 'not_completed'
-        else:  # StrategicGoal
+
+        else:
+            # ===== Strategic Goal =====
             title = item.goal_title
-            goals_status = calc_goal_status_for_cards(item)
-            if goals_status in ['C', 'CL']:
+            planned_end = item.end_date
+
+            # ===== Calculate goal progress from initiatives =====
+            avg_progress = calc_goal_progress(item)
+            department_name = item.department.department_name if hasattr(item, 'department') else None
+
+
+            # ===== Get last completion time from all related UserInitiatives =====
+            progress_list = []
+            for initiative in item.initiative_set.all():
+                for ui_id in ui_by_initiative.get(initiative.id, []):
+                    for log in logs_grouped.get(str(ui_id), []):
+                        try:
+                            new_data = json.loads(clean_log_value(log.new_value))
+                            old_data = json.loads(clean_log_value(log.old_value))
+
+                            new_progress = int(str(new_data.get('progress', '0')).strip() or 0)
+                            old_progress = int(str(old_data.get('progress', '0')).strip() or 0)
+                            if new_progress >= 100 and old_progress < 100:
+                                progress_list.append(localtime(log.created_at))
+                        except Exception as e:
+                            print(f"Error parsing log {log.id}: {e}")
+
+            if progress_list:
+                completed_time = max(progress_list)
+
+            # ===== Determine status =====
+            goal_status = calc_goal_status_for_cards(item)
+            if avg_progress >= 100:
                 completion_status = 'completed'
-                time_status = 'on_time' if goals_status == 'C' else 'late'
+                time_status = 'on_time' if goal_status == 'C' else 'late'
             else:
                 completion_status = 'not_completed'
                 time_status = 'not_completed'
 
-        delyed_item = completion_status == 'completed' and time_status == 'late'
+        # ===== Calculate delayed_item =====
+        delayed_item = False
+        if completed_time and planned_end and completion_status == 'completed':
+            delayed_item = completed_time.date() > planned_end
 
-        completed_time = None
-        for log in logs_grouped.get(str(item.id), []):
-          try:
-            data = json.loads(log.new_value)
-            progress_str = str(data.get('progress', '100')).strip()
-            progress = int(progress_str) if progress_str.isdigit() else 0
-            if progress >= 100:
-                completed_time = localtime(log.created_at)
-                break
-          except Exception as e:
-           print("Error parsing log:", e)
-           continue
-
-        planned_end = item.end_date
-
+        # ===== Add data to timeline =====
         timeline_data.append({
             'title': title,
             'start': item.start_date.isoformat() if item.start_date else None,
@@ -284,7 +383,9 @@ def get_timeline_data(plan, user):
             'completed_time': completed_time.isoformat() if completed_time else None,
             'completion_status': completion_status,
             'time_status': time_status,
-            'delyed_item':delyed_item
+            'delayed_item': delayed_item,
+            'average_progress': avg_progress,
+            'department_name': department_name
         })
 
     return timeline_data
@@ -295,12 +396,9 @@ def get_plan_dashboard(plan, user):
  
     # ====== Goals (filter by role) ======
     goals = StrategicGoal.objects.filter(strategicplan=plan).prefetch_related('initiative_set')
-    if role in ['M', 'CM']:
-        goals = goals.filter(department=user.department)
+    # if role in ['M', 'CM']:
+    #     goals = goals.filter(department=user.department)
     
-    planStartDate=plan.start_date
-    planEndDate=plan.end_date
-
     # ====== Initiatives related to these goals ======
     initiatives_qs = Initiative.objects.filter(strategic_goal__in=goals)
 
@@ -321,12 +419,13 @@ def get_plan_dashboard(plan, user):
      employees_progress = (
         UserInitiative.objects
         .filter(initiative__in=initiatives_qs, user__role__role_name='E')
-        .values('user__first_name', 'user__last_name')
+        .values('user__first_name', 'user__last_name', 'user__department__department_name')
         .annotate(avg_progress=Avg('progress'))
         .order_by('-avg_progress')[:5]
     )
-     top5_labels = [ f"{e['user__first_name']} {e['user__last_name']}" for e in employees_progress]
-     top5_progress = [float(e['avg_progress'] or 0) for e in employees_progress]
+     top5_labels = [f"{e['user__first_name']} {e['user__last_name']}" for e in employees_progress]
+     top5_department_name = [f"{e['user__department__department_name']}" for e in employees_progress]
+     top5_progress = [round(float(e['avg_progress'] or 0),2) for e in employees_progress]
 
     elif role == 'GM':
      departments_progress = (
@@ -335,7 +434,7 @@ def get_plan_dashboard(plan, user):
              .order_by('-avg_progress')[:5]
     )
      top5_labels = [d['department__department_name'] for d in departments_progress]
-     top5_progress = [float(d['avg_progress'] or 0) for d in departments_progress]
+     top5_progress = [round(float(d['avg_progress'] or 0),2) for d in departments_progress]
 
     # ====== Goals total & status counts ======
     goals_not_started = goals.filter(goal_status='NS').count()
@@ -372,6 +471,7 @@ def get_plan_dashboard(plan, user):
         plan_avg = 0
     else:
          plan_avg = calc_plan_progress(plan)
+
     plan_avg = plan_avg or 0
     avg_by_2 = plan_avg/2
     todays_date = timezone.now().date()
@@ -419,39 +519,119 @@ def get_plan_dashboard(plan, user):
     })
        
     #=========================== KPI Chart ==================================
+    # initiatives = initiatives_qs.prefetch_related('kpi_set', 'strategic_goal__department')
+    # kpi_chart_data = []
+
+    # for initiative in initiatives:
+    #   for kpi in initiative.kpi_set.all():
+    #     actual = float(kpi.actual_value) if kpi.actual_value is not None else 0
+    #     target = float(kpi.target_value) if kpi.target_value is not None else 1  
+    #     ratio = actual / target if target else 0
+
+    #     if ratio < 0.25:
+    #         color = "#A13525"  
+    #     elif ratio < 0.5:
+    #         color = "#E59256"  
+    #     elif ratio < 0.75:
+    #         color = "#F2C75C"  
+    #     else:
+    #         color = "#00685E"  
+
+    #     kpi_chart_data.append({
+    #         'initiative_title': initiative.title,
+    #         'department': initiative.strategic_goal.department.department_name,
+    #         'kpi_name': kpi.kpi,
+    #         'unit': kpi.unit,
+    #         'target': target,
+    #         'actual': actual,
+    #         'color': color
+    #   })
+    
+    # Kpi_length = len(kpi_chart_data)
+    # =========================== KPI Chart ==================================
     initiatives = initiatives_qs.prefetch_related('kpi_set', 'strategic_goal__department')
     kpi_chart_data = []
-
     for initiative in initiatives:
-      for kpi in initiative.kpi_set.all():
-        actual = float(kpi.actual_value) if kpi.actual_value is not None else 0
-        target = float(kpi.target_value) if kpi.target_value is not None else 1  # لتجنب القسمة على صفر
-        ratio = actual / target if target else 0
+     for kpi in initiative.kpi_set.all():
 
-        if ratio < 0.25:
-            color = "#A13525"  
-        elif ratio < 0.5:
-            color = "#E59256"  
-        elif ratio < 0.75:
-            color = "#F2C75C"  
+        actual = float(kpi.actual_value) if kpi.actual_value is not None else 0
+        target = float(kpi.target_value) if kpi.target_value is not None else 1
+        start = float(kpi.start_value) if kpi.start_value is not None else 0
+        
+        target_should_decrease = start > target
+        # difference = round(abs(actual - target),2)
+        diff = abs(actual - target)
+        if diff.is_integer():
+            difference = int(diff)
         else:
-            color = "#00685E"  
+            difference = round(diff, 2) 
+        
+        if target_should_decrease:
+            denominator = start - target
+            percentage = ((start - actual) / denominator) * 100 if denominator != 0 else 100
+        else:
+            denominator = target - start
+            percentage = ((actual - start) / denominator) * 100 if denominator != 0 else 100
+        
+        percentage = round(max(0, percentage))
+        
+        direction_text = "📉 المؤشر يستهدف الخفض" if target_should_decrease else "📈 المؤشر يستهدف الزيادة"
+        
+        if target_should_decrease:
+            if actual < target:
+                status_text = f"تم تجاوز المستهدف بـ {difference} {kpi.unit}"
+            elif actual == target:
+                status_text = f"تم تحقيق المستهدف تمامًا"
+            else:
+                status_text = f"أعلى من المستهدف بـ {difference} {kpi.unit}"
+        else:
+            if actual > target:
+                status_text = f"تم تجاوز المستهدف بـ {difference} {kpi.unit}"
+            elif actual == target:
+                status_text = f"تم تحقيق المستهدف تمامًا"
+            else:
+              status_text = f"أقل من المستهدف بـ {difference} {kpi.unit}"
+        
+        if percentage >= 100:
+            status_icon = "🟢"
+        elif percentage >= 70:
+            status_icon = "🟡"
+        elif percentage >= 50:
+            status_icon = "🟠"
+        else:
+            status_icon = "🔴"
+        
+        icon_to_color = {
+           "🟢": "#00685E",
+           "🟡": "#F2C75C",
+           "🟠": "#E59256",
+           "🔴": "#A13525"
+           }
+        
+        color = icon_to_color[status_icon]
 
         kpi_chart_data.append({
             'initiative_title': initiative.title,
             'department': initiative.strategic_goal.department.department_name,
+            'kpi_direction': direction_text,
             'kpi_name': kpi.kpi,
             'unit': kpi.unit,
             'target': target,
             'actual': actual,
+            'start': start,
+            'difference': difference,
+            'percentage': percentage,
+            'status_text': status_text,
+            'status_icon': status_icon,
             'color': color
-      })
-    
+        })
+        
     Kpi_length = len(kpi_chart_data)
+
 
     #===================== Timeline chart & cards ==================================
     timeline_data=get_timeline_data(plan, user)
-    delayed_items = [item for item in timeline_data if item['delyed_item']]
+    delayed_items = [item for item in timeline_data if item['delayed_item']]
     delayed_items_length = len(delayed_items)
 
     completed_on_time = sum(
@@ -506,30 +686,9 @@ def get_plan_dashboard(plan, user):
 
         'top5_labels_json': json.dumps(top5_labels),
         'top5_progress_json': json.dumps(top5_progress),
+        'top5_department_name': json.dumps(top5_department_name),
         'top5_length': len(top5_progress)
     }
-
-
-# def get_delayed_goals_with_days(goals_qs):
-#     today = date.today()
-#     delayed = []
-
-#     for goal in goals_qs.filter(goal_status='D'):
-#         delay_days = (today - goal.end_date).days
-#         if delay_days < 0:
-#             delay_days = 0
-
-#         delayed.append({
-#             "goal_id": goal.id,
-#             "goal_title": goal.goal_title,
-#             "delay_days": delay_days,
-#             "end_date": goal.end_date.strftime("%Y-%m-%d"),
-#             "goal_status": goal.goal_status,
-#         })
-
-#     delayed.sort(key=lambda x: x['delay_days'], reverse=True)
-
-#     return delayed
 
 def calc_user_initiative_status(user_initiative):
     """
@@ -634,16 +793,17 @@ def calc_goal_status(goal):
 
     avg_progress = calc_goal_progress(goal)
 
-    if days_left <= 0.10*total_days: #today >= end_date and avg_progress < 100:
-        return 'D'    
-
     if avg_progress >= 100:
         return 'C'
+
+    if days_left <= 0.10*total_days: #today >= end_date and avg_progress < 100:
+        return 'D'    
 
     if avg_progress > 0:
         return 'IP'
 
     return 'NS'
+
 #==========================================================
 def calc_goal_status_for_cards(goal):
     end_date = goal.end_date
@@ -669,6 +829,7 @@ def calc_goal_status_for_cards(goal):
         return 'IP'
 
     return 'NS'
+
 #==========================================================
 def calc_plan_progress(plan):
     goals = plan.goals.all()
@@ -681,10 +842,8 @@ def calc_plan_progress(plan):
         total += calc_goal_progress(goal)
 
     return round(total / goals.count(),2)
+
 #==================================================
-
-
-
 def filter_queryset(queryset, request, search_fields=None, status_field=None, priority_field=None):
 
     search = request.GET.get('search', '').strip()
@@ -939,11 +1098,3 @@ def departments_progress_over_time(departments, days_count=30):
             })
 
     return chart_data
-
-# def kpi_progress( list_of_kpis ):
-#     # check logs for start 
-#     for kpi in list_of_kpis:
-#         logs = Log.objects.filter(table_name = 'KPI', record_id = kpi.pk).first
-#         if logs:
-#             # start_value = 
-#             pass

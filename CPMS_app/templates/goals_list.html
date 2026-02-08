@@ -20,7 +20,7 @@
                 
                 <!-- Search Input -->
                 <div class="relative {% if request.user.role.role_name in 'GM E' %}w-full{% else %}w-80{% endif %}">
-                    <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
+                    <div class="absolute inset-y-0 end-0 flex items-center pe-3 pointer-events-none">
                         <svg class="w-4 h-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none"
                             viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -28,7 +28,7 @@
                         </svg>
                     </div>
                     <input type="text" id="search"
-                        class="block w-full ps-9 pe-3 py-2 border rounded-xl focus:ring-blue-500 focus:border-blue-500"
+                        class="block w-full pe-9 ps-3 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00A399]/10 focus:border-[#00685E]/20 "
                         placeholder="البحث عن هدف ...">
                 </div>
 
@@ -81,7 +81,7 @@
             <!-- Add goal Button chanege style -->
             {% if request.user.role.role_name in 'CM M' %}
             <div class="relative inline-block group">
-                <a href="{% if active_plan_exists %}{% url 'goal_create' active_plan.id %}{% else %}#{% endif %}"
+                <a href="{% if active_plan_exists %}{% url 'goal_create' plan.id %}{% else %}#{% endif %}"
                   onclick="{% if not active_plan_exists %}return false;{% endif %}"
                   class="bg-[#00A399] text-white px-4 py-2 rounded-md text-sm font-semibold
                   {% if not active_plan_exists %}
