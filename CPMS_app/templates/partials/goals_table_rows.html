@@ -185,7 +185,7 @@
 {% empty %}
 
 <tr>
-    <td colspan="6" class="items-center text-center text-gray-400 py-6">لا توجد أهداف تابعه لهذه الخطة</td>
+    <td colspan="6" class="items-center text-center text-gray-400 py-6">لا توجد أهداف</td>
 </tr>
 
 {% endfor %}
@@ -202,19 +202,3 @@
         </div>
     </div>
 </div>
-
-<script>
-    function toggleRow(id, iconId) {
-        const row = document.getElementById(id);
-        const icon = document.getElementById(iconId);
-
-        row.classList.toggle("hidden");
-
-        if (row.classList.contains("hidden")) {
-            icon.style.transform = "rotate(0deg)";
-        } else {
-            icon.style.transform = "rotate(45deg)";
-        }
-    }
-
-</script>

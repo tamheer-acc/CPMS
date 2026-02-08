@@ -20,7 +20,7 @@
     <!-- ================= HEADER ================= -->
     <div class="flex justify-between items-center">
         <div>
-            <h1 class="text-2xl font-bold text-gray-800">لوحة التحكم</h1>
+            <h1 class="text-2xl font-bold text-gray-900">لوحة التحكم</h1>
             <p class="text-sm text-gray-500">
                 مرحبًا {{ request.user.get_full_name }}
             </p>
@@ -36,10 +36,10 @@
 
 
 
-    {% if active_plan %}  
-        
-        <!-- ================= VISION AND MISSION ================= -->
-        <div class="grid grid-cols-1 md:grid-cols-1 gap-6">
+    {% if active_plan %}
+
+    <!-- ================= VISION AND MISSION ================= -->
+    <!-- <div class="grid grid-cols-1 md:grid-cols-1 gap-6">
 
             <div class="bg-gray-200 p-4 rounded-lg border-x-4 border-[#00A399] shadow-sm">
                 <p class="font-semibold text-gray-700 text-center mb-2">
@@ -54,505 +54,146 @@
                 </p>
                 <p class="font-cairo text-gray-600 break-words leading-loose tracking-wider">{{ mission }}</p>
             </div>
-        </div>
+        </div> -->
 
-        <!-- ================= CARDS ================= -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div class="bg-white p-4 rounded-lg shadow">
-                {% if user.role.role_name == 'E' %}
-                <p class="text-sm text-gray-500"> المبادرات</p>
-                <p class="text-2xl font-bold text-gray-800">{{ initiatives|length }}</p>
-                {% else %}
-                <p class="text-sm text-gray-500">الأهداف</p>
-                <p class="text-2xl font-bold text-gray-800">{{ goals|length }}</p>
-                {% endif %}
-            </div>
+    <div class="bg-[#568c87]/10  rounded-xl shadow-md px-3 py-2 gap-3 space-y-6 mt-2">
+        <!-- Plan details -->
+        <div class="flex items-center gap-3 justify-between rounded-md mx-2 py-2">
+            <div class="flex items-center gap-3">
+                <svg class="text-[#00675B]/80" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-timeline">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                    <path d="M4 16l6 -7l5 5l5 -6" />
+                    <path d="M14 14a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" />
+                    <path d="M9 9a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" />
+                    <path d="M3 16a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" />
+                    <path d="M19 8a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" />
+                </svg>
 
-            <div class="bg-white p-4 rounded-lg shadow">
-                {% if user.role.role_name == 'E' %}
-                <p class="text-sm text-gray-500"> المؤشرات</p>
-                <p class="text-2xl font-bold text-gray-800">{{ kpis|length }}</p>
-                {% else %}
-                <p class="text-sm text-gray-500"> المبادرات</p>
-                <p class="text-2xl font-bold text-gray-800">{{ initiatives|length }}</p>
-                {% endif %}
-            </div>
-
-            <div class="bg-white p-4 rounded-lg shadow">
-                <p class="text-sm text-gray-500">الملاحظات المرسلة</p>
-                <p class="text-2xl font-bold text-gray-800">{{ notes|length }}</p>
-            </div>
-        </div>
-
-
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <!-- ================= SUMMARY ================= -->
-            <div class="bg-gray-100 rounded-xl shadow-md p-3 col-span-3 grid md:grid-cols-3 gap-6">
-
-                <h2 class="text-lg font-bold text-2xl mr-3 mt-3 col-span-3 text-[#00675B]/80">
-                    <span class="inline-flex gap-1 items-center text-[#00675B]/80">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                            class="icon icon-tabler icons-tabler-outline icon-tabler-chart-histogram">
-                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                            <path d="M3 3v18h18" />
-                            <path d="M20 18v3" />
-                            <path d="M16 16v5" />
-                            <path d="M12 13v8" />
-                            <path d="M8 16v5" />
-                            <path d="M3 11c6 0 5 -5 9 -5s3 5 9 5" />
-                        </svg>
-                    </span>
-                    ملخص الأداء
+                <h2 class="text-lg font-semibold  text-[#00675B]/80">
+                    {{ active_plan.plan_name }}
                 </h2>
-
-                <div class="bg-white p-4 rounded-lg shadow md:col-span-2 flex flex-col justify-center">
-                    <!-- chart 1 Bar Chart: E,M,CM,GM-->
-                    <h3 class="font-semibold mb-3 text-center">{% if user.role.role_name == 'E' %}متوسط الإنجاز في
-                        المبادرات{% else %} مدى اكتمال الأهداف {% endif %}</h3>
-                    <div class="flex items-center justify-center h-64">
-                        {% if bar_chart_data %}
-                        <canvas id="barChart" class="w-full h-64"></canvas>
-                        {% else %}
-                        <div class="flex flex-col justify-center items-center h-full gap-2 mb-5">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                class=" icon icon-tabler icons-tabler-outline icon-tabler-chart-bar-off w-24 h-24 stroke-gray-300 hover:stroke-gray-400 transition-transform duration-300 hover:scale-110 ">
-                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                <path d="M3 13a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -6" />
-                                <path d="M12 8h2a1 1 0 0 1 1 1v2m0 4v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1v-10" />
-                                <path d="M15 11v-6a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v12m-1 3h-4a1 1 0 0 1 -1 -1v-4" />
-                                <path d="M4 20h14" />
-                                <path d="M3 3l18 18" />
-                            </svg>
-                            <p class="text-sm text-gray-600">لا توجد بيانات</p>
-                        </div>
-                        {% endif %}
-                    </div>
-                </div>
-
-
-                <div class="bg-white p-4 rounded-lg shadow md:col-span-1">
-                    <!-- chart 2 Donut Chart: E,M,CM,GM  -->
-                    <h3 class="font-semibold mb-3 text-center" id="donut-chart-title">
-                        {% if user.role.role_name == 'E' %}حالة المبادرات{% else %} الحالة الإجمالية للمبادرات {% endif %}</h3>
-                    <div class="flex items-center justify-center h-64">
-
-                        {% if donut_chart_data %}
-                        <canvas id="donutChart"></canvas>
-                        {% else %}
-                        <div class="flex flex-col justify-center items-center h-full gap-2 mb-5">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                class=" icon icon-tabler icons-tabler-outline icon-tabler-chart-bar-off w-24 h-24 stroke-gray-300 hover:stroke-gray-400 transition-transform duration-300 hover:scale-110 ">
-                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                <path d="M3 13a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -6" />
-                                <path d="M12 8h2a1 1 0 0 1 1 1v2m0 4v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1v-10" />
-                                <path d="M15 11v-6a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v12m-1 3h-4a1 1 0 0 1 -1 -1v-4" />
-                                <path d="M4 20h14" />
-                                <path d="M3 3l18 18" />
-                            </svg>
-                            <p class="text-sm text-gray-600">لا توجد بيانات</p>
-                        </div>
-                        {% endif %}
-                    </div>
-                </div>
-
-                <!-- chart 3 Stacked Bar Chart: E,M,CM,GM -->
-                <div class="bg-white p-4 rounded-lg shadow md:col-span-3 flex flex-col justify-center">
-                    <h3 class="font-semibold mb-3 text-center">مؤشرات الأداء الرئيسية</h3>
-                    <div class="flex items-center justify-center h-64 overflow-x-auto">
-                        {% if stacked_bar_chart_data %}
-                        <canvas id="stackedBarChart" width="800" height="auto"></canvas>
-                        {% else %}
-                        <div class="flex flex-col justify-center items-center h-full gap-2 mb-5">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                class=" icon icon-tabler icons-tabler-outline icon-tabler-chart-bar-off w-24 h-24 stroke-gray-300 hover:stroke-gray-400 transition-transform duration-300 hover:scale-110 ">
-                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                <path d="M3 13a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -6" />
-                                <path d="M12 8h2a1 1 0 0 1 1 1v2m0 4v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1v-10" />
-                                <path d="M15 11v-6a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v12m-1 3h-4a1 1 0 0 1 -1 -1v-4" />
-                                <path d="M4 20h14" />
-                                <path d="M3 3l18 18" />
-                            </svg>
-                            <p class="text-sm text-gray-600">لا توجد بيانات</p>
-                        </div>
-                        {% endif %}
-                    </div>
-                </div>
-
             </div>
 
-            <!-- ================= EMPLOYEE CARDS ================= -->
-            {% if user.role.role_name == 'E'%}
-            <div class="flex gap-6 p-4 rounded-lg col-span-3">
-                <div class="bg-white p-4 rounded-lg shadow flex-1 min-w-0">
-                    <p class="text-sm text-gray-500">متوسط نسبة الإنجاز</p>
-                    <p class="text-2xl font-bold text-gray-800">{{ avrage_progress }}%</p>
-                </div>
+            <!-- Dates -->
+            <span
+                class="inline-flex items-center text-[11px] font-medium gap-1 px-2 py-1 rounded-full border bg-[#00675B]/10 text-gray-700">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"
+                    class="w-4 h-4 text-gray-500">
+                    <path
+                        d="M5.75 7.5a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5ZM5 10.25a.75.75 0 1 1 1.5 0 .75.75 0 0 1-1.5 0ZM10.25 7.5a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5ZM7.25 8.25a.75.75 0 1 1 1.5 0 .75.75 0 0 1-1.5 0ZM8 9.5A.75.75 0 1 0 8 11a.75.75 0 0 0 0-1.5Z" />
+                    <path fill-rule="evenodd"
+                        d="M4.75 1a.75.75 0 0 0-.75.75V3a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2V1.75a.75.75 0 0 0-1.5 0V3h-5V1.75A.75.75 0 0 0 4.75 1ZM3.5 7a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1v4.5a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1V7Z"
+                        clip-rule="evenodd" />
+                </svg>
+                {{ active_plan.start_date|date:"Y/m/d"}} - {{ active_plan.end_date|date:'Y/m/d'}}
+            </span>
+        </div>
+    </div>
 
-                <div class="bg-white p-4 rounded-lg shadow flex-1 min-w-0">
-                    <p class="text-sm text-gray-500">المبادرات الموشكة على الانتهاء</p>
-                    <p class="text-2xl font-bold text-gray-800">{{ late|length }}</p>
-                </div>
 
-                <div class="bg-white p-4 rounded-lg shadow flex-1 min-w-0">
-                    <p class="text-sm text-gray-500">المبادرات المنتهية</p>
-                    <p class="text-2xl font-bold text-gray-800">{{ overdue|length }}</p>
-                </div>
+    <div>
+        <!-- Vision & Mission -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+            <div class="bg-white p-4 rounded-lg shadow">
+                <p class="flex items-center justify-center gap-2 font-semibold text-gray-700 mb-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-500" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                        <path d="M6 21l6 -5l6 5" />
+                        <path d="M12 13v8" />
+                        <path
+                            d="M3.294 13.678l.166 .281c.52 .88 1.624 1.265 2.605 .91l14.242 -5.165a1.023 1.023 0 0 0 .565 -1.456l-2.62 -4.705a1.087 1.087 0 0 0 -1.447 -.42l-.056 .032l-12.694 7.618c-1.02 .613 -1.357 1.897 -.76 2.905" />
+                        <path d="M14 5l3 5.5" />
+                    </svg>
+
+                    الرؤية
+                </p>
+                <div class="w-1/2 h-px bg-[#00675B]/20 mx-auto !mt-1 !mb-3"></div>
+                <p class="text-gray-600 break-words leading-tight">{{ vision }}</p>
             </div>
+
+            <div class="bg-white p-4 rounded-lg shadow">
+                <p class="flex items-center justify-center gap-2 font-semibold text-gray-700 mb-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-500" width="24" height="24"
+                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-flag">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                        <path d="M5 5a5 5 0 0 1 7 0a5 5 0 0 0 7 0v9a5 5 0 0 1 -7 0a5 5 0 0 0 -7 0v-9" />
+                        <path d="M5 21v-7" />
+                    </svg>
+
+                    الرسالة
+                </p>
+                <div class="w-1/2 h-px bg-[#00675B]/20 mx-auto !mt-1 !mb-3"></div>
+                <p class="text-gray-600 break-words leading-tight">{{ mission }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- horizontal line -->
+    <div class="w-1/2 h-px bg-gray-200 mx-auto !mt-10 !mb-8"></div>
+
+    <!-- ================= CARDS ================= -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-white p-4 rounded-lg shadow">
+            {% if user.role.role_name == 'E' %}
+            <p class="text-sm text-gray-500"> المبادرات</p>
+            <p class="text-2xl font-bold text-gray-800">{{ initiatives|length }}</p>
+            {% else %}
+            <p class="text-sm text-gray-500">الأهداف</p>
+            <p class="text-2xl font-bold text-gray-800">{{ goals|length }}</p>
             {% endif %}
+        </div>
+
+        <div class="bg-white p-4 rounded-lg shadow">
+            {% if user.role.role_name == 'E' %}
+            <p class="text-sm text-gray-500"> المؤشرات</p>
+            <p class="text-2xl font-bold text-gray-800">{{ kpis|length }}</p>
+            {% else %}
+            <p class="text-sm text-gray-500"> المبادرات</p>
+            <p class="text-2xl font-bold text-gray-800">{{ initiatives|length }}</p>
+            {% endif %}
+        </div>
+
+        <div class="bg-white p-4 rounded-lg shadow">
+            <p class="text-sm text-gray-500">الملاحظات المرسلة</p>
+            <p class="text-2xl font-bold text-gray-800">{{ notes|length }}</p>
+        </div>
+    </div>
 
 
-            <!-- ================= GOALS ================= -->
-            <div class="bg-gray-100 rounded-xl shadow-md p-3 col-span-3 space-y-6">
-                <h2 class="text-lg font-bold text-2xl text-gray-800 mr-3 mt-3">
-                    <span class="inline-flex gap-1 items-center text-[#00675B]/80">
-                        <svg class="text-[#00675B]/80" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                            stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-target-arrow">
-                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                            <path d="M11 12a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" />
-                            <path d="M12 7a5 5 0 1 0 5 5" />
-                            <path d="M13 3.055a9 9 0 1 0 7.941 7.945" />
-                            <path d="M15 6v3h3l3 -3h-3v-3l-3 3" />
-                            <path d="M15 9l-3 3" />
-                        </svg>
-                        الأهداف والمبادرات
-                    </span>
-                </h2>
-                {% if goals %}
-                <table class="w-full text-right text-gray-700 border border-gray-200 bg-white">
-                    <thead class="text-sm bg-gray-50 border-b text-center items-center">
-                        <tr>
-                            <th class="py-3 font-semibold">عنوان الهدف</th>
-                            <!-- <th class="py-3 font-semibold">وصف الهدف</th> -->
-                            {% if request.user.role.role_name == 'GM' %}
-                            <th class="py-3 font-semibold">الإدارة</th>
-                            {% endif %}
-                            <th class="py-3 font-semibold">الحالة</th>
-                            <th class="py-3 font-semibold">
-                                <span class="inline-flex items-center gap-1 font-semibold">
-                                    <a class="text-gray-400 hover:text-gray-700 transition" title="فرز حسب الأهمية"
-                                        href="?{% if request.GET.sort == 'priority' %}{% else %}sort=priority{% endif %}&per_page={{ request.GET.per_page|default:5 }}&page=1">
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"
-                                            class="size-4">
-                                            <path fill-rule="evenodd"
-                                                d="M5.22 10.22a.75.75 0 0 1 1.06 0L8 11.94l1.72-1.72a.75.75 0 1 1 1.06 1.06l-2.25 2.25a.75.75 0 0 1-1.06 0l-2.25-2.25a.75.75 0 0 1 0-1.06ZM10.78 5.78a.75.75 0 0 1-1.06 0L8 4.06 6.28 5.78a.75.75 0 0 1-1.06-1.06l2.25-2.25a.75.75 0 0 1 1.06 0l2.25 2.25a.75.75 0 0 1 0 1.06Z"
-                                                clip-rule="evenodd" />
-                                        </svg>
-                                    </a>
-                                    الأهمية
-                                </span>
-                            </th>
-                            <th class="py-3 font-semibold">
-                                <span class="inline-flex items-center gap-1 font-semibold">
-                                    <a class="text-gray-400 hover:text-gray-700 transition" title="فرز حسب المدة"
-                                        href="?{% if request.GET.sort == 'date' %}{% else %}sort=date{% endif %}&per_page={{ request.GET.per_page|default:5 }}&page=1">
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"
-                                            class="size-4">
-                                            <path fill-rule="evenodd"
-                                                d="M5.22 10.22a.75.75 0 0 1 1.06 0L8 11.94l1.72-1.72a.75.75 0 1 1 1.06 1.06l-2.25 2.25a.75.75 0 0 1-1.06 0l-2.25-2.25a.75.75 0 0 1 0-1.06ZM10.78 5.78a.75.75 0 0 1-1.06 0L8 4.06 6.28 5.78a.75.75 0 0 1-1.06-1.06l2.25-2.25a.75.75 0 0 1 1.06 0l2.25 2.25a.75.75 0 0 1 0 1.06Z"
-                                                clip-rule="evenodd" />
-                                        </svg>
-                                    </a>
-                                    مدة تنفيذ الهدف
-                                </span>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- ================= SUMMARY ================= -->
+        <div class="bg-gray-100 rounded-xl shadow-md p-3 col-span-3 grid md:grid-cols-3 gap-6">
 
-                            </th>
-                            <th class="px-3 py-3 font-semibold text-right">المبادرات</th>
-                        </tr>
-                    </thead>
-                    <tbody id="goalsBody">
-                        {% for goal in goals %}
-                        <tr class="border-b hover:bg-gray-50 text-center align-middle">
-                            <!-- Title -->
-                            <td class="px-6 py-3 max-w-[220px]">
-                                <div class="truncate text-[#00675B] text-sm font-normal" title="{{ goal.goal_title }}">
-                                    <a href="{% url 'goal_detail' goal.id %}"  class="hover:font-semibold">
-                                        {{ goal.goal_title }}
-                                    </a>
-                                </div>
-                            </td>
-                            <!-- Description
-                            <td class="px-4 py-3 max-w-[300px] text-sm text-gray-600">
-                                <div class="line-clamp-2  overflow-hidden max-h-[1.5em] group-hover:max-h-[1000px] transition-all duration-300 ease-in-out"
-                                    title="{{ goal.description }}">
-                                    {{ goal.description|default:"—" }}
-                                </div>
-                            </td> -->
-                            {% if request.user.role.role_name == 'GM' %}
-                            <!-- Department -->
-                            <td class="px-4 py-3 whitespace-nowrap text-sm">
-                                {{ goal.department|default:"—" }}
-                            </td>
-                            {% endif %}
-                            <!-- Status -->
-                            <td class="px-4 py-3">
-                                <span class="inline-flex items-center justify-center px-3 py-1 text-xs font-semibold rounded-full whitespace-nowrap
-                                            {% if goal.goal_status == 'C' %} bg-green-100 text-green-700
-                                            {% elif goal.goal_status == 'IP' %} bg-blue-100 text-blue-700
-                                            {% elif goal.goal_status == 'D' %} bg-red-100 text-red-700
-                                            {% else %} bg-gray-100 text-gray-600 {% endif %}">
-                                    {{ goal.get_goal_status_display }}
-                                </span>
-                            </td>
-                            <!-- Priority -->
-                            <td class="px-4 py-3">
-                                <span class="inline-flex items-center justify-center px-3 py-1 text-xs font-semibold rounded-full whitespace-nowrap
-                                            {% if goal.goal_priority == 'C' %} bg-red-100 text-red-800
-                                            {% elif goal.goal_priority == 'H' %} bg-orange-100 text-orange-800
-                                            {% elif goal.goal_priority == 'M' %} bg-yellow-100 text-yellow-800
-                                            {% else %} bg-green-100 text-green-800 {% endif %}">
-                                    {{ goal.get_goal_priority_display }}
-                                </span>
-                            </td>
-                            <!-- Dates -->
-                            <td class="px-4 py-3 text-sm whitespace-nowrap">
-                                {{ goal.start_date|date:'Y/m/d' }} – {{ goal.end_date|date:'Y/m/d' }}
-                            </td>
-                            <!-- Action -->
-                            <td class="px-6 py-3 items-center text-center flex justify-start gap-10">
-                                <button onclick="toggleRow('goal-{{ goal.id }}', 'plusIcon-{{ goal.id }}')">
-                                    <svg id="plusIcon-{{ goal.id }}"
-                                        class="transition-transform duration-300 text-[#00675B]/70 size-5"
-                                        xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        class="icon icon-tabler icons-tabler-outline icon-tabler-plus transition-transform duration-300">
-                                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                        <path d="M12 5l0 14" />
-                                        <path d="M5 12l14 0" />
-                                    </svg>
-                                </button>
-
-                                <!-- send note - only for GM -->
-                                {% if request.user.role.role_name == 'GM' %}
-                                <label for="note-modal-toggle"
-                                    hx-get="{% url 'note_create_modal' %}?goal_id={{ goal.id }}&next={{ request.path }}"
-                                    hx-target="#note-form-container" hx-swap="innerHTML"
-                                    class="text-[#018077]/70 hover:text-[#00A399]  relative group">
-
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none"
-                                        stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        class="icon icon-tabler icons-tabler-outline icon-tabler-message-plus">
-                                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                        <path d="M8 9h8" />
-                                        <path d="M8 13h6" />
-                                        <path
-                                            d="M12.01 18.594l-4.01 2.406v-3h-2a3 3 0 0 1 -3 -3v-8a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v5.5" />
-                                        <path d="M16 19h6" />
-                                        <path d="M19 16v6" />
-                                    </svg>
-                                    <div class="absolute left-1/2 -translate-x-1/2 mt-0.5 
-                                        px-1.5 py-0.5 text-[10px] 
-                                        bg-gray-800 text-white 
-                                        rounded-sm w-max max-w-xs
-                                        opacity-0 group-hover:opacity-100 
-                                        transition-opacity 
-                                        z-50"> ارسل ملاحظة
-                                    </div>
-                                </label>
-                            {% endif %}
-                            </td>
-                        </tr>
-
-                        <tr id="goal-{{ goal.id }}" class="hidden bg-gray-50">
-                            <td colspan="6" class="px-6 py-4">
-                                {% if goal.initiatives_with_status %}
-                                <div class="space-y-3">
-                                    <div class="flex justify-between items-center mb-4 px-3">
-                                        <h3 class="font-semibold text-[#00675B] text-lg ">| قائمة المبادرات</h3>
-                                        <!-- <a href="{% url 'initiative_create' goal.id %}"
-                                                        class="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700">
-                                                        إضافة مبادرة
-                                                    </a> -->
-                                    </div>
-                                    <!-- List of initiatives -->
-                                    <ol class="list-none space-y-2">
-                                        {% for initiative in goal.initiatives_with_status %}
-                                        <li class="flex items-start gap-3 p-3 bg-white rounded-lg border hover:bg-gray-50">
-                                            <span class="border-l-2 border-gray-300 h-10"></span>
-
-                                            <div class="flex-1">
-                                                <div class="flex justify-between items-start gap-3">
-                                                    <div class="space-y-1">
-                                                        <h4 class="font-semibold text-gray-800">
-                                                            {{ initiative.title }}
-                                                        </h4>
-                                                        <p class="text-sm text-gray-500">
-                                                            {{ initiative.description|default:"لا يوجد وصف" }}
-                                                        </p>
-                                                    </div>
-
-                                                <span class="text-xs font-normal px-2 py-1 rounded-full
-                                                    {% if initiative.status == 'C' %} bg-green-100 text-green-700
-                                                    {% elif initiative.status == 'IP' %} bg-blue-100 text-blue-700
-                                                    {% elif initiative.status == 'D' %} bg-red-100 text-red-700
-                                                    {% else %} bg-gray-100 text-gray-600 {% endif %}">
-                                                        {% if initiative.status == 'C' %} مكتملة
-                                                        {% elif initiative.status == 'IP' %} قيد التنفيذ
-                                                        {% elif initiative.status == 'D' %} متأخرة
-                                                        {% else %} لم تبدأ بعد
-                                                        {% endif %}
-                                                    </span>
-                                                </div>
-
-                                                <div class="mt-3 flex flex-wrap items-center justify-between">
-                                                    <span class="flex gap-1 items-center text-xs text-gray-500">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"
-                                                            fill="currentColor" class="size-4">
-                                                            <path
-                                                                d="M5.75 7.5a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5ZM5 10.25a.75.75 0 1 1 1.5 0 .75.75 0 0 1-1.5 0ZM10.25 7.5a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5ZM7.25 8.25a.75.75 0 1 1 1.5 0 .75.75 0 0 1-1.5 0ZM8 9.5A.75.75 0 1 0 8 11a.75.75 0 0 0 0-1.5Z" />
-                                                            <path fill-rule="evenodd"
-                                                                d="M4.75 1a.75.75 0 0 0-.75.75V3a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2V1.75a.75.75 0 0 0-1.5 0V3h-5V1.75A.75.75 0 0 0 4.75 1ZM3.5 7a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1v4.5a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1V7Z"
-                                                                clip-rule="evenodd" />
-                                                        </svg>
-                                                        {{ initiative.start_date|date:"Y/m/d" }} - {{ initiative.end_date|date:"Y/m/d" }}
-                                                    </span>
-
-                                                    <a href="{% url 'initiative_detail' initiative.id %}"
-                                                        class="text-xs px-3 py-1 rounded-full bg-[#00A399]/10 text-[#00A399] border border-[#00A399] hover:bg-[#00A399]/20">
-                                                        عرض التفاصيل
-                                                    </a>
-                                                </div>
-                                            </div>
-                                        </li>
-                                        {% endfor %}
-                                    </ol>
-                                </div>
-                                {% else %}
-                                <p class="text-center text-gray-400">
-                                    لا توجد مبادرات مرتبطة بهذا الهدف
-                                </p>
-                                {% endif %}
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="6" class="items-center text-center text-gray-400 py-6">لا توجد أهداف تابعه لهذه
-                                الخطة</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-                {% else %}
-                <div class="flex flex-col justify-center items-center min-h-[15rem] gap-2 mb-10">
+            <h2 class="text-lg font-bold text-2xl mr-3 mt-3 col-span-3 text-[#00675B]/80">
+                <span class="inline-flex gap-1 items-center text-[#00675B]/80">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                        class=" icon icon-tabler icons-tabler-outline icon-tabler-chart-bar-off w-24 h-24 stroke-gray-300 hover:stroke-gray-400 transition-transform duration-300 hover:scale-110 ">
+                        class="icon icon-tabler icons-tabler-outline icon-tabler-chart-histogram">
                         <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                        <path d="M3 13a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -6" />
-                        <path d="M12 8h2a1 1 0 0 1 1 1v2m0 4v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1v-10" />
-                        <path d="M15 11v-6a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v12m-1 3h-4a1 1 0 0 1 -1 -1v-4" />
-                        <path d="M4 20h14" />
-                        <path d="M3 3l18 18" />
+                        <path d="M3 3v18h18" />
+                        <path d="M20 18v3" />
+                        <path d="M16 16v5" />
+                        <path d="M12 13v8" />
+                        <path d="M8 16v5" />
+                        <path d="M3 11c6 0 5 -5 9 -5s3 5 9 5" />
                     </svg>
-                    <p class="text-sm text-gray-600">لا توجد بيانات</p>
-                </div>
-                {% endif %}
-            </div>
+                </span>
+                ملخص الأداء
+            </h2>
 
-            <!-- chart 4 Bar Chart: M,CM -->
-            {% if user.role.role_name == 'M' or user.role.role_name == 'CM' %}
-            <div class="bg-gray-100 rounded-xl shadow-md p-3 col-span-3 grid md:grid-cols-3 gap-6">
-
-                <h2 class="text-lg font-bold text-2xl  text-[#00675B]/80 mr-3 mt-3 col-span-3">
-                    <span class="inline-flex gap-1 items-center  text-[#00675B]/80">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                            class="icon icon-tabler icons-tabler-outline icon-tabler-users">
-                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                            <path d="M5 7a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" />
-                            <path d="M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
-                            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                            <path d="M21 21v-2a4 4 0 0 0 -3 -3.85" />
-                        </svg>
-                    </span>
-                    الموظفين
-                </h2>
-
-                <div class="bg-white p-4 rounded-lg shadow md:col-span-3">
-                    <h3 class="font-semibold mb-3 text-center">توزيع العمل</h3>
-                    <div class="flex items-center justify-center h-64 w-full overflow-x-auto">
-                        {% if bar_chart2_data %}
-                        <canvas id="barChart2" class="w-full h-full"></canvas>
-                        {% else %}
-                        <div class="flex flex-col justify-center items-center h-full gap-2 mb-5">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                class=" icon icon-tabler icons-tabler-outline icon-tabler-chart-bar-off w-24 h-24 stroke-gray-300 hover:stroke-gray-400 transition-transform duration-300 hover:scale-110 ">
-                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                <path d="M3 13a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -6" />
-                                <path d="M12 8h2a1 1 0 0 1 1 1v2m0 4v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1v-10" />
-                                <path d="M15 11v-6a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v12m-1 3h-4a1 1 0 0 1 -1 -1v-4" />
-                                <path d="M4 20h14" />
-                                <path d="M3 3l18 18" />
-                            </svg>
-                            <p class="text-sm text-gray-600">لا توجد بيانات</p>
-                        </div>
-                        {% endif %}
-                    </div>
-                </div>
-
-            </div>
-            {% endif %}
-
-            <!-- ================= DEPARTMENTS ================= -->
-            {% if departments %}
-            <div class="bg-gray-100 rounded-xl shadow-md p-3 col-span-3 grid md:grid-cols-3 gap-6">
-
-                <h2 class="text-lg font-bold text-2xl text-[#00675B]/80 mr-3 mt-3">
-                    <span class="inline-flex gap-1 items-center text-[#00675B]/80">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                            class="icon icon-tabler icons-tabler-outline icon-tabler-building-skyscraper">
-                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                            <path d="M3 21l18 0" />
-                            <path d="M5 21v-14l8 -4v18" />
-                            <path d="M19 21v-10l-6 -4" />
-                            <path d="M9 9l0 .01" />
-                            <path d="M9 12l0 .01" />
-                            <path d="M9 15l0 .01" />
-                            <path d="M9 18l0 .01" />
-                        </svg>
-                    </span>
-                    الإدارات
-                </h2>
-
-                <div
-                    class="flex gap-3 py-1 px-4 rounded-lg items-center justify-start col-span-3 overflow-x-auto whitespace-nowrap">
-                    {% for dept in departments %}
-                    <span class="inline-block px-4 py-2 bg-white rounded-full text-sm text-gray-700">
-                        {{ dept.department_name }}
-                    </span>
-                    {% endfor %}
-                </div>
-
-                <div class="bg-white px-4 rounded-lg shadow md:col-span-1 col-span-1 max-h-[27em] overflow-y-auto">
-                    <h3 class="font-semibold text-center sticky top-0 bg-white z-10 px-10 py-6">ترتيب أداء الإدارات</h3>
-                    {% if departments_performance_dict %}
-                    <ol class="space-y-2 list-decimal list-inside marker:font-bold marker:text-gray-600">
-                        {% for department, average in departments_performance_dict.items %}
-                        <li class="flex items-center gap-3 p-3 rounded-lg transition text-sm
-                                        {% if average > 0 %}
-                                            {% if forloop.counter == 1 %} bg-yellow-100 border-l-4 border-yellow-400 {% endif %}
-                                            {% if forloop.counter == 2 %} bg-gray-100 border-l-4 border-gray-400 {% endif %}
-                                            {% if forloop.counter == 3 %} bg-orange-100 border-l-4 border-orange-400 {% endif %}
-                                        {% endif %}">
-                            <span class="font-bold text-gray-600 min-w-[1.5rem] text-right">
-                                {{ forloop.counter }}.
-                            </span>
-                            <span class="flex justify-between w-full">
-                                <span class="font-bold">قسم {{ department }}</span>
-                                <span class="flex font-mono items-center justify-center">{{ average }}%</span>
-                            </span>
-                        </li>
-
-                        {% endfor %}
-                    </ol>
+            <div class="bg-white p-4 rounded-lg shadow md:col-span-2 flex flex-col justify-center">
+                <!-- chart 1 Bar Chart: E,M,CM,GM-->
+                <h3 class="font-semibold mb-3 text-center">{% if user.role.role_name == 'E' %}متوسط الإنجاز في
+                    المبادرات{% else %} مدى اكتمال الأهداف {% endif %}</h3>
+                <div class="flex items-center justify-center h-64">
+                    {% if bar_chart_data %}
+                    <canvas id="barChart" class="w-full h-64"></canvas>
                     {% else %}
                     <div class="flex flex-col justify-center items-center h-full gap-2 mb-5">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
@@ -569,56 +210,491 @@
                     </div>
                     {% endif %}
                 </div>
-                <!-- chart 5 Line Chart: E,M,CM,GM-->
-                <div class="bg-white p-4 rounded-lg shadow md:col-span-2 ">
-                    <h3 class="font-semibold text-center mt-3">مدى تقدم الإدارات </h3>
-                    <p class="text-xs text-center mt-0 mb-3">خلال آخر ٣٠ يوم</p>
-                    <div class="flex items-center justify-center h-80 w-full">
-                        {% if line_chart_data %}
-                        <canvas id="lineChart" class="w-full h-96"></canvas>
-                        {% else %}
-                        <div class="flex flex-col justify-center items-center h-full gap-2 mb-5">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                class=" icon icon-tabler icons-tabler-outline icon-tabler-chart-bar-off w-24 h-24 stroke-gray-300 hover:stroke-gray-400 transition-transform duration-300 hover:scale-110 ">
-                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                <path d="M3 13a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -6" />
-                                <path d="M12 8h2a1 1 0 0 1 1 1v2m0 4v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1v-10" />
-                                <path d="M15 11v-6a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v12m-1 3h-4a1 1 0 0 1 -1 -1v-4" />
-                                <path d="M4 20h14" />
-                                <path d="M3 3l18 18" />
-                            </svg>
-                            <p class="text-sm text-gray-600">لا توجد بيانات</p>
-                        </div>
-                        {% endif %}
+            </div>
+
+
+            <div class="bg-white p-4 rounded-lg shadow md:col-span-1">
+                <!-- chart 2 Donut Chart: E,M,CM,GM  -->
+                <h3 class="font-semibold mb-3 text-center" id="donut-chart-title">
+                    {% if user.role.role_name == 'E' %}حالة المبادرات{% else %} الحالة الإجمالية للمبادرات {% endif %}
+                </h3>
+                <div class="flex items-center justify-center h-64">
+
+                    {% if donut_chart_data %}
+                    <canvas id="donutChart"></canvas>
+                    {% else %}
+                    <div class="flex flex-col justify-center items-center h-full gap-2 mb-5">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class=" icon icon-tabler icons-tabler-outline icon-tabler-chart-bar-off w-24 h-24 stroke-gray-300 hover:stroke-gray-400 transition-transform duration-300 hover:scale-110 ">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <path d="M3 13a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -6" />
+                            <path d="M12 8h2a1 1 0 0 1 1 1v2m0 4v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1v-10" />
+                            <path d="M15 11v-6a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v12m-1 3h-4a1 1 0 0 1 -1 -1v-4" />
+                            <path d="M4 20h14" />
+                            <path d="M3 3l18 18" />
+                        </svg>
+                        <p class="text-sm text-gray-600">لا توجد بيانات</p>
                     </div>
+                    {% endif %}
                 </div>
             </div>
 
-            {% endif %}
+            <!-- chart 3 Stacked Bar Chart: E,M,CM,GM -->
+            <div class="bg-white p-4 rounded-lg shadow md:col-span-3 flex flex-col justify-center">
+                <h3 class="font-semibold mb-3 text-center">مؤشرات الأداء الرئيسية</h3>
+                <div class="flex items-center justify-center h-64 overflow-x-auto">
+                    {% if stacked_bar_chart_data %}
+                    <canvas id="stackedBarChart" width="800" height="auto"></canvas>
+                    {% else %}
+                    <div class="flex flex-col justify-center items-center h-full gap-2 mb-5">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class=" icon icon-tabler icons-tabler-outline icon-tabler-chart-bar-off w-24 h-24 stroke-gray-300 hover:stroke-gray-400 transition-transform duration-300 hover:scale-110 ">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <path d="M3 13a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -6" />
+                            <path d="M12 8h2a1 1 0 0 1 1 1v2m0 4v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1v-10" />
+                            <path d="M15 11v-6a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v12m-1 3h-4a1 1 0 0 1 -1 -1v-4" />
+                            <path d="M4 20h14" />
+                            <path d="M3 3l18 18" />
+                        </svg>
+                        <p class="text-sm text-gray-600">لا توجد بيانات</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
 
         </div>
-    
-    {% else %}
-        <div class="bg-white rounded-xl shadow-md p-10 min-h-[66vh] flex flex-col items-center justify-center gap-4 text-center">
 
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ff1111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-ban w-20 h-20 text-gray-300"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" /><path d="M5.7 5.7l12.6 12.6" /></svg>
-            
-            <h2 class="text-2xl font-bold text-gray-800">
-                لا توجد خطة استراتيجية نشطة
+        <!-- ================= EMPLOYEE CARDS ================= -->
+        {% if user.role.role_name == 'E'%}
+        <div class="flex gap-6 p-4 rounded-lg col-span-3">
+            <div class="bg-white p-4 rounded-lg shadow flex-1 min-w-0">
+                <p class="text-sm text-gray-500">متوسط نسبة الإنجاز</p>
+                <p class="text-2xl font-bold text-gray-800">{{ avrage_progress }}%</p>
+            </div>
+
+            <div class="bg-white p-4 rounded-lg shadow flex-1 min-w-0">
+                <p class="text-sm text-gray-500">المبادرات الموشكة على الانتهاء</p>
+                <p class="text-2xl font-bold text-gray-800">{{ late|length }}</p>
+            </div>
+
+            <div class="bg-white p-4 rounded-lg shadow flex-1 min-w-0">
+                <p class="text-sm text-gray-500">المبادرات المنتهية</p>
+                <p class="text-2xl font-bold text-gray-800">{{ overdue|length }}</p>
+            </div>
+        </div>
+        {% endif %}
+
+
+        <!-- ================= GOALS ================= -->
+        <div class="bg-gray-100 rounded-xl shadow-md p-3 col-span-3 space-y-6">
+            <h2 class="text-lg font-bold text-2xl text-gray-800 mr-3 mt-3">
+                <span class="inline-flex gap-1 items-center text-[#00675B]/80">
+                    <svg class="text-[#00675B]/80" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-target-arrow">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                        <path d="M11 12a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" />
+                        <path d="M12 7a5 5 0 1 0 5 5" />
+                        <path d="M13 3.055a9 9 0 1 0 7.941 7.945" />
+                        <path d="M15 6v3h3l3 -3h-3v-3l-3 3" />
+                        <path d="M15 9l-3 3" />
+                    </svg>
+                    الأهداف والمبادرات
+                </span>
+            </h2>
+            {% if goals %}
+            <table class="w-full text-right text-gray-700 border border-gray-200 bg-white">
+                <thead class="text-sm bg-gray-50 border-b text-center items-center">
+                    <tr>
+                        <th class="py-3 font-semibold">عنوان الهدف</th>
+                        {% if request.user.role.role_name == 'GM' %}
+                        <th class="py-3 font-semibold">الإدارة</th>
+                        {% endif %}
+                        <th class="py-3 font-semibold">الحالة</th>
+                        <th class="py-3 font-semibold">
+                            <span class="inline-flex items-center gap-1 font-semibold">
+                                <a class="text-gray-400 hover:text-gray-700 transition" title="فرز حسب الأهمية"
+                                    href="?{% if request.GET.sort == 'priority' %}{% else %}sort=priority{% endif %}&per_page={{ request.GET.per_page|default:5 }}&page=1">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"
+                                        class="size-4">
+                                        <path fill-rule="evenodd"
+                                            d="M5.22 10.22a.75.75 0 0 1 1.06 0L8 11.94l1.72-1.72a.75.75 0 1 1 1.06 1.06l-2.25 2.25a.75.75 0 0 1-1.06 0l-2.25-2.25a.75.75 0 0 1 0-1.06ZM10.78 5.78a.75.75 0 0 1-1.06 0L8 4.06 6.28 5.78a.75.75 0 0 1-1.06-1.06l2.25-2.25a.75.75 0 0 1 1.06 0l2.25 2.25a.75.75 0 0 1 0 1.06Z"
+                                            clip-rule="evenodd" />
+                                    </svg>
+                                </a>
+                                الأهمية
+                            </span>
+                        </th>
+                        <th class="py-3 font-semibold">
+                            <span class="inline-flex items-center gap-1 font-semibold">
+                                <a class="text-gray-400 hover:text-gray-700 transition" title="فرز حسب المدة"
+                                    href="?{% if request.GET.sort == 'date' %}{% else %}sort=date{% endif %}&per_page={{ request.GET.per_page|default:5 }}&page=1">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"
+                                        class="size-4">
+                                        <path fill-rule="evenodd"
+                                            d="M5.22 10.22a.75.75 0 0 1 1.06 0L8 11.94l1.72-1.72a.75.75 0 1 1 1.06 1.06l-2.25 2.25a.75.75 0 0 1-1.06 0l-2.25-2.25a.75.75 0 0 1 0-1.06ZM10.78 5.78a.75.75 0 0 1-1.06 0L8 4.06 6.28 5.78a.75.75 0 0 1-1.06-1.06l2.25-2.25a.75.75 0 0 1 1.06 0l2.25 2.25a.75.75 0 0 1 0 1.06Z"
+                                            clip-rule="evenodd" />
+                                    </svg>
+                                </a>
+                                مدة تنفيذ الهدف
+                            </span>
+
+                        </th>
+                        <th class="px-3 py-3 font-semibold text-right">المبادرات</th>
+                    </tr>
+                </thead>
+                <tbody id="goalsBody">
+                    {% for goal in goals %}
+                    <tr class="border-b hover:bg-gray-50 text-center align-middle">
+                        <!-- Title -->
+                        <td class="px-6 py-3 max-w-[220px]">
+                            <div class="truncate text-[#00675B] text-sm font-normal" title="{{ goal.goal_title }}">
+                                <a href="{% url 'goal_detail' goal.id %}" class="hover:font-semibold">
+                                    {{ goal.goal_title }}
+                                </a>
+                            </div>
+                        </td>
+                        {% if request.user.role.role_name == 'GM' %}
+                        <!-- Department -->
+                        <td class="px-4 py-3 whitespace-nowrap text-sm">
+                            {{ goal.department|default:"—" }}
+                        </td>
+                        {% endif %}
+                        <!-- Status -->
+                        <td class="px-4 py-3">
+                            <span class="inline-flex items-center justify-center px-3 py-1 text-xs font-semibold rounded-full whitespace-nowrap
+                                            {% if goal.goal_status == 'C' %} bg-green-100 text-green-700
+                                            {% elif goal.goal_status == 'IP' %} bg-blue-100 text-blue-700
+                                            {% elif goal.goal_status == 'D' %} bg-red-100 text-red-700
+                                            {% else %} bg-gray-100 text-gray-600 {% endif %}">
+                                {{ goal.get_goal_status_display }}
+                            </span>
+                        </td>
+                        <!-- Priority -->
+                        <td class="px-4 py-3">
+                            <span class="inline-flex items-center justify-center px-3 py-1 text-xs font-semibold rounded-full whitespace-nowrap
+                                            {% if goal.goal_priority == 'C' %} bg-red-100 text-red-800
+                                            {% elif goal.goal_priority == 'H' %} bg-orange-100 text-orange-800
+                                            {% elif goal.goal_priority == 'M' %} bg-yellow-100 text-yellow-800
+                                            {% else %} bg-green-100 text-green-800 {% endif %}">
+                                {{ goal.get_goal_priority_display }}
+                            </span>
+                        </td>
+                        <!-- Dates -->
+                        <td class="px-4 py-3 text-sm whitespace-nowrap">
+                            {{ goal.start_date|date:'Y/m/d' }} – {{ goal.end_date|date:'Y/m/d' }}
+                        </td>
+                        <!-- Action -->
+                        <td class="px-6 py-3 items-center text-center flex justify-start gap-10">
+                            <button onclick="toggleRow('goal-{{ goal.id }}', 'plusIcon-{{ goal.id }}')">
+                                <svg id="plusIcon-{{ goal.id }}"
+                                    class="transition-transform duration-300 text-[#00675B]/70 size-5"
+                                    xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    class="icon icon-tabler icons-tabler-outline icon-tabler-plus transition-transform duration-300">
+                                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                    <path d="M12 5l0 14" />
+                                    <path d="M5 12l14 0" />
+                                </svg>
+                            </button>
+
+                            <!-- send note - only for GM -->
+                            {% if request.user.role.role_name == 'GM' %}
+                            <label for="note-modal-toggle"
+                                hx-get="{% url 'note_create_modal' %}?goal_id={{ goal.id }}&next={{ request.path }}"
+                                hx-target="#note-form-container" hx-swap="innerHTML"
+                                class="text-[#018077]/70 hover:text-[#00A399]  relative group">
+
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    class="icon icon-tabler icons-tabler-outline icon-tabler-message-plus">
+                                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                    <path d="M8 9h8" />
+                                    <path d="M8 13h6" />
+                                    <path
+                                        d="M12.01 18.594l-4.01 2.406v-3h-2a3 3 0 0 1 -3 -3v-8a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v5.5" />
+                                    <path d="M16 19h6" />
+                                    <path d="M19 16v6" />
+                                </svg>
+                                <div class="absolute left-1/2 -translate-x-1/2 mt-0.5 
+                                        px-1.5 py-0.5 text-[10px] 
+                                        bg-gray-800 text-white 
+                                        rounded-sm w-max max-w-xs
+                                        opacity-0 group-hover:opacity-100 
+                                        transition-opacity 
+                                        z-50"> ارسل ملاحظة
+                                </div>
+                            </label>
+                            {% endif %}
+                        </td>
+                    </tr>
+
+                    <tr id="goal-{{ goal.id }}" class="hidden bg-gray-50">
+                        <td colspan="6" class="px-6 py-4">
+                            {% if goal.initiatives_with_status %}
+                            <div class="space-y-3">
+                                <div class="flex justify-between items-center mb-4 px-3">
+                                    <h3 class="font-semibold text-[#00675B] text-lg ">| قائمة المبادرات</h3>
+                                </div>
+                                <!-- List of initiatives -->
+                                <ol class="list-none space-y-2">
+                                    {% for initiative in goal.initiatives_with_status %}
+                                    <li class="flex items-start gap-3 p-3 bg-white rounded-lg border hover:bg-gray-50">
+                                        <span class="border-l-2 border-gray-300 h-10"></span>
+
+                                        <div class="flex-1">
+                                            <div class="flex justify-between items-start gap-3">
+                                                <div class="space-y-1">
+                                                    <h4 class="font-semibold text-gray-800">
+                                                        {{ initiative.title }}
+                                                    </h4>
+                                                    <p class="text-sm text-gray-500">
+                                                        {{ initiative.description|default:"لا يوجد وصف" }}
+                                                    </p>
+                                                </div>
+
+                                                <span class="text-xs font-normal px-2 py-1 rounded-full
+                                                    {% if initiative.status == 'C' %} bg-green-100 text-green-700
+                                                    {% elif initiative.status == 'IP' %} bg-blue-100 text-blue-700
+                                                    {% elif initiative.status == 'D' %} bg-red-100 text-red-700
+                                                    {% else %} bg-gray-100 text-gray-600 {% endif %}">
+                                                    {% if initiative.status == 'C' %} مكتملة
+                                                    {% elif initiative.status == 'IP' %} قيد التنفيذ
+                                                    {% elif initiative.status == 'D' %} متأخرة
+                                                    {% else %} لم تبدأ بعد
+                                                    {% endif %}
+                                                </span>
+                                            </div>
+
+                                            <div class="mt-3 flex flex-wrap items-center justify-between">
+                                                <span class="flex gap-1 items-center text-xs text-gray-500">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"
+                                                        fill="currentColor" class="size-4">
+                                                        <path
+                                                            d="M5.75 7.5a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5ZM5 10.25a.75.75 0 1 1 1.5 0 .75.75 0 0 1-1.5 0ZM10.25 7.5a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5ZM7.25 8.25a.75.75 0 1 1 1.5 0 .75.75 0 0 1-1.5 0ZM8 9.5A.75.75 0 1 0 8 11a.75.75 0 0 0 0-1.5Z" />
+                                                        <path fill-rule="evenodd"
+                                                            d="M4.75 1a.75.75 0 0 0-.75.75V3a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2V1.75a.75.75 0 0 0-1.5 0V3h-5V1.75A.75.75 0 0 0 4.75 1ZM3.5 7a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1v4.5a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1V7Z"
+                                                            clip-rule="evenodd" />
+                                                    </svg>
+                                                    {{ initiative.start_date|date:"Y/m/d" }} - {{ initiative.end_date|date:"Y/m/d" }}
+                                                </span>
+
+                                                <a href="{% url 'initiative_detail' initiative.id %}"
+                                                    class="text-xs px-3 py-1 rounded-full bg-[#00A399]/10 text-[#00A399] border border-[#00A399] hover:bg-[#00A399]/20">
+                                                    عرض التفاصيل
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </li>
+                                    {% endfor %}
+                                </ol>
+                            </div>
+                            {% else %}
+                            <p class="text-center text-gray-400">
+                                لا توجد مبادرات مرتبطة بهذا الهدف
+                            </p>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="items-center text-center text-gray-400 py-6">لا توجد أهداف</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="flex flex-col justify-center items-center min-h-[15rem] gap-2 mb-10">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    class=" icon icon-tabler icons-tabler-outline icon-tabler-chart-bar-off w-24 h-24 stroke-gray-300 hover:stroke-gray-400 transition-transform duration-300 hover:scale-110 ">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                    <path d="M3 13a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -6" />
+                    <path d="M12 8h2a1 1 0 0 1 1 1v2m0 4v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1v-10" />
+                    <path d="M15 11v-6a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v12m-1 3h-4a1 1 0 0 1 -1 -1v-4" />
+                    <path d="M4 20h14" />
+                    <path d="M3 3l18 18" />
+                </svg>
+                <p class="text-sm text-gray-600">لا توجد بيانات</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- chart 4 Bar Chart: M,CM -->
+        {% if user.role.role_name == 'M' or user.role.role_name == 'CM' %}
+        <div class="bg-gray-100 rounded-xl shadow-md p-3 col-span-3 grid md:grid-cols-3 gap-6">
+
+            <h2 class="text-lg font-bold text-2xl  text-[#00675B]/80 mr-3 mt-3 col-span-3">
+                <span class="inline-flex gap-1 items-center  text-[#00675B]/80">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class="icon icon-tabler icons-tabler-outline icon-tabler-users">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                        <path d="M5 7a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" />
+                        <path d="M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                        <path d="M21 21v-2a4 4 0 0 0 -3 -3.85" />
+                    </svg>
+                </span>
+                الموظفين
             </h2>
 
-            <p class="text-gray-500 max-w-md">
-                لا يمكن عرض المؤشرات، الأهداف، أو التقارير بدون وجود خطة استراتيجية نشطة.
-            </p>
+            <div class="bg-white p-4 rounded-lg shadow md:col-span-3">
+                <h3 class="font-semibold mb-3 text-center">توزيع العمل</h3>
+                <div class="flex items-center justify-center h-64 w-full overflow-x-auto">
+                    {% if bar_chart2_data %}
+                    <canvas id="barChart2" class="w-full h-full"></canvas>
+                    {% else %}
+                    <div class="flex flex-col justify-center items-center h-full gap-2 mb-5">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class=" icon icon-tabler icons-tabler-outline icon-tabler-chart-bar-off w-24 h-24 stroke-gray-300 hover:stroke-gray-400 transition-transform duration-300 hover:scale-110 ">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <path d="M3 13a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -6" />
+                            <path d="M12 8h2a1 1 0 0 1 1 1v2m0 4v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1v-10" />
+                            <path d="M15 11v-6a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v12m-1 3h-4a1 1 0 0 1 -1 -1v-4" />
+                            <path d="M4 20h14" />
+                            <path d="M3 3l18 18" />
+                        </svg>
+                        <p class="text-sm text-gray-600">لا توجد بيانات</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
 
-            {% if request.user.role.role_name == 'CM' %}
-            <a href="{% url 'plan_create' %}"
-                class="mt-4 inline-flex items-center gap-2 px-5 py-2.5 bg-[#00675B] text-white rounded-lg hover:bg-[#005249] transition">
-                إنشاء خطة جديدة
-            </a>
-            {% endif %}
         </div>
+        {% endif %}
+
+        <!-- ================= DEPARTMENTS ================= -->
+        {% if departments %}
+        <div class="bg-gray-100 rounded-xl shadow-md p-3 col-span-3 grid md:grid-cols-3 gap-6">
+
+            <h2 class="text-lg font-bold text-2xl text-[#00675B]/80 mr-3 mt-3">
+                <span class="inline-flex gap-1 items-center text-[#00675B]/80">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class="icon icon-tabler icons-tabler-outline icon-tabler-building-skyscraper">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                        <path d="M3 21l18 0" />
+                        <path d="M5 21v-14l8 -4v18" />
+                        <path d="M19 21v-10l-6 -4" />
+                        <path d="M9 9l0 .01" />
+                        <path d="M9 12l0 .01" />
+                        <path d="M9 15l0 .01" />
+                        <path d="M9 18l0 .01" />
+                    </svg>
+                </span>
+                الإدارات
+            </h2>
+
+            <div
+                class="flex gap-3 py-1 px-4 rounded-lg items-center justify-start col-span-3 overflow-x-auto whitespace-nowrap">
+                {% for dept in departments %}
+                <span class="inline-block px-4 py-2 bg-white rounded-full text-sm text-gray-700">
+                    {{ dept.department_name }}
+                </span>
+                {% endfor %}
+            </div>
+
+            <div class="bg-white px-4 rounded-lg shadow md:col-span-1 col-span-1 max-h-[27em] overflow-y-auto">
+                <h3 class="font-semibold text-center sticky top-0 bg-white z-10 px-10 py-6">ترتيب أداء الإدارات</h3>
+                {% if departments_performance_dict %}
+                <ol class="space-y-2 list-decimal list-inside marker:font-bold marker:text-gray-600">
+                    {% for department, average in departments_performance_dict.items %}
+                    <li class="flex items-center gap-3 p-3 rounded-lg transition text-sm
+                                        {% if average > 0 %}
+                                            {% if forloop.counter == 1 %} bg-yellow-100 border-l-4 border-yellow-400 {% endif %}
+                                            {% if forloop.counter == 2 %} bg-gray-100 border-l-4 border-gray-400 {% endif %}
+                                            {% if forloop.counter == 3 %} bg-orange-100 border-l-4 border-orange-400 {% endif %}
+                                        {% endif %}">
+                        <span class="font-bold text-gray-600 min-w-[1.5rem] text-right">
+                            {{ forloop.counter }}.
+                        </span>
+                        <span class="flex justify-between w-full">
+                            <span class="font-bold">قسم {{ department }}</span>
+                            <span class="flex font-mono items-center justify-center">{{ average }}%</span>
+                        </span>
+                    </li>
+
+                    {% endfor %}
+                </ol>
+                {% else %}
+                <div class="flex flex-col justify-center items-center h-full gap-2 mb-5">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class=" icon icon-tabler icons-tabler-outline icon-tabler-chart-bar-off w-24 h-24 stroke-gray-300 hover:stroke-gray-400 transition-transform duration-300 hover:scale-110 ">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                        <path d="M3 13a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -6" />
+                        <path d="M12 8h2a1 1 0 0 1 1 1v2m0 4v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1v-10" />
+                        <path d="M15 11v-6a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v12m-1 3h-4a1 1 0 0 1 -1 -1v-4" />
+                        <path d="M4 20h14" />
+                        <path d="M3 3l18 18" />
+                    </svg>
+                    <p class="text-sm text-gray-600">لا توجد بيانات</p>
+                </div>
+                {% endif %}
+            </div>
+            <!-- chart 5 Line Chart: E,M,CM,GM-->
+            <div class="bg-white p-4 rounded-lg shadow md:col-span-2 ">
+                <h3 class="font-semibold text-center mt-3">مدى تقدم الإدارات </h3>
+                <p class="text-xs text-center mt-0 mb-3">خلال آخر ٣٠ يوم</p>
+                <div class="flex items-center justify-center h-80 w-full">
+                    {% if line_chart_data %}
+                    <canvas id="lineChart" class="w-full h-96"></canvas>
+                    {% else %}
+                    <div class="flex flex-col justify-center items-center h-full gap-2 mb-5">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class=" icon icon-tabler icons-tabler-outline icon-tabler-chart-bar-off w-24 h-24 stroke-gray-300 hover:stroke-gray-400 transition-transform duration-300 hover:scale-110 ">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <path d="M3 13a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -6" />
+                            <path d="M12 8h2a1 1 0 0 1 1 1v2m0 4v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1v-10" />
+                            <path d="M15 11v-6a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v12m-1 3h-4a1 1 0 0 1 -1 -1v-4" />
+                            <path d="M4 20h14" />
+                            <path d="M3 3l18 18" />
+                        </svg>
+                        <p class="text-sm text-gray-600">لا توجد بيانات</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        {% endif %}
+
+    </div>
+
+    {% else %}
+    <div
+        class="bg-white rounded-xl shadow-md p-10 min-h-[66vh] flex flex-col items-center justify-center gap-4 text-center">
+
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ff1111"
+            stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+            class="icon icon-tabler icons-tabler-outline icon-tabler-ban w-20 h-20 text-gray-300">
+            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+            <path d="M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" />
+            <path d="M5.7 5.7l12.6 12.6" />
+        </svg>
+
+        <h2 class="text-2xl font-bold text-gray-800">
+            لا توجد خطة استراتيجية نشطة
+        </h2>
+
+        <p class="text-gray-500 max-w-md">
+            لا يمكن عرض المؤشرات، الأهداف، أو التقارير بدون وجود خطة استراتيجية نشطة.
+        </p>
+
+        {% if request.user.role.role_name == 'CM' %}
+        <a href="{% url 'plan_create' %}"
+            class="mt-4 inline-flex items-center gap-2 px-5 py-2.5 bg-[#00675B] text-white rounded-lg hover:bg-[#005249] transition">
+            إنشاء خطة جديدة
+        </a>
+        {% endif %}
+    </div>
     {% endif %}
 
 </div>
@@ -637,20 +713,4 @@
     </div>
 </div>
 
-
-<script>
-    function toggleRow(id, iconId) {
-        const row = document.getElementById(id);
-        const icon = document.getElementById(iconId);
-
-        row.classList.toggle("hidden");
-
-        if (row.classList.contains("hidden")) {
-            icon.style.transform = "rotate(0deg)";
-        } else {
-            icon.style.transform = "rotate(45deg)";
-        }
-    }
-
-</script>
 {% endblock %}

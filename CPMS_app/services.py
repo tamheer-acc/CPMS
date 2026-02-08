@@ -305,6 +305,9 @@ def get_timeline_data(plan, user):
                 UserInitiative.objects.filter(initiative=item, user__role__role_name='E')
             )
 
+            department_name = item.strategic_goal.department.department_name if item.strategic_goal and hasattr(item.strategic_goal, 'department') else None
+
+
             # ===== Get last completion time =====
             progress_list = []
             for ui_id in ui_by_initiative.get(item.id, []):
@@ -336,6 +339,8 @@ def get_timeline_data(plan, user):
 
             # ===== Calculate goal progress from initiatives =====
             avg_progress = calc_goal_progress(item)
+            department_name = item.department.department_name if hasattr(item, 'department') else None
+
 
             # ===== Get last completion time from all related UserInitiatives =====
             progress_list = []
@@ -379,7 +384,8 @@ def get_timeline_data(plan, user):
             'completion_status': completion_status,
             'time_status': time_status,
             'delayed_item': delayed_item,
-            'average_progress': avg_progress
+            'average_progress': avg_progress,
+            'department_name': department_name
         })
 
     return timeline_data
@@ -413,11 +419,12 @@ def get_plan_dashboard(plan, user):
      employees_progress = (
         UserInitiative.objects
         .filter(initiative__in=initiatives_qs, user__role__role_name='E')
-        .values('user__first_name', 'user__last_name')
+        .values('user__first_name', 'user__last_name', 'user__department__department_name')
         .annotate(avg_progress=Avg('progress'))
         .order_by('-avg_progress')[:5]
     )
-     top5_labels = [ f"{e['user__first_name']} {e['user__last_name']}" for e in employees_progress]
+     top5_labels = [f"{e['user__first_name']} {e['user__last_name']}" for e in employees_progress]
+     top5_department_name = [f"{e['user__department__department_name']}" for e in employees_progress]
      top5_progress = [round(float(e['avg_progress'] or 0),2) for e in employees_progress]
 
     elif role == 'GM':
@@ -512,35 +519,115 @@ def get_plan_dashboard(plan, user):
     })
        
     #=========================== KPI Chart ==================================
+    # initiatives = initiatives_qs.prefetch_related('kpi_set', 'strategic_goal__department')
+    # kpi_chart_data = []
+
+    # for initiative in initiatives:
+    #   for kpi in initiative.kpi_set.all():
+    #     actual = float(kpi.actual_value) if kpi.actual_value is not None else 0
+    #     target = float(kpi.target_value) if kpi.target_value is not None else 1  
+    #     ratio = actual / target if target else 0
+
+    #     if ratio < 0.25:
+    #         color = "#A13525"  
+    #     elif ratio < 0.5:
+    #         color = "#E59256"  
+    #     elif ratio < 0.75:
+    #         color = "#F2C75C"  
+    #     else:
+    #         color = "#00685E"  
+
+    #     kpi_chart_data.append({
+    #         'initiative_title': initiative.title,
+    #         'department': initiative.strategic_goal.department.department_name,
+    #         'kpi_name': kpi.kpi,
+    #         'unit': kpi.unit,
+    #         'target': target,
+    #         'actual': actual,
+    #         'color': color
+    #   })
+    
+    # Kpi_length = len(kpi_chart_data)
+    # =========================== KPI Chart ==================================
     initiatives = initiatives_qs.prefetch_related('kpi_set', 'strategic_goal__department')
     kpi_chart_data = []
-
     for initiative in initiatives:
-      for kpi in initiative.kpi_set.all():
-        actual = float(kpi.actual_value) if kpi.actual_value is not None else 0
-        target = float(kpi.target_value) if kpi.target_value is not None else 1  # لتجنب القسمة على صفر
-        ratio = actual / target if target else 0
+     for kpi in initiative.kpi_set.all():
 
-        if ratio < 0.25:
-            color = "#A13525"  
-        elif ratio < 0.5:
-            color = "#E59256"  
-        elif ratio < 0.75:
-            color = "#F2C75C"  
+        actual = float(kpi.actual_value) if kpi.actual_value is not None else 0
+        target = float(kpi.target_value) if kpi.target_value is not None else 1
+        start = float(kpi.start_value) if kpi.start_value is not None else 0
+        
+        target_should_decrease = start > target
+        # difference = round(abs(actual - target),2)
+        diff = abs(actual - target)
+        if diff.is_integer():
+            difference = int(diff)
         else:
-            color = "#00685E"  
+            difference = round(diff, 2) 
+        
+        if target_should_decrease:
+            denominator = start - target
+            percentage = ((start - actual) / denominator) * 100 if denominator != 0 else 100
+        else:
+            denominator = target - start
+            percentage = ((actual - start) / denominator) * 100 if denominator != 0 else 100
+        
+        percentage = round(max(0, percentage))
+        
+        direction_text = "📉 المؤشر يستهدف الخفض" if target_should_decrease else "📈 المؤشر يستهدف الزيادة"
+        
+        if target_should_decrease:
+            if actual < target:
+                status_text = f"تم تجاوز المستهدف بـ {difference} {kpi.unit}"
+            elif actual == target:
+                status_text = f"تم تحقيق المستهدف تمامًا"
+            else:
+                status_text = f"أعلى من المستهدف بـ {difference} {kpi.unit}"
+        else:
+            if actual > target:
+                status_text = f"تم تجاوز المستهدف بـ {difference} {kpi.unit}"
+            elif actual == target:
+                status_text = f"تم تحقيق المستهدف تمامًا"
+            else:
+              status_text = f"أقل من المستهدف بـ {difference} {kpi.unit}"
+        
+        if percentage >= 100:
+            status_icon = "🟢"
+        elif percentage >= 70:
+            status_icon = "🟡"
+        elif percentage >= 50:
+            status_icon = "🟠"
+        else:
+            status_icon = "🔴"
+        
+        icon_to_color = {
+           "🟢": "#00685E",
+           "🟡": "#F2C75C",
+           "🟠": "#E59256",
+           "🔴": "#A13525"
+           }
+        
+        color = icon_to_color[status_icon]
 
         kpi_chart_data.append({
             'initiative_title': initiative.title,
             'department': initiative.strategic_goal.department.department_name,
+            'kpi_direction': direction_text,
             'kpi_name': kpi.kpi,
             'unit': kpi.unit,
             'target': target,
             'actual': actual,
+            'start': start,
+            'difference': difference,
+            'percentage': percentage,
+            'status_text': status_text,
+            'status_icon': status_icon,
             'color': color
-      })
-    
+        })
+        
     Kpi_length = len(kpi_chart_data)
+
 
     #===================== Timeline chart & cards ==================================
     timeline_data=get_timeline_data(plan, user)
@@ -599,6 +686,7 @@ def get_plan_dashboard(plan, user):
 
         'top5_labels_json': json.dumps(top5_labels),
         'top5_progress_json': json.dumps(top5_progress),
+        'top5_department_name': json.dumps(top5_department_name),
         'top5_length': len(top5_progress)
     }
 

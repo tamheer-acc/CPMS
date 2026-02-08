@@ -4,6 +4,7 @@
 {% block breadcrumb %}
 
 <!-- for GM, CM, M -- when come from goal list page -->
+{% if is_plan_active %}
 {% if breadcrumb_source == 'goals_list' %}
     <li class="flex items-center">
         <span class="mx-2">/</span>
@@ -13,34 +14,34 @@
         <span class="mx-2">/</span>
         <span class="text-gray-800 font-semibold">تفاصيل الهدف</span>
     </li>
-
-<!-- for GM, CM, M -- when the plan is active and they come from dashboard -->
-{% elif breadcrumb_source == 'dashboard' %}
+    {% else %}
+    <li class="flex items-center">
+        <span class="mx-2">/</span>
+        <span class="text-gray-700">{{goal.goal_title}}</span>
+    </li>
     <li class="flex items-center">
         <span class="mx-2">/</span>
         <span class="text-gray-800 font-semibold">تفاصيل الهدف</span>
     </li>
- 
+ {% endif %}
 <!-- for GM, CM, M -- when the plan is inactive -->   
-{% elif breadcrumb_source == 'plan_detail' %}
-<li class="flex items-center">
+{% elif not is_plan_active %}
+    {% if breadcrumb_source == 'plan_detail' %}
+    <li class="flex items-center">
         <span class="mx-2">/</span>
         <a href="{% url 'plan_detail' plan.id %}" class="hover:text-gray-700">تفاصيل الخطة</a>
     </li>
+     <li class="flex items-center">
+        <span class="mx-2">/</span>
+        <span class="text-gray-700">{{goal.goal_title}}</span>
+    </li>
     <li class="flex items-center">
         <span class="mx-2">/</span>
         <span class="text-gray-800 font-semibold">تفاصيل الهدف</span>
     </li>
-
-<!-- for E -->
- {% elif request.user.role.role_name == 'E' %}
-<li class="flex items-center">
-    <span class="mx-2">/</span>
-    <span class="text-gray-800 font-semibold">تفاصيل الهدف</span>
-</li>
-
-
 {% endif %}
+{% endif %}
+
 
 {% endblock %}
 

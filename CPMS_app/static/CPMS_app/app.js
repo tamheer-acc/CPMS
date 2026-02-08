@@ -789,4 +789,176 @@ if (document.getElementById('line-chart-data')) {
         lineChart(lineChartData, 'lineChart');
     }
 }
-// //====================== Plan Detail Dashboard =============================
+
+// to expanding goal table 
+function toggleRow(id, iconId) {
+    const row = document.getElementById(id);
+    const icon = document.getElementById(iconId);
+
+    row.classList.toggle("hidden");
+
+    if (row.classList.contains("hidden")) {
+            icon.style.transform = "rotate(0deg)";
+    } else {
+            icon.style.transform = "rotate(45deg)";
+    }
+}
+// ----------------------------------------
+// for note list page
+// ----------------------------------------
+document.body.addEventListener('click', function (e) {
+        const row = e.target.closest('.note-row');
+        if (!row) return;
+        
+        if (e.target.closest('.star-btn')) return;
+
+        const noteId = row.dataset.id;
+
+        htmx.ajax('GET', `/notes/${noteId}/detail/`, {
+            target: "#note-preview > div",
+            swap: "innerHTML"
+        });
+
+        const url = new URL(window.location);
+        url.searchParams.set("note", noteId);
+        window.history.pushState({}, "", url);
+
+
+        highlightActive(row);
+        openPreview();
+    });
+
+
+// to display note detail section
+function openPreview() {
+        const messages = document.getElementById('messages-section');
+        const preview = document.getElementById('note-preview');
+
+        preview.classList.remove('hidden');
+        messages.classList.remove('flex-1');
+        messages.classList.add('w-[45%]');
+    }
+
+
+// to close note detail section
+function closePreview() {
+        const messages = document.getElementById('messages-section');
+        const preview = document.getElementById('note-preview');
+
+        preview.classList.add('hidden');
+        messages.classList.remove('w-[45%]');
+        messages.classList.add('flex-1');
+    }
+
+// to highlight the selected note
+function highlightActive(activeRow) {
+        document.querySelectorAll('.note-row').forEach(row => {
+            row.classList.remove('bg-[#00A399]/10');
+        });
+
+        activeRow.classList.add('bg-[#00A399]/10');
+    }
+
+// set url for selected note
+document.addEventListener("DOMContentLoaded", function () {
+        const params = new URLSearchParams(window.location.search);
+        const noteId = params.get("note");
+
+        if (!noteId) return;
+
+        const noteRow = document.querySelector(
+            `.note-row[data-id="${noteId}"]`
+        );
+
+        if (noteRow) {
+            noteRow.click();
+        }
+    });
+
+
+// change icon color when dropdown button was clicked
+const icon = document.getElementById("dropdownIconfilter");
+let filterActive = false;
+
+document.querySelectorAll(".filter-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+            const filter = btn.dataset.filter;
+
+            if (filter === "all") {
+                filterActive = false;
+                icon?.setAttribute("fill", "none");
+                icon?.setAttribute("stroke", "currentColor");
+            } else {
+                filterActive = true;
+                icon?.setAttribute("fill", "#00A399");
+                icon?.setAttribute("stroke", "#00A399");
+            }
+        });
+    });
+
+
+function initNoteForm() {
+        const sendType = document.getElementById("send-type");
+        if (!sendType) return;
+
+        const receiver = document.getElementById("receiver-field");
+        const initiative = document.getElementById("initiative-field");
+        const goal = document.getElementById("goal-field");
+
+        function hideAll() {
+            receiver?.classList.add("hidden");
+            initiative?.classList.add("hidden");
+            goal?.classList.add("hidden");
+        }
+
+        hideAll();
+
+        sendType.addEventListener("change", function () {
+            hideAll();
+
+            if (this.value === "manager" || this.value === "employee") {
+                receiver?.classList.remove("hidden");
+            }
+
+            if (this.value === "initiative") {
+                initiative?.classList.remove("hidden");
+            }
+
+            if (this.value === "goal") {
+                goal?.classList.remove("hidden");
+            }
+        });
+
+        sendType.dispatchEvent(new Event("change"));
+    }
+
+
+document.body.addEventListener("htmx:afterSwap", function (e) {
+        if (e.target.id === "note-form-container") {
+            document.getElementById('note-modal-toggle').checked = true;
+            initNoteForm();
+        }
+    });
+
+// for note detail
+function scrollToBottom() {
+    const container = document.getElementById("replies-container");
+    if (!container) return;
+
+    container.scrollTo({
+      top: container.scrollHeight,
+      behavior: "smooth"
+    });
+  }
+
+document.body.addEventListener("htmx:afterSwap", function (evt) {
+
+    if (evt.detail.target.id === "replies-container") {
+      scrollToBottom();
+    }
+    if (evt.target && evt.target.id === "replies-container") {
+      const textarea = document.querySelector("textarea[name='reply_content']");
+      if (textarea) textarea.value = "";
+
+    }
+})

@@ -459,10 +459,10 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         departments_performance_dict = {dep.department_name: [] for dep in departments}            
         for goal in goals:
             goal_average = avg_calculator(UserInitiative.objects.filter(initiative__strategic_goal = goal, user__role__role_name = 'E' ))
-            departments_performance_dict.setdefault(goal.department.department_name, []).append(float(goal_average))
+            departments_performance_dict.setdefault(goal.department.department_name, []).append(round(float(goal_average),2))
         for key in departments_performance_dict:
             values = departments_performance_dict[key]
-            departments_performance_dict[key] = sum(values) / len(values) if values else 0.0
+            departments_performance_dict[key] = round(sum(values) / len(values),2) if values else 0.0
         sorted_departments = dict( sorted(departments_performance_dict.items(), key=lambda x: x[1], reverse=True)) #sort deps based on performance percentage 
         context['departments_performance_dict'] = sorted_departments
         
@@ -479,6 +479,8 @@ class DashboardView(LoginRequiredMixin, TemplateView):
 
         context['departments'] = departments
         context['department'] = user.department if user.role.role_name != 'GM' else None
+
+        context['unread_count'] = get_unread_notes_count(user)
 
         return context
 
@@ -536,6 +538,8 @@ class AllInitiativeView(LoginRequiredMixin, InitiativePermissionMixin, RoleRequi
         context['search'] = self.request.GET.get('search', '')
         context['priority'] = self.request.GET.get('priority', '')
         context['per_page'] = self.request.GET.get('per_page', 25)
+
+        context['unread_count'] = get_unread_notes_count(self.request.user)
 
         page_obj = context['page_obj']
         total_pages = context['paginator'].num_pages
@@ -614,15 +618,25 @@ class InitiativeDetailsView(LoginRequiredMixin, DetailView):
         referer = self.request.META.get('HTTP_REFERER', '')
         if '/initiatives/' in referer:
             context['breadcrumb_source'] = 'initiatives_list'
-        elif '/plans' in referer:
+        elif '/plans/' in referer:
             context['breadcrumb_source'] = 'plan_detail'
+        elif '/plans/' and '/detail/' and '/goals/' in referer:
+            context['breadcrumb_source'] = 'plandetail'
+        elif '/goals/' and '/detail/' and '/initiatives/' in referer:
+            context['breadcrumb_source'] = 'detail'
+        elif '/goals/' in referer:
+            context['breadcrumb_source'] = 'goals'
+       
         else:
             context['breadcrumb_source'] = 'dashboard'
+
         
         #  الملاحظات المرتبطة بالمبادرة
         notes = Note.objects.filter(initiative=initiative, parent_note__isnull=True).order_by('-created_at')
 
         context['initiative_notes'] = notes
+
+        context['unread_count'] = get_unread_notes_count(user)
 
 
         if user.role.role_name == 'E':
@@ -1113,6 +1127,8 @@ class AllPlansView(LoginRequiredMixin, RoleRequiredMixin, ListView):
         context['is_paginated'] = True if paginator.num_pages > 1 else False
         context['active_plan_exists'] = StrategicPlan.objects.filter(is_active=True).exists()
 
+        context['unread_count'] = get_unread_notes_count(self.request.user)
+
         return context
 
 
@@ -1180,6 +1196,9 @@ class PlanDetailsview(LoginRequiredMixin, RoleRequiredMixin, DetailView):
       context['per_page'] = per_page
       context['is_paginated'] = True if paginator.num_pages > 1 else False
       context['page_numbers'] = get_page_numbers(page_obj, paginator)
+
+      context['unread_count'] = get_unread_notes_count(user)
+      
       return context
       
      def render_to_response(self, context, **response_kwargs):
@@ -1336,6 +1355,9 @@ class AllGoalsView(LoginRequiredMixin, RoleRequiredMixin, ListView):
       context['per_page'] = per_page
       context['is_paginated'] = True if paginator.num_pages > 1 else False
       context['page_numbers'] = get_page_numbers(page_obj, paginator)
+
+      context['unread_count'] = get_unread_notes_count(self.request.user)
+      
       return context
     
     
@@ -1381,7 +1403,7 @@ class GoalDetailsview(LoginRequiredMixin, DetailView):
         referer = self.request.META.get('HTTP_REFERER', '')
         if '/goals/' in referer:
             context['breadcrumb_source'] = 'goals_list'
-        elif '/plans' in referer:
+        elif '/plans/' in referer:
             context['breadcrumb_source'] = 'plan_detail'
         else:
             context['breadcrumb_source'] = 'dashboard'
@@ -1402,6 +1424,8 @@ class GoalDetailsview(LoginRequiredMixin, DetailView):
         context["passed_duration_percent"] = timeline["passed_duration_percent"]
         
         context['is_plan_active'] = strategic_goal.strategicplan.is_active
+
+        context['unread_count'] = get_unread_notes_count(user)
 
         # svg_size = 48  # in px
         # radius = 0.45 * svg_size
@@ -1690,6 +1714,13 @@ class AllNotesView(LoginRequiredMixin, ListView):
         context['current_filter'] = self.request.GET.get('filter', 'all')
         context['search'] = self.request.GET.get('search', '')
         context['unread_count'] = get_unread_notes_count(user)
+
+        initiative_id = self.request.GET.get('initiative')
+        if initiative_id:
+            context['initiative'] = get_object_or_404(Initiative, pk=initiative_id)
+            context['breadcrumb_source'] = 'initiative_detail'
+        else:
+            context['breadcrumb_source'] = 'notes'
 
 
         # Display sender for template
@@ -2394,6 +2425,9 @@ class AllLogsView(LoginRequiredMixin,ListView):
             elif page_numbers[-1] != '...':
                 page_numbers.append('...')
         context['page_numbers'] = page_numbers
+        
+        context['unread_count'] = get_unread_notes_count(self.request.user)
+
         return context
 
 
