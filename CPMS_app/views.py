@@ -773,15 +773,14 @@ class DeleteInitiativeView(LoginRequiredMixin, RoleRequiredMixin, InitiativePerm
 
 
 
-@never_cache
 def is_manager(user):
     return user.role and user.role.role_name in ['M', 'CM']
 
 
 
-@never_cache
 @login_required
 @user_passes_test(is_manager)
+@never_cache
 def assign_employee_to_initiative(request, pk):
     initiative = get_object_or_404(Initiative, id=pk)
     employees = User.objects.filter(role__role_name='E', department=request.user.department)
@@ -848,8 +847,8 @@ def assign_employee_to_initiative(request, pk):
 
 
 
-@never_cache
 @login_required
+@never_cache
 def add_progress(request, initiative_id):
     user = request.user
     initiative = get_object_or_404(Initiative, id=initiative_id)
@@ -922,9 +921,9 @@ class KPIDetailsView(LoginRequiredMixin, DetailView):
 
 
 
-@never_cache
 @login_required
 @user_passes_test(is_manager)
+@never_cache
 def create_kpi_view(request, initiative_id):
     '''
     - Allows users to create a new KPI for a given initiative
@@ -1003,8 +1002,8 @@ class DeleteKPIView(LoginRequiredMixin, RoleRequiredMixin, LogMixin, DeleteView)
 
 
 
-@never_cache
 @login_required
+@never_cache
 def edit_kpi_view(request, initiative_id, kpi_id):
     kpi = get_object_or_404(KPI, id=kpi_id, initiative_id=initiative_id)
     
