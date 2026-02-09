@@ -1,14 +1,81 @@
 {% extends 'base.html' %}
 {% block breadcrumb %}
-<li class="flex items-center">
-    <span class="mx-2">/</span>
-    <a href="{% url 'initiatives_list' %}" class="hover:text-gray-700">المبادرات</a>
-</li>
-<li class="flex items-center">
-    <span class="mx-2">/</span>
-    <span class="text-gray-800 font-semibold">تفاصيل المبادرة</span>
-</li>
+<!-- for GM, CM, M -- when come from initiatives list page -->
+{% if is_plan_active %}
+   {% if breadcrumb_source == 'initiatives_list' %}
+    <li class="flex items-center">
+        <span class="mx-2">/</span>
+        <a href="{% url 'initiatives_list' %}" class="hover:text-gray-700">المبادرات</a>
+    </li>
+    <li class="flex items-center">
+        <span class="mx-2">/</span>
+        <span class="text-gray-800 font-semibold">تفاصيل المبادرة</span>
+    </li>
+
+<!-- for GM, CM, M, E -- when the plan is active and they come from dashboard -->
+{% elif breadcrumb_source == 'dashboard' %}
+    <li class="flex items-center">
+        <span class="mx-2">/</span>
+        <span class="text-gray-700">{{initiative.strategic_goal.goal_title}}</span>
+   </li>
+    <li class="flex items-center">
+        <span class="mx-2">/</span>
+        <span class="text-gray-800 font-semibold">تفاصيل المبادرة</span>
+    </li>
+    {% else %}
+   
+    <li class="flex items-center">
+        <span class="mx-2">/</span>
+         <span class="text-gray-700">{{initiative.strategic_goal.goal_title}}</span>
+       </li>
+    <li class="flex items-center">
+        <span class="mx-2">/</span>
+        <span class="text-gray-800 font-semibold">تفاصيل المبادرة</span>
+    </li>
+ {% endif %} 
+{% elif not is_plan_active %}
+{% if breadcrumb_source == 'plandetail' %}
+    <li class="flex items-center">
+        <span class="mx-2">/</span>
+        <a href="{% url 'plan_detail'  initiative.strategic_goal.strategicplan.id %}" class="hover:text-gray-700">تفاصيل الخطة</a>
+    </li>
+    <li class="flex items-center">
+        <span class="mx-2">/</span>
+        <span class="text-gray-700">{{initiative.strategic_goal.goal_title}}</span>
+    </li>
+    <li class="flex items-center">
+        <span class="mx-2">/</span>
+        <span class="text-gray-800 font-semibold">تفاصيل المبادرة</span>
+    </li>
+    <!-- for GM, CM, M -- when the plan is inactive -->   
+{% elif breadcrumb_source == 'plan_detail' %}
+ <li class="flex items-center">
+        <span class="mx-2">/</span>
+        <a href="{% url 'plan_detail' plan.id %}" class="hover:text-gray-700">تفاصيل الخطة</a>
+    </li>
+     <li class="flex items-center">
+        <span class="mx-2">/</span>
+         <span class="text-gray-700">{{initiative.strategic_goal.goal_title}}</span>
+    </li>
+    <li class="flex items-center">
+        <span class="mx-2">/</span>
+        <span class="text-gray-800 font-semibold">تفاصيل المبادرة</span>
+    </li>
+
+    {% endif %}
+{% else %}
+    <li class="flex items-center">
+        <span class="mx-2">/</span>
+        <span class="text-gray-700">{{initiative.strategic_goal.goal_title}}</span>
+    </li>
+    <li class="flex items-center">
+        <span class="mx-2">/</span>
+        <span class="text-gray-800 font-semibold">تفاصيل المبادرة</span>
+    </li>
+
+{% endif %}
 {% endblock %}
+
 {% block content %}
 {% include "partials/confirm_delete.html" %}
 

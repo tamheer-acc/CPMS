@@ -46,7 +46,7 @@
 
     <!-- Action -->  
   
-    <td class="px-4 py-3 items-center text-center {% if request.user.role.role_name == 'GM' %} flex justify-start gap-10 {% endif%}">
+    <td class="px-4 py-3 items-center text-right {% if request.user.role.role_name == 'GM' and active_plan_exists %} flex justify-start gap-10 {% endif%}">
         {% if show_initiatives%}
         <button onclick="toggleRow('goal-{{ goal.id }}', 'plusIcon-{{ goal.id }}')">
             <svg id="plusIcon-{{ goal.id }}" class="transition-transform duration-300 text-[#00675B]/70 size-5"
@@ -185,7 +185,7 @@
 {% empty %}
 
 <tr>
-    <td colspan="6" class="items-center text-center text-gray-400 py-6">لا توجد أهداف تابعه لهذه الخطة</td>
+    <td colspan="6" class="items-center text-center text-gray-400 py-6">لا توجد أهداف</td>
 </tr>
 
 {% endfor %}
@@ -202,19 +202,3 @@
         </div>
     </div>
 </div>
-
-<script>
-    function toggleRow(id, iconId) {
-        const row = document.getElementById(id);
-        const icon = document.getElementById(iconId);
-
-        row.classList.toggle("hidden");
-
-        if (row.classList.contains("hidden")) {
-            icon.style.transform = "rotate(0deg)";
-        } else {
-            icon.style.transform = "rotate(45deg)";
-        }
-    }
-
-</script>

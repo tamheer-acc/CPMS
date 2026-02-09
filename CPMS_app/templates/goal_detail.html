@@ -2,15 +2,46 @@
 {% load l10n %}
 
 {% block breadcrumb %}
-<li class="flex items-center">
-    <span class="mx-2">/</span>
-    <a href="{% url 'goals_list' %}" class="hover:text-gray-700">الأهداف</a>
-</li>
-<li class="flex items-center">
-    <span class="mx-2">/</span>
-    <!-- <span class="text-gray-800 font-semibold">تفاصيل {{ goal.goal_title }}</span> -->
-    <span class="text-gray-800 font-semibold">تفاصيل الهدف</span>
-</li>
+
+<!-- for GM, CM, M -- when come from goal list page -->
+{% if is_plan_active %}
+{% if breadcrumb_source == 'goals_list' %}
+    <li class="flex items-center">
+        <span class="mx-2">/</span>
+        <a href="{% url 'goals_list' %}" class="hover:text-gray-700">الأهداف</a>
+    </li>
+    <li class="flex items-center">
+        <span class="mx-2">/</span>
+        <span class="text-gray-800 font-semibold">تفاصيل الهدف</span>
+    </li>
+    {% else %}
+    <li class="flex items-center">
+        <span class="mx-2">/</span>
+        <span class="text-gray-700">{{goal.goal_title}}</span>
+    </li>
+    <li class="flex items-center">
+        <span class="mx-2">/</span>
+        <span class="text-gray-800 font-semibold">تفاصيل الهدف</span>
+    </li>
+ {% endif %}
+<!-- for GM, CM, M -- when the plan is inactive -->   
+{% elif not is_plan_active %}
+    {% if breadcrumb_source == 'plan_detail' %}
+    <li class="flex items-center">
+        <span class="mx-2">/</span>
+        <a href="{% url 'plan_detail' plan.id %}" class="hover:text-gray-700">تفاصيل الخطة</a>
+    </li>
+     <li class="flex items-center">
+        <span class="mx-2">/</span>
+        <span class="text-gray-700">{{goal.goal_title}}</span>
+    </li>
+    <li class="flex items-center">
+        <span class="mx-2">/</span>
+        <span class="text-gray-800 font-semibold">تفاصيل الهدف</span>
+    </li>
+{% endif %}
+{% endif %}
+
 
 {% endblock %}
 
@@ -75,7 +106,7 @@
                             d="M4.75 1a.75.75 0 0 0-.75.75V3a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2V1.75a.75.75 0 0 0-1.5 0V3h-5V1.75A.75.75 0 0 0 4.75 1ZM3.5 7a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1v4.5a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1V7Z"
                             clip-rule="evenodd" />
                     </svg>
-                    {{ goal.start_date|date:"d/m/Y" }}
+                    {{ goal.start_date|date:"Y/m/d" }}
                 </h1>
             </span>
 
@@ -90,7 +121,7 @@
                             d="M4.75 1a.75.75 0 0 0-.75.75V3a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2V1.75a.75.75 0 0 0-1.5 0V3h-5V1.75A.75.75 0 0 0 4.75 1ZM3.5 7a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1v4.5a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1V7Z"
                             clip-rule="evenodd" />
                     </svg>
-                    {{ goal.end_date|date:"d/m/Y" }}
+                    {{ goal.end_date|date:"Y/m/d" }}
                 </h1>
             </span>
 
@@ -188,10 +219,13 @@
                     المبادرات المرتبطة بالهدف الاستراتيجي
                 </h3>
                 {% if user.role.role_name == 'CM' or user.role.role_name == 'M' %}
+                 {% if is_plan_active %}
+
                 <a href="{% url 'initiative_create' goal.id %}"
                     class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition">
                     إضافة مبادرة جديدة
                 </a>
+                 {% endif %}
                 {% endif %}
             </div>
 
@@ -211,6 +245,7 @@
 
     <!-- edit and delete -->
     {% if user.role.role_name == 'CM' or user.role.role_name == 'M' %}
+     {% if is_plan_active %}
     <div class="flex justify-center gap-10">
         <a href="{% url 'goal_update' goal.id %}"
             class="bg-yellow-600 rounded-lg p-3 items-center hover:bg-yellow-800 text-white rounded-lg transition-colors flex gap-1">
@@ -242,6 +277,7 @@
             حذف الهدف
         </button>
     </div>
+     {% endif %}
     {% endif %}
 </div>
 {% endblock %}
