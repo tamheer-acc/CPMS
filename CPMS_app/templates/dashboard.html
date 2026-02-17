@@ -206,7 +206,38 @@
                             <path d="M4 20h14" />
                             <path d="M3 3l18 18" />
                         </svg>
-                        <p class="text-sm text-gray-600">لا توجد بيانات</p>
+
+                        <div class="  flex items-center gap-1">
+                        
+                            <div class="relative group">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" 
+                                    class="size-4 cursor-pointer">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z" />
+                                </svg>
+
+
+                                <!-- Tooltip -->
+                                <div class="
+                                    absolute top-[4vh] left-3/4 -translate-x-1/2 px-2 py-1  opacity-0 group-hover:opacity-100 transition-opacity duration-300
+                                    bg-black/60  rounded-sm shadow-lg max-w-[200px] min-w-[200px] text-center text-white text-[10px] break-words leading-tight whitespace-normal">
+                                    
+                                    {% if user.role.role_name == 'E' %}
+                                        يعرض المخطط متوسط التقدم للمبادرات المرتبطة بك                                
+                                    {% elif user.role.role_name == 'M' or user.role.role_name == 'CM' %}
+                                        يوضح المخطط توزيع مدى اكتمال الأهداف المرتبطة بالإدارة بناء على نسبة الأداء في المبادرات  
+                                    {% elif user.role.role_name == 'GM' %}
+                                        يوضح المخطط مدى اكتمال الأهداف ضمن الخطة الحالية بناء على نسبة الأداء في المبادرات المرتبطة  
+                                    {% else %}
+                                        لا توجد بيانات لعرض المخطط حالياً
+                                    {% endif %}
+                                    
+                                </div>
+
+                            </div>
+                            <p class="text-sm text-gray-600"> لا توجد بيانات</p>
+
+                        </div>
+
                     </div>
                     {% endif %}
                 </div>
@@ -234,7 +265,30 @@
                             <path d="M4 20h14" />
                             <path d="M3 3l18 18" />
                         </svg>
-                        <p class="text-sm text-gray-600">لا توجد بيانات</p>
+                        <div class="  flex items-center gap-1">
+                            <div class="relative group">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" 
+                                    class="size-4 cursor-pointer">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z" />
+                                </svg>
+                                <!-- Tooltip -->
+                                <div class="
+                                    absolute top-[4vh] left-3/4 -translate-x-1/2 px-2 py-1  opacity-0 group-hover:opacity-100 transition-opacity duration-300
+                                    bg-black/60  rounded-sm shadow-lg max-w-[200px] min-w-[200px] text-center text-white text-[10px] break-words leading-tight whitespace-normal">
+                                    
+                                    {% if user.role.role_name == 'E' %}
+                                        يعرض المخطط الحالة الإجمالية للمبادرات المرتبطة بك وتجميعها بناء على حالتها الحالية                               
+                                    {% elif user.role.role_name == 'M' or user.role.role_name == 'CM' %}
+                                        يوضح المخطط توزيع المبادرات المرتبطة بالإدارة وتجميعها بناء على حالتها الحالية
+                                    {% elif user.role.role_name == 'GM' %}
+                                        يوضح المخطط توزيع المبادرات ضمن الخطة الحالية وتجميعها بناء على حالتها  
+                                    {% else %}
+                                        لا توجد بيانات لعرض المخطط حالياً
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <p class="text-sm text-gray-600"> لا توجد بيانات</p>
+                        </div>
                     </div>
                     {% endif %}
                 </div>
@@ -244,9 +298,11 @@
             <div class="bg-white p-4 rounded-lg shadow md:col-span-3 flex flex-col justify-center">
                 <h3 class="font-semibold mb-3 text-center">مؤشرات الأداء الرئيسية</h3>
                 <div class="flex items-center justify-center h-64 overflow-x-auto">
-                    {% if stacked_bar_chart_data %}
+                    {% if stacked_bar_chart_data.datasets.0.data|length > 0 or stacked_bar_chart_data.datasets.1.data|length > 0 or stacked_bar_chart_data.datasets.2.data|length > 0 %}
+
                     <canvas id="stackedBarChart" width="800" height="auto"></canvas>
                     {% else %}
+                    
                     <div class="flex flex-col justify-center items-center h-full gap-2 mb-5">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
@@ -258,8 +314,32 @@
                             <path d="M4 20h14" />
                             <path d="M3 3l18 18" />
                         </svg>
-                        <p class="text-sm text-gray-600">لا توجد بيانات</p>
+                        <div class="  flex items-center gap-1">
+                            <div class="relative group">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" 
+                                    class="size-4 cursor-pointer">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z" />
+                                </svg>
+                                <!-- Tooltip -->
+                                <div class="
+                                    absolute top-[4vh] left-3/4 -translate-x-1/2 px-2 py-1  opacity-0 group-hover:opacity-100 transition-opacity duration-300
+                                    bg-black/60  rounded-sm shadow-lg max-w-[200px] min-w-[200px] text-center text-white text-[10px] break-words leading-tight whitespace-normal">
+                                    
+                                    {% if user.role.role_name == 'E' %}
+                                        يعرض المخطط تصنيف مؤشرات الأداء الرئيسية حسب حالتها وتجميعها بناء على المبادرات المرتبطة                                
+                                    {% elif user.role.role_name == 'M' or user.role.role_name == 'CM' %}
+                                        يعرض المخطط تصنيف مؤشرات الأداء الرئيسية حسب حالتها وتجميعها بناء على مبادرات الإدارة المرتبطة                                
+                                    {% elif user.role.role_name == 'GM' %}
+                                        يعرض المخطط تصنيف مؤشرات الأداء الرئيسية حسب حالتها وتجميعها بناء على المبادرات المرتبطة                                
+                                    {% else %}
+                                        لا توجد بيانات لعرض المخطط حالياً
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <p class="text-sm text-gray-600"> لا توجد بيانات</p>
+                        </div>
                     </div>
+
                     {% endif %}
                 </div>
             </div>
@@ -560,7 +640,26 @@
                             <path d="M4 20h14" />
                             <path d="M3 3l18 18" />
                         </svg>
-                        <p class="text-sm text-gray-600">لا توجد بيانات</p>
+                        <div class="  flex items-center gap-1">
+                            <div class="relative group">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" 
+                                    class="size-4 cursor-pointer">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z" />
+                                </svg>
+                                <!-- Tooltip -->
+                                <div class="
+                                    absolute top-[4vh] left-3/4 -translate-x-1/2 px-2 py-1  opacity-0 group-hover:opacity-100 transition-opacity duration-300
+                                    bg-black/60  rounded-sm shadow-lg max-w-[200px] min-w-[200px] text-center text-white text-[10px] break-words leading-tight whitespace-normal">
+                                    
+                                    {% if user.role.role_name == 'M' or user.role.role_name == 'CM' %}
+                                        يعرض المخطط توزيع العمل بين الموظفين وعدد المبادرات التي يعمل عليها كل موظف ضمن القسم الحالي                                
+                                    {% else %}
+                                        لا توجد بيانات لعرض المخطط حالياً
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <p class="text-sm text-gray-600"> لا توجد بيانات</p>
+                        </div>
                     </div>
                     {% endif %}
                 </div>
@@ -623,19 +722,33 @@
                     {% endfor %}
                 </ol>
                 {% else %}
-                <div class="flex flex-col justify-center items-center h-full gap-2 mb-5">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                        class=" icon icon-tabler icons-tabler-outline icon-tabler-chart-bar-off w-24 h-24 stroke-gray-300 hover:stroke-gray-400 transition-transform duration-300 hover:scale-110 ">
-                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                        <path d="M3 13a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -6" />
-                        <path d="M12 8h2a1 1 0 0 1 1 1v2m0 4v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1v-10" />
-                        <path d="M15 11v-6a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v12m-1 3h-4a1 1 0 0 1 -1 -1v-4" />
-                        <path d="M4 20h14" />
-                        <path d="M3 3l18 18" />
-                    </svg>
-                    <p class="text-sm text-gray-600">لا توجد بيانات</p>
-                </div>
+                    <div class="flex flex-col justify-center items-center h-full gap-2 mb-5">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class=" icon icon-tabler icons-tabler-outline icon-tabler-chart-bar-off w-24 h-24 stroke-gray-300 hover:stroke-gray-400 transition-transform duration-300 hover:scale-110 ">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <path d="M3 13a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -6" />
+                            <path d="M12 8h2a1 1 0 0 1 1 1v2m0 4v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1v-10" />
+                            <path d="M15 11v-6a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v12m-1 3h-4a1 1 0 0 1 -1 -1v-4" />
+                            <path d="M4 20h14" />
+                            <path d="M3 3l18 18" />
+                        </svg>
+                        <div class="  flex items-center gap-1">
+                            <div class="relative group">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" 
+                                    class="size-4 cursor-pointer">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z" />
+                                </svg>
+                                <!-- Tooltip -->
+                                <div class="
+                                    absolute top-[4vh] left-3/4 -translate-x-1/2 px-2 py-1  opacity-0 group-hover:opacity-100 transition-opacity duration-300
+                                    bg-black/60  rounded-sm shadow-lg max-w-[200px] min-w-[200px] text-center text-white text-[10px] break-words leading-tight whitespace-normal">
+                                        قائمة ترتيب أداء الإدارات مع متوسط أدائها                                
+                                </div>
+                            </div>
+                            <p class="text-sm text-gray-600"> لا توجد بيانات</p>
+                        </div>
+                    </div>
                 {% endif %}
             </div>
             <!-- chart 5 Line Chart: E,M,CM,GM-->
@@ -657,7 +770,21 @@
                             <path d="M4 20h14" />
                             <path d="M3 3l18 18" />
                         </svg>
-                        <p class="text-sm text-gray-600">لا توجد بيانات</p>
+                        <div class="  flex items-center gap-1">
+                            <div class="relative group">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" 
+                                    class="size-4 cursor-pointer">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z" />
+                                </svg>
+                                <!-- Tooltip -->
+                                <div class="
+                                    absolute top-[4vh] left-3/4 -translate-x-1/2 px-2 py-1  opacity-0 group-hover:opacity-100 transition-opacity duration-300
+                                    bg-black/60  rounded-sm shadow-lg max-w-[200px] min-w-[200px] text-center text-white text-[10px] break-words leading-tight whitespace-normal">
+                                        يعرض المخطط مدى تقدم الإدارات خلال اخر ٣٠ يوم عبر متوسط الأداء للإدارات                                
+                                </div>
+                            </div>
+                            <p class="text-sm text-gray-600"> لا توجد بيانات</p>
+                        </div>
                     </div>
                     {% endif %}
                 </div>

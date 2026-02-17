@@ -12,8 +12,11 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 
 from pathlib import Path
 import os
+from dotenv import load_dotenv
+
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(BASE_DIR / ".env")
 
 STATIC_URL = '/static/'
 
@@ -90,10 +93,10 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'CPMS',
-        'USER': 'postgres',
-        'PASSWORD': 'post123',
-        'HOST': 'localhost',
-        'PORT': '5432',
+        # 'USER': 'postgres',
+        # 'PASSWORD': 'post123',
+        # 'HOST': 'localhost',
+        # 'PORT': '5432',
     }
 }
 

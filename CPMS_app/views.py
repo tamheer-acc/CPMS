@@ -295,14 +295,9 @@ class DashboardView(LoginRequiredMixin, TemplateView):
 
 
             # Bar Chart ( مدى اكتمال الأهداف ) : avg of progress in each goal
-            bar_chart_labels = []
-            bar_chart_data = []
-            for goal in goals:
-                avrage_goal_progress = avg_calculator(userinitiatives.filter(initiative__strategic_goal = goal, user__role__role_name = 'E' ))
-                bar_chart_labels.append(goal.goal_title)
-                bar_chart_data.append(avrage_goal_progress or 0)
-            context['bar_chart_labels'] = bar_chart_labels
-            context['bar_chart_data'] = bar_chart_data
+            goals_with_avg = goals.annotate(avg_progress=Avg('initiative__userinitiative__progress', filter=Q(initiative__userinitiative__user__role__role_name='E')))
+            context['bar_chart_labels'] = [goal.goal_title for goal in goals_with_avg]
+            context['bar_chart_data'] = [round(goal.avg_progress or 0) for goal in goals_with_avg]
             
             
             # Bar Chart ( توزيع العمل ) : each employee and the number of initiatives they're working on
@@ -386,14 +381,18 @@ class DashboardView(LoginRequiredMixin, TemplateView):
                 context['donut_chart_data'] = [count.get(key, 0) for key in status_order]                
             
             # Bar Chart ( متوسط الإنجاز في المبادرات ) : average of all user's progress in all of his/her initiatives 
-            bar_chart_data = []
-            bar_chart_labels = []
-            for initiative in initiatives:
-                ui = userinitiatives.filter(initiative = initiative)
-                bar_chart_data.append(avg_calculator(ui))
-                bar_chart_labels.append(initiative.title)
-            context['bar_chart_data'] = bar_chart_data
-            context['bar_chart_labels'] = bar_chart_labels
+            initiatives_with_avg = initiatives.annotate(avg_progress=Avg('userinitiative__progress'))
+            context['bar_chart_labels'] = [initiative.title for initiative in initiatives_with_avg]
+            context['bar_chart_data'] = [round(initiative.avg_progress or 0) for initiative in initiatives_with_avg]
+
+            # bar_chart_data = []
+            # bar_chart_labels = []
+            # for initiative in initiatives:
+            #     ui = userinitiatives.filter(initiative = initiative)
+            #     bar_chart_data.append(avg_calculator(ui))
+            #     bar_chart_labels.append(initiative.title)
+            # context['bar_chart_data'] = bar_chart_data
+            # context['bar_chart_labels'] = bar_chart_labels
             
             # Card ( متوسط نسبة الإنجاز ) : Avrage Progress 
             avrage_progress = avg_calculator(userinitiatives)
@@ -987,7 +986,7 @@ def create_kpi_view(request, initiative_id):
 
     else:
         form = KPIForm()
-        ai_suggestion = generate_KPIs(initiative)
+        ai_suggestion = generate_KPIs(initiative.strategic_goal,initiative, initiative.strategic_goal.department)
 
         if request.headers.get('x-requested-with') == 'XMLHttpRequest':    # only return partial HTML if request is via JS
             return render(request, 'partials/kpi_modal.html', {'form': form, 'suggestions': ai_suggestion})
@@ -1160,71 +1159,57 @@ class AllPlansView(LoginRequiredMixin, RoleRequiredMixin, ListView):
 
 @method_decorator(never_cache, name='dispatch')
 class PlanDetailsview(LoginRequiredMixin, RoleRequiredMixin, DetailView):
-     '''
-     - Displays details of a single strategic plan
-     '''
-     model = StrategicPlan
-     template_name = 'plan_detail.html'
-     context_object_name = 'plan'
-     allowed_roles = ['M', 'CM', 'GM']  # Roles allowed to access this view
+    '''
+    - Displays details of a single strategic plan
+    '''
+    model = StrategicPlan
+    template_name = 'plan_detail.html'
+    context_object_name = 'plan'
+    allowed_roles = ['M', 'CM', 'GM']  # Roles allowed to access this view
 
-     def get_queryset(self):
-         return StrategicPlan.objects.all()
+    def get_queryset(self):
+        return StrategicPlan.objects.all()
 
-     def get_context_data(self, **kwargs):
-      context = super().get_context_data(**kwargs)
-      user = self.request.user
-      role = user.role.role_name
-      goals_qs = StrategicGoal.objects.filter(strategicplan=self.object)
-      per_page = 25
-      dashboard_data = get_plan_dashboard(self.object, self.request.user)
-      context.update(dashboard_data)
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+        role = user.role.role_name
+        goals_qs = StrategicGoal.objects.filter(strategicplan=self.object)
+        per_page = 25
+        dashboard_data = get_plan_dashboard(self.object, self.request.user)
+        context.update(dashboard_data)
 
-    # search & filter
-      goals_qs = filter_queryset(
-        queryset=goals_qs,
-        request=self.request,
-        search_fields=['goal_title'],
-        status_field='goal_status',
-        priority_field='goal_priority'
-    )
+        # search & filter
+        goals_qs = filter_queryset(
+            queryset=goals_qs,
+            request=self.request,
+            search_fields=['goal_title'],
+            status_field='goal_status',
+            priority_field='goal_priority'
+        )
 
-    #   if role in ['M', 'CM']:
-    #     goals_qs = goals_qs.filter(department=user.department)
-    #     goals_qs.prefetch_related(
-    #         Prefetch(
-    #             'initiative_set',
-    #             queryset=Initiative.objects.prefetch_related(
-    #                 Prefetch(
-    #                     'userinitiative_set',
-    #                     queryset=UserInitiative.objects.filter(user=user),
-    #                     to_attr='user_initiative'
-    #                 )
-    #            ), to_attr='_prefetched_initiatives'  
-    #         )
-    #     )
 
-      goal_list, page_obj, paginator = paginate_queryset(goals_qs, self.request, per_page)
-      
-      context['show_initiatives'] = True
-      context['goals'] = goal_list
-      context['page_obj'] = page_obj
-      context['paginator'] = paginator
-      context['per_page'] = per_page
-      context['is_paginated'] = True if paginator.num_pages > 1 else False
-      context['page_numbers'] = get_page_numbers(page_obj, paginator)
+        goal_list, page_obj, paginator = paginate_queryset(goals_qs, self.request, per_page)
 
-      context['unread_count'] = get_unread_notes_count(user)
-      
-      return context
-      
-     def render_to_response(self, context, **response_kwargs):
-         if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
-             html = render_to_string('partials/goals_table_rows.html', context, request=self.request)
-             return JsonResponse({
-                 'html': html
-             })
-         return super().render_to_response(context, **response_kwargs)
+        context['show_initiatives'] = True
+        context['goals'] = goal_list
+        context['page_obj'] = page_obj
+        context['paginator'] = paginator
+        context['per_page'] = per_page
+        context['is_paginated'] = True if paginator.num_pages > 1 else False
+        context['page_numbers'] = get_page_numbers(page_obj, paginator)
+
+        context['unread_count'] = get_unread_notes_count(user)
+        
+        return context
+
+    def render_to_response(self, context, **response_kwargs):
+        if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            html = render_to_string('partials/goals_table_rows.html', context, request=self.request)
+            return JsonResponse({
+                'html': html
+            })
+        return super().render_to_response(context, **response_kwargs)
 
 
 
@@ -1350,37 +1335,37 @@ class AllGoalsView(LoginRequiredMixin, ListView):
 
         #search & filter function
         qs = filter_queryset(
-           queryset=qs,
-           request=self.request,
-           search_fields=['goal_title'],
-           status_field='goal_status',
-           priority_field='goal_priority'
-         )
+            queryset=qs,
+            request=self.request,
+            search_fields=['goal_title'],
+            status_field='goal_status',
+            priority_field='goal_priority'
+        )
 
         return qs
-      
+
     def get_context_data(self, **kwargs):
-      context = super().get_context_data(**kwargs)
-      context['show_initiatives'] = False
-      queryset = self.get_queryset()
-      per_page = 25
+        context = super().get_context_data(**kwargs)
+        context['show_initiatives'] = False
+        queryset = self.get_queryset()
+        per_page = 25
 
-      goal_list, page_obj, paginator = paginate_queryset(queryset, self.request, per_page)
+        goal_list, page_obj, paginator = paginate_queryset(queryset, self.request, per_page)
 
-     
-     # ====== Get active plan ======
-      context['plan'] = StrategicPlan.objects.filter(is_active = True).first()
-      context['active_plan_exists'] = StrategicPlan.objects.filter(is_active=True).exists()
-      context['goals'] = goal_list
-      context['page_obj'] = page_obj
-      context['paginator'] = paginator
-      context['per_page'] = per_page
-      context['is_paginated'] = True if paginator.num_pages > 1 else False
-      context['page_numbers'] = get_page_numbers(page_obj, paginator)
 
-      context['unread_count'] = get_unread_notes_count(self.request.user)
-      
-      return context
+        # ====== Get active plan ======
+        context['plan'] = StrategicPlan.objects.filter(is_active = True).first()
+        context['active_plan_exists'] = StrategicPlan.objects.filter(is_active=True).exists()
+        context['goals'] = goal_list
+        context['page_obj'] = page_obj
+        context['paginator'] = paginator
+        context['per_page'] = per_page
+        context['is_paginated'] = True if paginator.num_pages > 1 else False
+        context['page_numbers'] = get_page_numbers(page_obj, paginator)
+
+        context['unread_count'] = get_unread_notes_count(self.request.user)
+
+        return context
     
     
     def render_to_response(self, context, **response_kwargs):
@@ -1421,7 +1406,7 @@ class GoalDetailsview(LoginRequiredMixin, DetailView):
         context['progress'] = goal_progress
         
         context['plan'] = strategic_goal.strategicplan  
-      
+
         #source determination for breadcrumbs
         referer = self.request.META.get('HTTP_REFERER', '')
         if '/goals/' in referer:
@@ -1449,13 +1434,6 @@ class GoalDetailsview(LoginRequiredMixin, DetailView):
         context['is_plan_active'] = strategic_goal.strategicplan.is_active
 
         context['unread_count'] = get_unread_notes_count(user)
-
-        # svg_size = 48  # in px
-        # radius = 0.45 * svg_size
-        # circumference = 2 * math.pi * radius
-        # context["circumference"] = circumference
-        # context["circle_offset"] = round(circumference * (1 - timeline["passed_duration_percent"]/100), 2)
-        # context["circle_offset_for_progress"] = round(circumference * (1 - goal_progress/100), 2)
 
         return context
 
@@ -1485,10 +1463,10 @@ class CreateGoalView(LoginRequiredMixin, RoleRequiredMixin, LogMixin, CreateView
         today = timezone.localdate()
 
         if goal.end_date:
-         if today > goal.end_date:
-            goal.goal_status = 'D'
-        else:
-            goal.goal_status = 'NS'
+            if today > goal.end_date:
+                goal.goal_status = 'D'
+            else:
+                goal.goal_status = 'NS'
 
         self.object = form.save(user=self.request.user, plan_id=self.kwargs['plan_id'])
         self.log_create(self.object)
@@ -1756,15 +1734,15 @@ class AllNotesView(LoginRequiredMixin, ListView):
             note.is_received_box = note.is_inbox
             if note.has_replies:
                 if note.display_user_id == user.id:
-                   note.display_sender = "رد: أنت"
+                    note.display_sender = "رد: أنت"
                 else:
-                   note.display_sender = f"رد: {note.display_user_name}"
+                    note.display_sender = f"رد: {note.display_user_name}"
             else:
                 # no replies → show normal sender
                 if note.display_user_id == user.id:
-                   note.display_sender = "أنت"
+                    note.display_sender = "أنت"
                 else:
-                   note.display_sender = note.display_user_name
+                    note.display_sender = note.display_user_name
 
         # Empty messages
         empty_message = "لا توجد ملاحظات لعرضها"
@@ -1808,11 +1786,11 @@ class NoteDetailsview(LoginRequiredMixin, LogMixin, DetailView):
     template_name = 'partials/note_detail.html'
     context_object_name = 'note'
 
-  
+
     def get_object(self, queryset=None):
         note = super().get_object(queryset)
         user = self.request.user
-   
+
         # Mark this note as read by the current user
         if not note.read_by.filter(id=user.id).exists():
             note.read_by.add(user)
@@ -1827,7 +1805,7 @@ class NoteDetailsview(LoginRequiredMixin, LogMixin, DetailView):
         
         # Allow reply if the user is part of the initiative
         if note.initiative:
-           return UserInitiative.objects.filter(initiative=note.initiative, user=user).exists()
+            return UserInitiative.objects.filter(initiative=note.initiative, user=user).exists()
         
         # Allow reply if the user is sender or receiver
         return note.receiver == user or note.sender == user
@@ -1846,7 +1824,7 @@ class NoteDetailsview(LoginRequiredMixin, LogMixin, DetailView):
                 "date": date,
                 "notes": list(notes)
             })
-       
+
         # if note.receiver:
         #    context['is_read_by_receiver'] = note.read_by.filter(id=note.receiver.id).exists()
         # else:
@@ -1854,9 +1832,9 @@ class NoteDetailsview(LoginRequiredMixin, LogMixin, DetailView):
         
         plan_ended = False
         if note.initiative and note.initiative.strategic_goal.strategicplan.is_active is False:
-           plan_ended = True
+            plan_ended = True
         elif note.strategic_goal and note.strategic_goal.strategicplan.is_active is False:
-           plan_ended = True
+            plan_ended = True
         
         context['plan_ended'] = plan_ended
         context['grouped_replies'] = grouped_replies
@@ -2001,7 +1979,7 @@ class CreateNoteView(LoginRequiredMixin, LogMixin, CreateView):
             form.fields['initiative'].widget = forms.Select()
             form.fields['initiative'].queryset = Initiative.objects.filter(strategic_goal__strategicplan=plan, userinitiative__user=user).distinct()
 
-      
+
         if self.request.GET.get('goal_id'):
             form.fields['strategic_goal'].widget = forms.HiddenInput()
             form.fields['receiver'].widget = forms.HiddenInput()
@@ -2023,7 +2001,7 @@ class CreateNoteView(LoginRequiredMixin, LogMixin, CreateView):
         if goal_id:
             context['selected_goal'] = StrategicGoal.objects.get(id=goal_id)
         if initiative_id:
-           context['selected_initiative'] = Initiative.objects.get(id=initiative_id)
+            context['selected_initiative'] = Initiative.objects.get(id=initiative_id)
 
         return context
 
@@ -2046,7 +2024,7 @@ class CreateNoteView(LoginRequiredMixin, LogMixin, CreateView):
         
         next_url = self.request.GET.get('next')
         if next_url:
-           return redirect(next_url)
+            return redirect(next_url)
         
         return super().form_valid(form)
 
@@ -2115,11 +2093,11 @@ class DeleteNoteView(LoginRequiredMixin, LogMixin, DeleteView):
 #  Log View
 # ---------------------------
 @method_decorator(never_cache, name='dispatch')
-class AllLogsView(LoginRequiredMixin,ListView):
+class AllLogsView(LoginRequiredMixin, RoleRequiredMixin, ListView):
     model = Log
     template_name = 'log.html'
     context_object_name = 'logs'
-    
+    allowed_roles = ['CM']
     def get_paginate_by(self, queryset):
         return int(self.request.GET.get('per_page', 25))  # default 25
 

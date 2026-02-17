@@ -1,5 +1,9 @@
 import json
 import re
+import os
+import requests
+from openai import OpenAI 
+from django.http import JsonResponse
 from statistics import mean
 from datetime import date, timedelta
 from datetime import datetime, time
@@ -22,6 +26,13 @@ from django.db.models import Case, When, F, Subquery, OuterRef
 from django.db.models.functions import Coalesce
 from django.db.models import CharField
 from django.db.models.functions import Cast
+
+
+
+HF_ACCESS_TOKEN = os.getenv("HF_ACCESS_TOKEN")
+MODEL = os.getenv("MODEL")
+
+
 
 def model_to_dict_with_usernames(instance):
     """
@@ -134,12 +145,12 @@ def get_unread_notes_count(user):
         return (
             Note.objects
             .filter(parent_note__isnull=True)
-           .annotate(
-               last_sender=Coalesce(
-                   last_reply_sender,
-                   F('sender_id'),
-                   output_field=IntegerField()
-                   )
+            .annotate(
+                last_sender=Coalesce(
+                    last_reply_sender,
+                    F('sender_id'),
+                    output_field=IntegerField()
+                )
             )
 
             .exclude(last_sender=user.id)
@@ -159,12 +170,12 @@ def get_unread_notes_count(user):
         Note.objects
         .filter(parent_note__isnull=True)
         .annotate(
-               last_sender=Coalesce(
-                   last_reply_sender,
-                   F('sender_id'),
-                   output_field=IntegerField()
-                   )
+            last_sender=Coalesce(
+                last_reply_sender,
+                F('sender_id'),
+                output_field=IntegerField()
             )
+        )
         .exclude(last_sender=user.id)
         .exclude(read_by=user)
         .filter(
@@ -177,35 +188,66 @@ def get_unread_notes_count(user):
 
 
 
+client = OpenAI(
+    base_url="https://router.huggingface.co/v1",
+    api_key=HF_ACCESS_TOKEN, 
+)
+
+
+
 def generate_KPIs(goal, initiative, department):
+    try:
+        prompt = f"""
+        أنت خبير تخطيط استراتيجي. اقترح 3 مؤشرات أداء رئيسية لمبادرة '{initiative.title}' تحت الهدف '{goal.goal_title}' لإدارة '{department}'.
+        ⚠️ ملاحظات للنموذج:
+        - ارجع النتائج **كنقاط قصيرة فقط**، بدون أي شرح.
+        - كل نقطة عبارة عن جملة واحدة واضحة وقابلة للقياس.
+        - استخدم العربية فقط، لا ترجمة أو أي لغة أخرى.
+        - ارجع فقط 3 نقاط بالضبط، بدون أي إضافات.
+        """
 
-# llm.create_chat_completion(
-# 	messages = [
-# 		{
-# 			"role": "user",
-# 			"content":
-# "انت محلل استراتيجي خبير في وزارة النقل والخدمات اللوجستية في السعودية، اقترح لي كرؤوس أقلام فقط ثلاث
-# مؤشرات قياس الأداء لمبادرة 
-# (initiative.title)، 
-# تحت الهدف الاستراتيجي
-# (goal.title)،
-# لإدارة 
-# (department)
-# 		}
-# 	]
-# )
-    # text = response["choices"][0]["message"]["content"]
 
-    # kpis = text.split("\n")
-    # kpis = [kpi.strip() for kpi in kpis if kpi.strip()]  
-    # print(kpis)
-    return ['kpi suggestion1', 'kpi suggestion2', 'kpi suggestion3']
+        completion = client.chat.completions.create(
+            model=MODEL,
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=150,
+            temperature=0.3,
+        )
 
+        text = completion.choices[0].message.content
+        print(text)
+        lines = [l.strip() for l in text.split("\n") if l.strip()]
+        kpis = []
+        for line in lines:
+            clean = re.sub(r"^[\d\u0660-\u0669]+[\.\)\-]?\s*", "", line)  # existing
+            clean = re.sub(r"^[-•]\s*", "", clean)  # remove - or • at start
+            kpis.append(clean)
+
+        return kpis[:3]
+
+
+    except Exception as e:
+
+        error_msg = str(e)
+        print(error_msg)
+        if "401" in error_msg:
+            print("خطأ: التوكن غير صالح أو انتهت صلاحيته")
+            return []
+        elif "timeout" in error_msg.lower():
+            print(" انتهى الوقت أثناء الاتصال بالمودل")
+            return []
+        elif "connection" in error_msg.lower():
+            print(" تعذر الاتصال بالمودل")
+            return []
+        else:
+            print(f" خطأ غير متوقع: {error_msg}")
+            return []
 
 
 
 def donutChart_data():
     return
+
 
 
 def calculate_goal_timeline(goal):
@@ -240,6 +282,7 @@ def calculate_goal_timeline(goal):
     }
 
 
+
 # ---------- Helper to clean log values ----------
 def clean_log_value(value):
     """Clean log value to convert datetime.date(...) into JSON-friendly string"""
@@ -251,6 +294,8 @@ def clean_log_value(value):
         return f'"{y:04d}-{m:02d}-{d:02d}"'
 
     return re.sub(r"datetime\.date\((\d+),\s*(\d+),\s*(\d+)\)", replace_date, value)
+
+
 
 def get_timeline_data(plan, user):
     timeline_data = []
@@ -391,13 +436,12 @@ def get_timeline_data(plan, user):
     return timeline_data
 
 
+
 def get_plan_dashboard(plan, user):
     role = user.role.role_name
- 
+
     # ====== Goals (filter by role) ======
     goals = StrategicGoal.objects.filter(strategicplan=plan).prefetch_related('initiative_set')
-    # if role in ['M', 'CM']:
-    #     goals = goals.filter(department=user.department)
     
     # ====== Initiatives related to these goals ======
     initiatives_qs = Initiative.objects.filter(strategic_goal__in=goals)
@@ -416,25 +460,25 @@ def get_plan_dashboard(plan, user):
 
     # ======== top 5 employees / departments ============
     if role in ['M', 'CM']:
-     employees_progress = (
-        UserInitiative.objects
-        .filter(initiative__in=initiatives_qs, user__role__role_name='E')
-        .values('user__first_name', 'user__last_name', 'user__department__department_name')
-        .annotate(avg_progress=Avg('progress'))
-        .order_by('-avg_progress')[:5]
-    )
-     top5_labels = [f"{e['user__first_name']} {e['user__last_name']}" for e in employees_progress]
-     top5_department_name = [f"{e['user__department__department_name']}" for e in employees_progress]
-     top5_progress = [round(float(e['avg_progress'] or 0),2) for e in employees_progress]
+        employees_progress = (
+            UserInitiative.objects
+            .filter(initiative__in=initiatives_qs, user__role__role_name='E')
+            .values('user__first_name', 'user__last_name', 'user__department__department_name')
+            .annotate(avg_progress=Avg('progress'))
+            .order_by('-avg_progress')[:5]
+        )
+        top5_labels = [f"{e['user__first_name']} {e['user__last_name']}" for e in employees_progress]
+        top5_department_name = [f"{e['user__department__department_name']}" for e in employees_progress]
+        top5_progress = [round(float(e['avg_progress'] or 0),2) for e in employees_progress]
 
     elif role == 'GM':
-     departments_progress = (
-        goals.values('department_id', 'department__department_name')
-             .annotate(avg_progress=Avg('initiative__userinitiative__progress'))
-             .order_by('-avg_progress')[:5]
-    )
-     top5_labels = [d['department__department_name'] for d in departments_progress]
-     top5_progress = [round(float(d['avg_progress'] or 0),2) for d in departments_progress]
+        departments_progress = (
+            goals.values('department_id', 'department__department_name')
+                .annotate(avg_progress=Avg('initiative__userinitiative__progress'))
+                .order_by('-avg_progress')[:5]
+        )
+        top5_labels = [d['department__department_name'] for d in departments_progress]
+        top5_progress = [round(float(d['avg_progress'] or 0),2) for d in departments_progress]
 
     # ====== Goals total & status counts ======
     goals_not_started = goals.filter(goal_status='NS').count()
@@ -448,7 +492,7 @@ def get_plan_dashboard(plan, user):
         goals_not_started,
         goals_in_progress,
         goals_delayed,
-          goals_completed,
+        goals_completed,
     ]
 
     # ====== Initiatives total & status counts ======
@@ -457,20 +501,20 @@ def get_plan_dashboard(plan, user):
 
     initiative_status_counts = {'NS': 0, 'IP': 0, 'C': 0, 'D': 0}
     for status in initiative_status_map.values():
-     initiative_status_counts[status] += 1
+        initiative_status_counts[status] += 1
 
-     initiative_status = [
-        initiative_status_counts['NS'],
-        initiative_status_counts['IP'],
-        initiative_status_counts['D'],
-        initiative_status_counts['C'],
-    ]
+        initiative_status = [
+            initiative_status_counts['NS'],
+            initiative_status_counts['IP'],
+            initiative_status_counts['D'],
+            initiative_status_counts['C'],
+        ]
 
     # ========================= Plan avg =================================
     if goals_total == 0:
         plan_avg = 0
     else:
-         plan_avg = calc_plan_progress(plan)
+        plan_avg = calc_plan_progress(plan)
 
     plan_avg = plan_avg or 0
     avg_by_2 = plan_avg/2
@@ -500,54 +544,26 @@ def get_plan_dashboard(plan, user):
     'M': "#F2C75C", 
     'L': "#00685E", 
     }
-   
+
     priority_stats = defaultdict(list)
 
     for goal in goals:
-       progress = calc_goal_progress(goal)
-       priority_stats[goal.goal_priority].append(progress)
+        progress = calc_goal_progress(goal)
+        priority_stats[goal.goal_priority].append(progress)
 
     chart_data = []
 
     for priority, progresses in priority_stats.items():
-       avg_progress = round(sum(progresses)/len(progresses), 2) if progresses else 0
-       chart_data.append({
-        'priority_label': PRIORITY_MAP.get(priority, priority),
-        'avg_progress': avg_progress,
-        'count': len(progresses),
-        'color': priority_colors.get(priority, '#bdc3c7')
-    })
-       
-    #=========================== KPI Chart ==================================
-    # initiatives = initiatives_qs.prefetch_related('kpi_set', 'strategic_goal__department')
-    # kpi_chart_data = []
+        avg_progress = round(sum(progresses)/len(progresses), 2) if progresses else 0
+        chart_data.append({
+            'priority_label': PRIORITY_MAP.get(priority, priority),
+            'avg_progress': avg_progress,
+            'count': len(progresses),
+            'color': priority_colors.get(priority, '#bdc3c7')
+        })
 
-    # for initiative in initiatives:
-    #   for kpi in initiative.kpi_set.all():
-    #     actual = float(kpi.actual_value) if kpi.actual_value is not None else 0
-    #     target = float(kpi.target_value) if kpi.target_value is not None else 1  
-    #     ratio = actual / target if target else 0
 
-    #     if ratio < 0.25:
-    #         color = "#A13525"  
-    #     elif ratio < 0.5:
-    #         color = "#E59256"  
-    #     elif ratio < 0.75:
-    #         color = "#F2C75C"  
-    #     else:
-    #         color = "#00685E"  
 
-    #     kpi_chart_data.append({
-    #         'initiative_title': initiative.title,
-    #         'department': initiative.strategic_goal.department.department_name,
-    #         'kpi_name': kpi.kpi,
-    #         'unit': kpi.unit,
-    #         'target': target,
-    #         'actual': actual,
-    #         'color': color
-    #   })
-    
-    # Kpi_length = len(kpi_chart_data)
     # =========================== KPI Chart ==================================
     initiatives = initiatives_qs.prefetch_related('kpi_set', 'strategic_goal__department')
     kpi_chart_data = []
@@ -690,6 +706,8 @@ def get_plan_dashboard(plan, user):
         'top5_length': len(top5_progress)
     }
 
+
+
 def calc_user_initiative_status(user_initiative):
     """
     Calculate the status of a user initiative
@@ -713,6 +731,8 @@ def calc_user_initiative_status(user_initiative):
     
     return 'NS'
 
+
+
 #=============================initiative status=======================================
 def calc_initiative_status_by_avg(initiative):
 
@@ -726,18 +746,20 @@ def calc_initiative_status_by_avg(initiative):
 
     # Completed
     if initiative_average >= 100:
-       return 'C'        # Completed On Time
+        return 'C'        # Completed On Time
 
     # Not completed & time finished
     if days_left <= 0.10*total_days: #today > end_date and initiative_average < 100:
         return 'D'    
-  
+
     # In progress
     if initiative_average > 0:
         return 'IP'
 
     # Not started
     return 'NS'
+
+
 
 #---------------------------------------------------------------------------
 def calc_initiative_status_for_Cards(initiative):
@@ -756,13 +778,15 @@ def calc_initiative_status_for_Cards(initiative):
     # Not completed & time finished
     if today >= end_date and initiative_average < 100:
         return 'D'    
-  
+
     # In progress
     if initiative_average > 0:
         return 'IP'
 
     # Not started
     return 'NS'
+
+
 
 #==============================goal progress=======================================
 def calc_goal_progress(goal):
@@ -776,6 +800,7 @@ def calc_goal_progress(goal):
     
 
     return round(goal_progress, 2)
+
 
 
 #==============================goal status=======================================
@@ -804,6 +829,8 @@ def calc_goal_status(goal):
 
     return 'NS'
 
+
+
 #==========================================================
 def calc_goal_status_for_cards(goal):
     end_date = goal.end_date
@@ -830,6 +857,8 @@ def calc_goal_status_for_cards(goal):
 
     return 'NS'
 
+
+
 #==========================================================
 def calc_plan_progress(plan):
     goals = plan.goals.all()
@@ -842,6 +871,8 @@ def calc_plan_progress(plan):
         total += calc_goal_progress(goal)
 
     return round(total / goals.count(),2)
+
+
 
 #==================================================
 def filter_queryset(queryset, request, search_fields=None, status_field=None, priority_field=None):
@@ -864,7 +895,7 @@ def filter_queryset(queryset, request, search_fields=None, status_field=None, pr
             q &= Q(**{status_field: status})
 
     if priority and priority_field:
-      q &= Q(**{priority_field: priority})
+        q &= Q(**{priority_field: priority})
 
     queryset = queryset.filter(q)
 
@@ -928,6 +959,7 @@ def get_page_numbers(page_obj, paginator, max_surrounding=1):
     return page_numbers
 
 
+
 #  Dashboaed Helper Functions <3
 def avg_calculator( data , field=None ):
     '''
@@ -936,8 +968,6 @@ def avg_calculator( data , field=None ):
     :param data: data should be a queryset result
     :param field: field can be none if the average calculated is progress, other than that mst be specified
     '''
-    # Book.objects.aggregate(Avg("price", default=0))
-    # Book.objects << data 
     if field:
         key = f"{field}__avg"
         avrage = data.aggregate(Avg( field, default=0 ))[key]
@@ -1017,7 +1047,7 @@ def kpi_filter( list_of_kpis ):
         return [],[],[]
     
     for kpi in list_of_kpis:
-        if kpi.start_value:
+        if kpi.start_value is not None:
             
             # just created, not modified
             if kpi.start_value == kpi.actual_value:
